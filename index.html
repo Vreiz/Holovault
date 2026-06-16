@@ -6,14 +6,13 @@
     <title>Holovault | Portfolio Engine</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.mini.min.js"></script>
     <style>
-        /* PERBAIKAN WARNA KONTRAST TINGGI */
         :root {
             --bg-main: #090d16; 
             --bg-card: #111827; 
             --primary: #4f46e5; 
-            --text-main: #ffffff; /* Putih bersih */
-            --text-muted: #cbd5e1; /* Abu-abu terang (sangat mudah dibaca) */
-            --border: #334155; /* Border lebih terang agar kotak terlihat jelas */
+            --text-main: #ffffff; 
+            --text-muted: #cbd5e1; 
+            --border: #334155; 
             --green: #10b981; 
             --danger: #ef4444; 
             --sold: #f59e0b;
@@ -37,7 +36,6 @@
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.3); }
         textarea { resize: none; min-height: 50px; }
 
-        /* Kustomisasi Placeholder agar lebih terang */
         ::-webkit-input-placeholder { color: #94a3b8; font-weight: normal; }
         ::-moz-placeholder { color: #94a3b8; font-weight: normal; }
         :-ms-input-placeholder { color: #94a3b8; font-weight: normal; }
@@ -90,7 +88,6 @@
         .card-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-top: 0.4rem; transition: opacity 0.2s; }
         .btn-action { padding: 0.4rem; font-size: 0.75rem; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; color: white; }
         
-        /* Interactive Bulk Container */
         .showcase-card.is-bulkable { cursor: pointer; }
         .showcase-card.is-bulkable:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         .showcase-card.is-bulkable .card-actions, .showcase-card.is-bulkable .qty-adjuster { pointer-events: none; opacity: 0.3; filter: grayscale(1); }
@@ -99,7 +96,6 @@
         .check-circle { background: var(--green); color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); margin-bottom: 10px; }
         .bulk-qty-override { width: 80px; padding: 8px; font-size: 1.2rem; border-radius: 6px; background: #090d16; color: white; border: 2px solid var(--green); text-align: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         
-        /* History Layout */
         #soldGrid { display: flex; flex-direction: column; gap: 1rem; }
         .trx-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; }
         .trx-mini-item { display:flex; gap:12px; align-items:center; background: var(--bg-main); padding:10px; border-radius:6px; margin-bottom:8px; border:1px solid var(--border); }
@@ -140,19 +136,19 @@
         <div style="display: flex; gap: 0.8rem; align-items: center;">
             <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelImport(event)">
             <button type="button" onclick="document.getElementById('excelFileInput').click()" style="background: #334155; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📥 Import Excel</button>
-            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">v6.9 Pure Vision</div>
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">v7.1 Dynamic Set Filtering</div>
         </div>
     </header>
 
     <div id="bulkActionBar" class="hidden">
         <span id="bulkCountText" style="color:white; font-size: 0.95rem; font-weight:bold; margin-right: 0.5rem;">0 Terpilih</span>
+        <button onclick="toggleSelectAll()" style="background:#3b82f6; padding:0.5rem 1.2rem; border-radius:20px; color:#ffffff; border:none; cursor:pointer; font-size:0.85rem; font-weight:bold; margin-right: 0.5rem;">Pilih Semua</button>
         <button onclick="openBulkSellModal()" style="background:var(--green); padding:0.5rem 1.2rem; border-radius:20px; color:#ffffff; border:none; cursor:pointer; font-size:0.85rem; font-weight:bold;">Jual Borongan</button>
         <button onclick="openBulkDeleteModal()" style="background:var(--danger); padding:0.5rem 1.2rem; border-radius:20px; color:#ffffff; border:none; cursor:pointer; font-size:0.85rem; font-weight:bold;">Hapus Borongan</button>
         <button onclick="toggleBulkMode()" style="background:transparent; border:2px solid white; padding:0.4rem 1.2rem; border-radius:20px; color:#ffffff; cursor:pointer; font-size:0.85rem; font-weight:bold;">Batal</button>
     </div>
 
     <div class="dashboard-layout">
-        <!-- FORM LEFT -->
         <div class="flat-panel">
             <div class="panel-title" id="formTitle">Vault Entry</div>
             
@@ -213,7 +209,6 @@
             </form>
         </div>
 
-        <!-- RIGHT SHOWCASE -->
         <div>
             <div class="tab-header">
                 <div class="tabs">
@@ -223,8 +218,11 @@
                 <button class="btn-bulk-mode" id="btnToggleBulk" onclick="toggleBulkMode()">📦 Mode Borongan</button>
             </div>
             
-            <div style="margin-bottom: 1.2rem;">
-                <input type="text" id="inventorySearchInput" placeholder="🔍 Cari berdasarkan nama kartu atau set..." oninput="filterInventory()" style="padding:0.8rem; font-size:1rem; border-radius:8px;">
+            <div style="display: grid; grid-template-columns: 1fr 240px; gap: 1rem; margin-bottom: 1.2rem;">
+                <input type="text" id="inventorySearchInput" placeholder="🔍 Cari berdasarkan nama kartu atau kode..." oninput="filterInventory()" style="padding:0.8rem; font-size:1rem; border-radius:8px; margin:0;">
+                <select id="filterSetSelect" onchange="filterInventory()" style="padding:0.8rem; font-size:1rem; border-radius:8px; background: var(--bg-card); color: white; border: 1px solid var(--border); cursor: pointer; font-weight:bold;">
+                    <option value="">✨ Semua Set Expansion</option>
+                </select>
             </div>
 
             <div id="soldFilterSection" class="hidden" style="background: var(--bg-card); border: 1px solid var(--border); padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem;">
@@ -274,12 +272,10 @@
         document.getElementById('modalTitle').innerText = title;
         document.getElementById('modalBody').innerHTML = bodyText;
         document.getElementById('modalInputs').innerHTML = inputsHtml;
-        
         const confirmBtn = document.getElementById('modalConfirmBtn');
         const newBtn = confirmBtn.cloneNode(true);
         confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
         newBtn.onclick = () => { confirmCallback(); };
-        
         document.getElementById('customModal').classList.remove('hidden');
     }
     function closeModal() { document.getElementById('customModal').classList.add('hidden'); }
@@ -296,6 +292,7 @@
         document.getElementById('inventorySearchInput').value = ''; 
         document.getElementById('filterStartDate').value = ''; 
         document.getElementById('filterEndDate').value = ''; 
+        document.getElementById('filterSetSelect').value = ''; // Reset filter set saat pindah tab
         
         document.getElementById('tabVault').classList.toggle('active', tab === 'vault');
         document.getElementById('tabSold').classList.toggle('active', tab === 'sold');
@@ -306,16 +303,25 @@
         filterInventory();
     }
 
+    /* --- REALTIME MULTI-FILTER ENGINE (SEARCH + DATE + SET SINKRONISASI) --- */
     function filterInventory() {
         const query = document.getElementById('inventorySearchInput').value.toLowerCase();
         const startDate = document.getElementById('filterStartDate').value; 
         const endDate = document.getElementById('filterEndDate').value; 
+        const selectedSet = document.getElementById('filterSetSelect').value.toLowerCase(); // Ambil nilai set yang dipilih
 
+        // 1. Saring Tab Vault
         document.querySelectorAll('#vaultGrid .showcase-card').forEach(card => {
             const txt = card.textContent.toLowerCase();
-            card.classList.toggle('hidden', !txt.includes(query));
+            const cardSet = card.querySelector('.card-set').textContent.toLowerCase();
+            
+            const matchQuery = txt.includes(query);
+            const matchSet = !selectedSet || cardSet === selectedSet;
+            
+            card.classList.toggle('hidden', !(matchQuery && matchSet));
         });
 
+        // 2. Saring Tab Sold & Akumulasi Keuangan Otomatis
         let runningTotalSold = 0; let runningTotalProfit = 0;
 
         document.querySelectorAll('#soldGrid .trx-card').forEach(card => {
@@ -327,14 +333,18 @@
             if (startDate && cardDate < startDate) dateMatches = false;
             if (endDate && cardDate > endDate) dateMatches = false;
 
-            let keywordMatches = false;
+            let contentMatches = false;
             card.querySelectorAll('.trx-mini-item').forEach(item => {
-                const match = item.textContent.toLowerCase().includes(query);
-                item.classList.toggle('hidden', !match);
-                if(match) keywordMatches = true;
+                const itemSet = item.getAttribute('data-set').toLowerCase();
+                const matchQuery = item.textContent.toLowerCase().includes(query);
+                const matchSet = !selectedSet || itemSet === selectedSet;
+                
+                const finalItemShow = matchQuery && matchSet;
+                item.classList.toggle('hidden', !finalItemShow);
+                if(finalItemShow) contentMatches = true;
             });
 
-            const finalShow = dateMatches && (keywordMatches || query === '');
+            const finalShow = dateMatches && (contentMatches || (query === '' && !selectedSet));
             card.classList.toggle('hidden', !finalShow);
 
             if (finalShow) { runningTotalSold += cardGross; runningTotalProfit += cardProfit; }
@@ -359,12 +369,28 @@
         const card = document.getElementById(`card_${id}`);
         const uiOverlay = document.getElementById(`bulk_ui_${id}`);
         if (card.classList.contains('selected-for-bulk')) {
-            card.classList.remove('selected-for-bulk');
-            uiOverlay.classList.add('hidden');
+            card.classList.remove('selected-for-bulk'); uiOverlay.classList.add('hidden');
         } else {
-            card.classList.add('selected-for-bulk');
-            uiOverlay.classList.remove('hidden');
+            card.classList.add('selected-for-bulk'); uiOverlay.classList.remove('hidden');
         }
+        updateBulkCount();
+    }
+
+    function toggleSelectAll() {
+        if (!isBulkMode) return;
+        // Hanya memilih kartu yang sedang terlihat di layar (lolos filter search/set)
+        const visibleCards = Array.from(document.querySelectorAll('#vaultGrid .showcase-card:not(.hidden)'));
+        if (visibleCards.length === 0) return showToast("Tidak ada kartu untuk diseleksi!", true);
+
+        const isAllSelected = visibleCards.every(card => card.classList.contains('selected-for-bulk'));
+        visibleCards.forEach(card => {
+            const id = card.id.replace('card_', ''); const uiOverlay = document.getElementById(`bulk_ui_${id}`);
+            if (isAllSelected) {
+                card.classList.remove('selected-for-bulk'); uiOverlay.classList.add('hidden');
+            } else {
+                card.classList.add('selected-for-bulk'); uiOverlay.classList.remove('hidden');
+            }
+        });
         updateBulkCount();
     }
 
@@ -374,6 +400,20 @@
             const vaultGrid = document.getElementById('vaultGrid'); const soldGrid = document.getElementById('soldGrid');
             vaultGrid.innerHTML = ''; soldGrid.innerHTML = '';
             let vaultCount = 0; let soldCount = 0; const groupedSold = {};
+
+            /* --- REKONSTRUKSI DROPDOWN FILTER EXPANSION (OTOMATIS & DYNAMIC) --- */
+            const setSelect = document.getElementById('filterSetSelect');
+            const previousSelection = setSelect.value;
+            // Ambil seluruh nama set unik di database, buang nilai null, lalu urutkan sesuai abjad
+            const uniqueSets = [...new Set(globalData.map(item => item.set_name).filter(Boolean))].sort();
+            
+            setSelect.innerHTML = '<option value="">✨ Semua Set Expansion</option>';
+            uniqueSets.forEach(setName => {
+                const opt = document.createElement('option');
+                opt.value = setName; opt.innerText = setName;
+                if(setName === previousSelection) opt.selected = true;
+                setSelect.appendChild(opt);
+            });
 
             globalData.forEach(item => {
                 const imgSrc = item.image_url || 'https://via.placeholder.com/55x77/111827/ffffff?text=No+Img';
@@ -432,8 +472,9 @@
                     tglDisplay = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
                 }
 
+                // MENAMBAHKAN ATRIBUT data-set AGAR STRUK TRANSAKSI JUGAL BISA DIFILTER PER SET
                 let miniCards = trx.items.map(i => `
-                    <div class="trx-mini-item">
+                    <div class="trx-mini-item" data-set="${i.set_name || ''}">
                         <img src="${i.image_url || 'https://via.placeholder.com/40x56/111827/ffffff?text=No+Img'}" style="width:40px; height:56px; object-fit:cover; border-radius:4px; border:1px solid var(--border);">
                         <div style="flex:1; font-size:0.85rem; color:#ffffff;">
                             <b style="font-size:0.95rem;">${i.name}</b> <span style="color:var(--text-muted); font-weight:bold;">x${i.quantity}</span>
@@ -463,7 +504,6 @@
 
     function openSingleSellModal(id, namaItem, maxQty) {
         if(isBulkMode) return; 
-        
         let inputsHtml = '';
         if(maxQty > 1) {
             inputsHtml += `
@@ -495,12 +535,9 @@
         const inputsHtml = `<label style="font-size:0.85rem; font-weight:bold; color:#ffffff;">Total Harga Borongan Paket (Rp)</label><input type="number" id="modalBulkPrice" placeholder="Membagi rata harga otomatis" style="margin-top:0.3rem; font-size:1.1rem; font-weight:bold;">`;
         openModal(`Jual Borongan (${selectedCards.length} Tipe)`, `Sistem otomatis membagi rata P/L ke tiap kartu yang terpilih secara proporsional.`, inputsHtml, async () => {
             const harga = parseFloat(document.getElementById('modalBulkPrice').value); if(isNaN(harga)) return showToast('Harga kosong!', true);
-            
             const items = Array.from(selectedCards).map(card => {
-                const id = card.id.replace('card_', '');
-                return { id: id, sell_qty: document.getElementById(`bulk_qty_${id}`).value };
+                const id = card.id.replace('card_', ''); return { id: id, sell_qty: document.getElementById(`bulk_qty_${id}`).value };
             });
-
             try {
                 const res = await fetch(`${API_URL}/api/inventory/bulk-sell`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items, total_price: harga }) });
                 if(res.ok) { closeModal(); showToast("Borongan sukses!"); loadInventory(); switchTab('sold'); }
@@ -511,7 +548,6 @@
     function openBulkDeleteModal() {
         const selectedCards = document.querySelectorAll('.selected-for-bulk'); 
         if(selectedCards.length === 0) return showToast('Pilih minimal 1 item dengan mengeklik kartunya!', true);
-        
         openModal(`Hapus Borongan (${selectedCards.length} Tipe)`, `Apakah kamu yakin ingin menghapus permanen semua kartu yang dipilih dari Vault? <br><br><b style="color:var(--danger)">Aksi ini tidak bisa dikembalikan.</b>`, '', async () => {
             const ids = Array.from(selectedCards).map(card => card.id.replace('card_', ''));
             try {
@@ -536,25 +572,16 @@
     }
 
     function toggleBulkMode() {
-        isBulkMode = !isBulkMode; 
-        document.getElementById('bulkActionBar').classList.toggle('hidden', !isBulkMode);
-        
-        const btn = document.getElementById('btnToggleBulk');
-        btn.innerText = isBulkMode ? 'Tutup Mode' : '📦 Mode Borongan';
-        btn.style.background = isBulkMode ? 'var(--danger)' : '#1f2937';
-        
+        isBulkMode = !isBulkMode; document.getElementById('bulkActionBar').classList.toggle('hidden', !isBulkMode);
+        const btn = document.getElementById('btnToggleBulk'); btn.innerText = isBulkMode ? 'Tutup Mode' : '📦 Mode Borongan'; btn.style.background = isBulkMode ? 'var(--danger)' : '#1f2937';
         document.querySelectorAll('.showcase-card').forEach(card => {
             card.classList.toggle('is-bulkable', isBulkMode);
             if (!isBulkMode) {
-                card.classList.remove('selected-for-bulk');
-                const id = card.id.replace('card_', '');
-                const ui = document.getElementById(`bulk_ui_${id}`);
-                if(ui) ui.classList.add('hidden');
+                card.classList.remove('selected-for-bulk'); const id = card.id.replace('card_', ''); const ui = document.getElementById(`bulk_ui_${id}`); if(ui) ui.classList.add('hidden');
             }
         });
         updateBulkCount();
     }
-    
     function updateBulkCount() { document.getElementById('bulkCountText').innerText = `${document.querySelectorAll('.selected-for-bulk').length} Tipe Dipilih`; }
 
     function handleExcelImport(event) {
@@ -584,14 +611,11 @@
                 const img = document.createElement('img'); img.src = card.images.small; img.className = 'card-preview';
                 img.onclick = () => {
                     document.querySelectorAll('.card-preview').forEach(el => el.classList.remove('selected')); img.classList.add('selected');
-                    document.getElementById('nama').value = card.name; 
-                    document.getElementById('set').value = card.set.name;
-                    document.getElementById('imageUrl').value = card.images.small; 
-                    document.getElementById('cardNumber').value = card.number || '';
+                    document.getElementById('nama').value = card.name; document.getElementById('set').value = card.set.name;
+                    document.getElementById('imageUrl').value = card.images.small; document.getElementById('cardNumber').value = card.number || '';
                     const customSetMapping = { 'sv3pt5': 'MEW', 'sv4pt5': 'PAF', 'swsh12pt5': 'CRZ', 'swsh4pt5': 'SHF', 'swsh7pt5': 'CEL', 'pgo': 'PGO' };
                     document.getElementById('setCode').value = (customSetMapping[card.set.id] || card.set.ptcgoCode || card.set.id || '').toUpperCase();
-                }; 
-                hasilDiv.appendChild(img);
+                }; hasilDiv.appendChild(img);
             });
         } catch (error) { hasilDiv.innerHTML = '<p style="color:var(--danger); font-size:0.9rem; font-weight:bold;">Offline.</p>'; } finally { btn.innerText = 'Cari'; }
     }
