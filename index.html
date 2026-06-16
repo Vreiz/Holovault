@@ -622,7 +622,15 @@
                     document.getElementById('set').value = card.set.name;
                     document.getElementById('imageUrl').value = card.images.small; 
                     document.getElementById('cardNumber').value = card.number || '';
-                    const customSetMapping = { 'sv3pt5': 'MEW', 'sv4pt5': 'PAF', 'swsh12pt5': 'CRZ', 'swsh4pt5': 'SHF', 'swsh7pt5': 'CEL', 'pgo': 'PGO' };
+                    const customSetMapping = { 
+    'sv2': 'PAL',        // Paldea Evolved
+    'sv3pt5': 'MEW',     // 151
+    'sv4pt5': 'PAF',     // Paldean Fates
+    'swsh12pt5': 'CRZ',  // Crown Zenith
+    'swsh4pt5': 'SHF',   // Shining Fates
+    'swsh7pt5': 'CEL',   // Celebrations
+    'pgo': 'PGO'         // Pokemon GO
+};
                     document.getElementById('setCode').value = (customSetMapping[card.set.id] || card.set.ptcgoCode || card.set.id || '').toUpperCase();
                 }; 
                 hasilDiv.appendChild(img);
