@@ -11,137 +11,133 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Buat folder gambar otomatis
 const dir = './uploads/images';
 if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-// Koneksi Database
 const pool = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'pokemon_db'
+    host: 'localhost', user: 'root', password: '', database: 'pokemon_db'
 });
 
-// --- API 1: Pencarian Kartu Canggih ---
+// API 1: Pencarian
 app.get('/api/search-card', async (req, res) => {
     try {
         const { name, set } = req.query;
         let queries = [];
-        
-        // Logika dinamis: Bisa pakai Nama saja, Set saja, atau Keduanya!
         if (name) queries.push(`name:"*${name}*"`);
         if (set) queries.push(`set.name:"*${set}*"`);
+        if (queries.length === 0) return res.status(400).json({ error: 'Harus ada kata kunci' });
         
-        // Tolak jika dua-duanya kosong
-        if (queries.length === 0) {
-            return res.status(400).json({ error: 'Harus ada kata kunci pencarian' });
-        }
-        
-        const stringQuery = queries.join(' ');
-        const queryAman = encodeURIComponent(stringQuery);
-        
-        const response = await fetch(`https://api.pokemontcg.io/v2/cards?q=${queryAman}&orderBy=-set.releaseDate&pageSize=50`, {
-            headers: { 'User-Agent': 'Holovault-App/1.0', 'Accept': 'application/json' }
+        const response = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&orderBy=-set.releaseDate&pageSize=50`, {
+            headers: { 'User-Agent': 'Holovault/1.0' }
         });
         
-        if (!response.ok) throw new Error('Ditolak oleh Server API');
-        
+        if (!response.ok) throw new Error('API Reject');
         const data = await response.json();
         res.status(200).json(data.data || []);
-    } catch (error) {
-        console.error('API Error:', error);
-        res.status(500).json({ error: 'Gagal mencari dari server pusat' });
-    }
+    } catch (error) { res.status(500).json({ error: 'Gagal API' }); }
 });
 
-// --- API 2: Ambil Data Inventory ---
+// API 2: Ambil Data
 app.get('/api/inventory', async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM inventory ORDER BY created_at DESC');
         res.status(200).json(rows);
-    } catch (error) {
-        res.status(500).json({ error: 'Gagal mengambil data database' });
-    }
+    } catch (error) { res.status(500).json({ error: 'Gagal db' }); }
 });
 
-// --- API 3: Simpan Kartu Baru (Create) ---
+// API 3: Simpan
 app.post('/api/inventory', multer().none(), async (req, res) => {
     try {
-        const { 
-            name, category, set_name, set_code, card_number, language, 
-            quantity, purchase_price, market_price, notes, card_condition, 
-            cert_number, external_image_url, grader, grade 
-        } = req.body;
-        
+        const { name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, cert_number, external_image_url, grader, grade } = req.body;
         const id = crypto.randomUUID();
-        const is_holo = req.body.is_holo ? 1 : 0;
-        const is_first_edition = req.body.is_first_edition ? 1 : 0;
-
         await pool.query(
-            `INSERT INTO inventory (
-                id, name, category, set_name, set_code, card_number, language, 
-                quantity, purchase_price, market_price, image_url, notes, 
-                card_condition, is_holo, is_first_edition, grader, grade, cert_number
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                id, name, category, set_name || '-', set_code || null, card_number || null, language || 'English', 
-                quantity || 1, purchase_price || 0, market_price || 0, external_image_url || null, notes || null, 
-                card_condition || null, is_holo, is_first_edition, grader || null, grade || null, cert_number || null
-            ]
+            `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault')`,
+            [id, name, category, set_name || '-', set_code || null, card_number || null, language || 'English', quantity || 1, purchase_price || 0, market_price || 0, external_image_url || null, notes || null, card_condition || null, req.body.is_holo?1:0, req.body.is_first_edition?1:0, grader || null, grade || null, cert_number || null]
         );
-
-        res.status(201).json({ message: 'Kartu berhasil diamankan di Holovault!' });
-    } catch (error) {
-        console.error('Simpan Error:', error);
-        res.status(500).json({ error: 'Gagal menyimpan ke database' });
-    }
+        res.status(201).json({ message: 'Saved' });
+    } catch (error) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// --- API 4: Update Kartu (Edit) ---
+// API 4: Update
 app.put('/api/inventory/:id', multer().none(), async (req, res) => {
     try {
-        const id = req.params.id;
-        const { 
-            name, category, set_name, set_code, card_number, language, 
-            quantity, purchase_price, market_price, notes, card_condition, 
-            cert_number, external_image_url, grader, grade 
-        } = req.body;
-        
-        const is_holo = req.body.is_holo ? 1 : 0;
-        const is_first_edition = req.body.is_first_edition ? 1 : 0;
-
+        const { name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, cert_number, external_image_url, grader, grade } = req.body;
         await pool.query(
-            `UPDATE inventory SET 
-                name=?, category=?, set_name=?, set_code=?, card_number=?, language=?, 
-                quantity=?, purchase_price=?, market_price=?, image_url=?, notes=?, 
-                card_condition=?, is_holo=?, is_first_edition=?, grader=?, grade=?, cert_number=?
-             WHERE id=?`,
-            [
-                name, category, set_name || '-', set_code || null, card_number || null, language || 'English', 
-                quantity || 1, purchase_price || 0, market_price || 0, external_image_url || null, notes || null, 
-                card_condition || null, is_holo, is_first_edition, grader || null, grade || null, cert_number || null, id
-            ]
+            `UPDATE inventory SET name=?, category=?, set_name=?, set_code=?, card_number=?, language=?, quantity=?, purchase_price=?, market_price=?, image_url=?, notes=?, card_condition=?, is_holo=?, is_first_edition=?, grader=?, grade=?, cert_number=? WHERE id=?`,
+            [name, category, set_name || '-', set_code || null, card_number || null, language || 'English', quantity || 1, purchase_price || 0, market_price || 0, external_image_url || null, notes || null, card_condition || null, req.body.is_holo?1:0, req.body.is_first_edition?1:0, grader || null, grade || null, cert_number || null, req.params.id]
         );
-        res.status(200).json({ message: 'Item berhasil diupdate!' });
-    } catch (error) {
-        console.error('Update Error:', error);
-        res.status(500).json({ error: 'Gagal mengupdate database' });
-    }
+        res.status(200).json({ message: 'Updated' });
+    } catch (error) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// --- API 5: Hapus Kartu (Delete) ---
+// API 5: Delete Permanen
 app.delete('/api/inventory/:id', async (req, res) => {
     try {
-        console.log("Menerima perintah hapus untuk ID:", req.params.id);
         await pool.query('DELETE FROM inventory WHERE id = ?', [req.params.id]);
-        res.status(200).json({ message: 'Item berhasil dihapus!' });
-    } catch (error) {
-        console.error('Delete Error:', error);
-        res.status(500).json({ error: 'Gagal menghapus dari database' });
-    }
+        res.status(200).json({ message: 'Deleted' });
+    } catch (error) { res.status(500).json({ error: 'Failed' }); }
 });
 
-app.listen(3000, () => {
-    console.log('Holovault Backend MENYALA di http://localhost:3000');
+/* --- ALGORITMA PENJUALAN --- */
+async function processSale(id, sell_qty, price_per_unit, trx_id) {
+    const [rows] = await pool.query('SELECT * FROM inventory WHERE id = ?', [id]);
+    if(rows.length === 0) return;
+    const item = rows[0];
+    const sq = parseInt(sell_qty);
+    
+    // Jika jual sebagian (Pecah Data)
+    if(sq < item.quantity) {
+        await pool.query('UPDATE inventory SET quantity = quantity - ? WHERE id = ?', [sq, id]);
+        const newId = crypto.randomUUID();
+        await pool.query(
+            `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status, sold_price, transaction_id) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Sold', ?, ?)`,
+            [newId, item.name, item.category, item.set_name, item.set_code, item.card_number, item.language, sq, item.purchase_price, item.market_price, item.image_url, item.notes, item.card_condition, item.is_holo, item.is_first_edition, item.grader, item.grade, item.cert_number, price_per_unit, trx_id]
+        );
+    } 
+    // Jika jual seluruh tumpukan
+    else {
+        await pool.query('UPDATE inventory SET status = "Sold", sold_price = ?, transaction_id = ? WHERE id = ?', [price_per_unit, trx_id, id]);
+    }
+}
+
+// API 6: JUAL SINGLE
+app.put('/api/inventory/:id/sell', async (req, res) => {
+    try {
+        const sell_qty = req.body.sell_qty || 1;
+        const total_sold_price = req.body.sold_price || 0;
+        const price_per_unit = total_sold_price / sell_qty;
+        
+        await processSale(req.params.id, sell_qty, price_per_unit, crypto.randomUUID());
+        res.status(200).json({ message: 'Terjual!' });
+    } catch (error) { res.status(500).json({ error: 'Gagal jual' }); }
 });
+
+// API 7: JUAL BORONGAN (BULK AUCTION)
+app.post('/api/inventory/bulk-sell', async (req, res) => {
+    try {
+        const { items, total_price } = req.body; 
+        if (!items || items.length === 0) return res.status(400).json({ error: 'Kosong' });
+
+        const trx_id = crypto.randomUUID(); // Buat 1 ID Struk Bon
+        const total_qty = items.reduce((sum, item) => sum + parseInt(item.sell_qty), 0);
+        const price_per_unit = (parseFloat(total_price) || 0) / total_qty; // Distribusi Harga
+
+        for(let i=0; i<items.length; i++) {
+            await processSale(items[i].id, items[i].sell_qty, price_per_unit, trx_id);
+        }
+        res.status(200).json({ message: 'Borongan Sukses!' });
+    } catch (error) { res.status(500).json({ error: 'Gagal borongan' }); }
+});
+
+// API 8: BATALKAN PENJUALAN (KEMBALI KE VAULT)
+app.put('/api/inventory/:id/undo-sell', async (req, res) => {
+    try {
+        // Mengembalikan status jadi Vault, mengosongkan harga jual dan ID transaksi
+        await pool.query('UPDATE inventory SET status = "Vault", sold_price = 0, transaction_id = NULL WHERE id = ?', [req.params.id]);
+        res.status(200).json({ message: 'Penjualan dibatalkan, kembali ke Vault' });
+    } catch (error) { res.status(500).json({ error: 'Gagal membatalkan' }); }
+});
+
+app.listen(3000, () => console.log('Backend MENYALA di http://localhost:3000'));
