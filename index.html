@@ -3,77 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Holovault | Premium TCG Tracker</title>
+    <title>Holovault | Portfolio Engine</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.mini.min.js"></script>
     <style>
         :root {
-            --bg-main: #0f172a; --bg-card: #1e293b; --primary: #6366f1; 
-            --primary-hover: #4f46e5; --text-main: #f8fafc; --text-muted: #94a3b8; 
-            --border: #334155; --gold: #fbbf24; --green: #10b981; --danger: #ef4444; --sold: #f59e0b;
+            --bg-main: #090d16; --bg-card: #111827; --primary: #4f46e5; 
+            --text-main: #f9fafb; --text-muted: #9ca3af; --border: #1f2937; 
+            --green: #10b981; --danger: #ef4444; --sold: #d97706;
         }
 
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-main); margin: 0; padding: 2rem; }
-        .container { max-width: 1300px; margin: 0 auto; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
-        header h1 { margin: 0; font-size: 2.2rem; font-weight: 800; color: transparent; -webkit-background-clip: text; background-image: linear-gradient(to right, #6366f1, #a855f7); }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-main); color: var(--text-main); margin: 0; padding: 1.5rem; -webkit-font-smoothing: antialiased; }
+        .container { max-width: 1340px; margin: 0 auto; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+        header h1 { margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; }
 
-        .dashboard-layout { display: grid; grid-template-columns: 480px 1fr; gap: 2.5rem; align-items: start; }
-        .glass-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3); }
-        .panel-title { font-size: 1.2rem; font-weight: 700; margin-top: 0; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+        .dashboard-layout { display: grid; grid-template-columns: 440px 1fr; gap: 2rem; align-items: start; }
+        .flat-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; }
+        .panel-title { font-size: 1rem; font-weight: 600; margin: 0 0 1rem 0; color: var(--text-main); }
 
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; margin-bottom: 0.8rem; }
         .form-group.full { grid-column: 1 / -1; }
-        .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; }
-        input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 0.7rem; background: #0f172a; border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); font-size: 0.9rem; box-sizing: border-box; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.3rem; }
+        
+        input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 0.6rem; background: var(--bg-main); border: 1px solid var(--border); border-radius: 6px; color: var(--text-main); font-size: 0.85rem; box-sizing: border-box; }
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+        textarea { resize: none; min-height: 50px; }
 
-        .checkbox-row { display: flex; gap: 1.5rem; background: #0f172a; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); grid-column: 1 / -1; }
-        .checkbox-label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+        .checkbox-row { display: flex; gap: 1.5rem; background: var(--bg-main); padding: 0.7rem; border-radius: 6px; border: 1px solid var(--border); grid-column: 1 / -1; }
+        .checkbox-label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--text-muted); }
 
-        .btn-submit { width: 100%; padding: 0.85rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; margin-top: 0.5rem; }
-        .btn-submit:hover { background: var(--primary-hover); }
-        .btn-cancel { width: 100%; padding: 0.85rem; background: #475569; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; margin-top: 0.5rem; }
+        button.btn-submit { width: 100%; padding: 0.7rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.15s; margin-top:0.5rem;}
+        button.btn-submit:hover { background: #4338ca; }
+        button.btn-cancel { width: 100%; padding: 0.7rem; background: #374151; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; margin-top: 0.4rem; } 
+        button.btn-cancel:hover { background: #4b5563; }
 
-        .search-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-        #hasilPencarian { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; max-height: 280px; overflow-y: auto; padding-right: 5px; }
-        .card-preview { width: 100%; height: auto; aspect-ratio: 2.5/3.5; object-fit: cover; cursor: pointer; border-radius: 6px; opacity: 0.6; transition: 0.2s; }
-        .card-preview:hover, .card-preview.selected { transform: translateY(-4px) scale(1.05); opacity: 1; border: 2px solid var(--primary); box-shadow: 0 4px 10px rgba(99, 102, 241, 0.5); }
+        .search-row { display: flex; gap: 0.4rem; margin-bottom: 0.8rem; }
+        #hasilPencarian { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; max-height: 190px; overflow-y: auto; padding-right: 2px; }
+        .card-preview { width: 100%; aspect-ratio: 2.5/3.5; object-fit: cover; cursor: pointer; border-radius: 4px; opacity: 0.5; border: 1px solid transparent; }
+        .card-preview:hover, .card-preview.selected { opacity: 1; border-color: var(--primary); }
 
-        .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); }
-        .tabs { display: flex; gap: 1.5rem; margin-bottom: -2px; }
-        .tab-btn { background: none; border: none; color: var(--text-muted); font-size: 1.1rem; font-weight: 700; padding: 0.5rem 0; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.2s; }
-        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
-        .btn-bulk-mode { background: #334155; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-bulk-mode:hover { background: #475569; }
-
-        #bulkActionBar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--primary); padding: 1rem 2rem; border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); z-index: 100; display: flex; gap: 1.5rem; align-items: center; }
+        .tab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border); }
+        .tabs { display: flex; gap: 1.2rem; margin-bottom: -1px; }
+        .tab-btn { background: none; border: none; color: var(--text-muted); font-size: 0.95rem; font-weight: 600; padding: 0.5rem 0; cursor: pointer; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--text-main); border-bottom-color: var(--text-main); }
         
-        .bulk-action-wrapper { position: absolute; top: 10px; left: 10px; z-index: 20; display:flex; gap:6px; align-items:center; background:rgba(15, 23, 42, 0.95); padding:6px 10px; border-radius:8px; border:1px solid var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
-        .bulk-checkbox { width: 20px; height: 20px; accent-color: var(--primary); cursor: pointer; margin:0;}
-        .bulk-qty-input { width: 45px; padding: 3px 5px; font-size: 0.9rem; border-radius:4px; background:#1e293b; color:white; border:1px solid var(--border); text-align: center; }
+        .btn-bulk-mode { background: #1f2937; border: 1px solid var(--border); color: white; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; cursor:pointer;}
 
-        /* Vault Layout */
-        .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
-        .showcase-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; transition: 0.3s; position: relative; }
-        .card-header { display: flex; background: #0f172a; padding: 0.8rem; border-bottom: 1px solid var(--border); gap: 1rem; }
-        .card-thumb { width: 70px; height: 98px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); }
+        #bulkActionBar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #111827; border: 1px solid var(--primary); padding: 0.8rem 1.5rem; border-radius: 30px; z-index: 100; display: flex; gap: 1rem; align-items: center; }
+        .bulk-action-wrapper { position: absolute; top: 6px; left: 6px; z-index: 20; display:flex; gap:4px; align-items:center; background: rgba(0,0,0,0.85); padding:4px 6px; border-radius:4px; }
+        .bulk-checkbox { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+        .bulk-qty-input { width: 35px; padding: 2px; font-size: 0.75rem; border-radius:3px; background:#090d16; color:white; border:1px solid var(--border); text-align: center; }
+
+        /* Qty Adjuster UI */
+        .qty-adjuster { display:flex; align-items:center; background:#1f2937; border-radius:12px; overflow:hidden; border:1px solid var(--border); }
+        .qty-btn { background:transparent; border:none; color:white; padding: 2px 8px; font-weight:bold; cursor:pointer; }
+        .qty-btn:hover { background:var(--primary); }
+        .qty-val { font-size: 0.75rem; font-weight:bold; padding: 0 4px; min-width: 14px; text-align:center;}
+
+        .inventory-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.2rem; }
+        .showcase-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; position: relative; }
+        .card-header { display: flex; background: rgba(0,0,0,0.15); padding: 0.6rem; border-bottom: 1px solid var(--border); gap: 0.8rem; }
+        .card-thumb { width: 55px; height: 77px; object-fit: cover; border-radius: 3px; border: 1px solid var(--border); }
         .card-title-area { flex: 1; overflow: hidden; }
-        .card-title { font-size: 1rem; font-weight: 700; margin: 0 0 0.2rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .card-set { font-size: 0.75rem; color: var(--text-muted); margin: 0 0 0.4rem 0; }
-        .finance-row { display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed var(--border); }
-        .price-label { color: var(--text-muted); }
-        .price-value { font-weight: 700; }
-        .card-body { padding: 0.8rem; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; gap: 0.5rem; }
-        .meta-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; font-size: 0.7rem; }
-        .tag { padding: 0.2rem 0.4rem; border-radius: 4px; font-weight: 600; background: #334155; }
-        .card-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem; margin-top: 0.5rem; }
-        .btn-action { padding: 0.4rem; font-size: 0.75rem; font-weight: 700; border-radius: 6px; border: none; cursor: pointer; color: white; transition: 0.2s; }
+        .card-title { font-size: 0.9rem; font-weight: 600; margin: 0 0 0.1rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display:flex; justify-content:space-between; align-items:center;}
+        .card-set { font-size: 0.7rem; color: var(--text-muted); margin: 0 0 0.3rem 0; }
+        .finance-row { display: flex; justify-content: space-between; font-size: 0.75rem; }
+
+        .card-body { padding: 0.6rem; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; gap: 0.4rem; }
+        .meta-tags { display: flex; flex-wrap: wrap; gap: 0.25rem; font-size: 0.65rem; }
+        .tag { padding: 0.15rem 0.35rem; border-radius: 3px; font-weight: 600; background: #1f2937; color: var(--text-muted); }
+        .card-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.25rem; margin-top: 0.3rem; }
+        .btn-action { padding: 0.35rem; font-size: 0.7rem; font-weight: 600; border-radius: 4px; border: none; cursor: pointer; color: white; }
         
-        /* Transaction Mode / Sold Layout */
-        #soldGrid { display: flex; flex-direction: column; gap: 1.5rem; }
-        .trx-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 10px 15px rgba(0,0,0,0.2); }
-        .trx-mini-item { display:flex; gap:12px; align-items:center; background:#0f172a; padding:10px; border-radius:8px; margin-bottom:8px; border:1px solid #334155; }
-        .btn-undo-sale { background:rgba(239, 68, 68, 0.1); border:1px solid var(--danger); color:var(--danger); cursor:pointer; font-size:0.85rem; padding:6px 10px; border-radius:6px; font-weight:bold; transition:0.2s; }
-        .btn-undo-sale:hover { background:var(--danger); color:white; }
+        #soldGrid { display: flex; flex-direction: column; gap: 1rem; }
+        .trx-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+        .trx-mini-item { display:flex; gap:10px; align-items:center; background: var(--bg-main); padding:6px; border-radius:6px; margin-bottom:6px; border:1px solid var(--border); }
+        .btn-undo-sale { background: transparent; border: 1px solid var(--danger); color: var(--danger); font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; width: auto; cursor:pointer;}
+        
+        /* NEW: Toast Notifications */
+        #toastContainer { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events:none; }
+        .toast { background: #1f2937; border-left: 4px solid var(--primary); padding: 12px 20px; border-radius: 4px; box-shadow: 0 5px 15px rgba(0,0,0,0.4); color: white; font-size: 0.85rem; font-weight: 600; animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* NEW: Custom Modals */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        .modal-box { background: var(--bg-card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 8px; width: 320px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
+        .modal-title { font-size: 1.1rem; font-weight:bold; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
 
         .profit-plus { color: var(--green); } .profit-minus { color: var(--danger); }
         .hidden { display: none !important; }
@@ -81,38 +97,51 @@
 </head>
 <body>
 
+<div id="toastContainer"></div>
+
+<div id="customModal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <div class="modal-title" id="modalTitle">Konfirmasi</div>
+        <div id="modalBody" style="margin-bottom: 1rem; font-size:0.85rem; color:var(--text-muted);"></div>
+        <div id="modalInputs" style="display:flex; flex-direction:column; gap:0.5rem; margin-bottom:1rem;"></div>
+        <div style="display:flex; gap:0.5rem;">
+            <button onclick="closeModal()" style="background:#374151; padding:0.6rem; border-radius:6px; color:white; border:none; flex:1; cursor:pointer;">Batal</button>
+            <button id="modalConfirmBtn" style="background:var(--primary); padding:0.6rem; border-radius:6px; color:white; border:none; flex:1; font-weight:bold; cursor:pointer;">Proses</button>
+        </div>
+    </div>
+</div>
+
 <div class="container">
     <header>
         <h1>HOLOVAULT</h1>
-        <div style="color: var(--text-muted); font-size: 0.9rem; font-weight: 500;">TCG Portfolio Engine v6.1 (Safe Undo)</div>
+        <div style="display: flex; gap: 0.8rem; align-items: center;">
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelImport(event)">
+            <button type="button" onclick="document.getElementById('excelFileInput').click()" style="background: #1f2937; border: 1px solid var(--border); padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.8rem; width: auto;">📥 Import Excel</button>
+            <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 500;">v6.4 No-Alert UI</div>
+        </div>
     </header>
 
     <div id="bulkActionBar" class="hidden">
-        <span id="bulkCountText" style="color:white; font-size: 1.1rem; font-weight:bold;">0 Item Terpilih</span>
-        <button onclick="prosesBulkSell()" style="background:#10b981; color:white; border:none; padding:0.6rem 1.5rem; border-radius:20px; font-weight:bold; cursor:pointer;">Proses Jual Borongan</button>
-        <button onclick="toggleBulkMode()" style="background:transparent; border:1px solid white; color:white; padding:0.6rem 1rem; border-radius:20px; cursor:pointer;">Batal</button>
+        <span id="bulkCountText" style="color:white; font-size: 0.85rem; font-weight:bold;">0 Terpilih</span>
+        <button onclick="openBulkSellModal()" style="background:var(--green); padding:0.4rem 1rem; border-radius:15px; width:auto; font-size:0.8rem;">Jual Borongan</button>
+        <button onclick="toggleBulkMode()" style="background:transparent; border:1px solid white; padding:0.4rem 1rem; border-radius:15px; width:auto; font-size:0.8rem;">Batal</button>
     </div>
 
     <div class="dashboard-layout">
-        <div class="glass-panel">
-            <div class="panel-title" id="formTitle"><span>📥</span> Secure Vault Entry</div>
+        <div class="flat-panel">
+            <div class="panel-title" id="formTitle">Vault Entry</div>
             
-            <div style="background: #0f172a; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--border);">
-                <label style="font-size: 0.75rem; font-weight: bold; color: var(--text-muted); display:block; margin-bottom:0.4rem;">SCANNER API PUSAT</label>
+            <div style="background: var(--bg-main); padding: 0.8rem; border-radius: 6px; margin-bottom: 1rem; border: 1px solid var(--border);">
                 <div class="search-row">
-                    <input type="text" id="searchInput" placeholder="Nama Kartu...">
-                    <input type="text" id="searchSet" placeholder="Set (Opsional)..." style="max-width: 120px;">
-                    <button type="button" onclick="cariKartu()" id="btnSearch" style="width:auto; padding:0 1rem; border:none; border-radius:6px; background:var(--primary); color:white; cursor:pointer;">Cari</button>
+                    <input type="text" id="searchInput" placeholder="Nama kartu...">
+                    <input type="text" id="searchSet" placeholder="Set..." style="max-width: 100px;">
+                    <button type="button" onclick="cariKartu()" id="btnSearch" style="width:auto; padding:0 0.8rem;">Cari</button>
                 </div>
                 <div id="hasilPencarian"></div>
             </div>
 
             <form id="formKartu">
-                <div class="form-group full" style="background: rgba(16, 185, 129, 0.1); padding: 0.8rem; border-radius: 8px; border: 1px dashed var(--green); margin-bottom: 1rem;">
-                    <label style="color: var(--green);">Link Gambar (Otomatis API / Manual Jepang)</label>
-                    <input type="text" id="imageUrl" name="external_image_url" placeholder="Paste link gambar kartu di sini...">
-                </div>
-
+                <div class="form-group full" style="margin-bottom: 0.8rem;"><input type="text" id="imageUrl" name="external_image_url" placeholder="Paste link gambar..."></div>
                 <div class="form-grid">
                     <div class="form-group full"><label>Nama Item</label><input type="text" id="nama" name="name" required></div>
                     <div class="form-group">
@@ -123,39 +152,34 @@
                     </div>
                     <div class="form-group">
                         <label>Bahasa</label>
-                        <select name="language" id="languageSelect">
-                            <option value="English">English</option><option value="Japanese">Japanese</option><option value="Indonesian">Indonesian</option>
-                        </select>
+                        <select name="language" id="languageSelect"><option value="English">English</option><option value="Japanese">Japanese</option><option value="Indonesian">Indonesian</option></select>
                     </div>
-                    <div class="form-group full"><label>Set / Edisi rilis</label><input type="text" id="set" name="set_name" required></div>
+                    <div class="form-group full"><label>Set Edisi</label><input type="text" id="set" name="set_name" required></div>
                     <div class="form-group"><label>Kode Set</label><input type="text" id="setCode" name="set_code"></div>
-                    <div class="form-group"><label>Nomor Kartu</label><input type="text" id="cardNumber" name="card_number"></div>
-                    <div class="form-group"><label>Harga Beli (Modal)</label><input type="number" step="0.01" id="purchasePrice" name="purchase_price"></div>
+                    <div class="form-group"><label>No Kartu</label><input type="text" id="cardNumber" name="card_number"></div>
+                    <div class="form-group"><label>Harga Modal</label><input type="number" step="0.01" id="purchasePrice" name="purchase_price"></div>
                     <div class="form-group"><label>Harga Pasar</label><input type="number" step="0.01" id="marketPrice" name="market_price"></div>
 
                     <div class="checkbox-row" id="specialAttributes">
-                        <label class="checkbox-label"><input type="checkbox" id="isHolo" name="is_holo" value="1"> Foil / Holo</label>
+                        <label class="checkbox-label"><input type="checkbox" id="isHolo" name="is_holo" value="1"> Foil</label>
                         <label class="checkbox-label"><input type="checkbox" id="isFirstEd" name="is_first_edition" value="1"> 1st Ed</label>
                     </div>
                     <div class="form-group full" id="conditionGroup">
-                        <label>Kondisi Kartu</label>
-                        <select name="card_condition" id="conditionSelect"><option value="NM" selected>Near Mint (NM)</option><option value="LP">LP</option><option value="MP">MP</option><option value="HP">HP</option><option value="DMG">DMG</option></select>
+                        <label>Kondisi</label>
+                        <select name="card_condition" id="conditionSelect"><option value="NM" selected>Near Mint</option><option value="M">Mint</option><option value="LP">LP</option><option value="MP">MP</option><option value="HP">HP</option><option value="DMG">DMG</option></select>
                     </div>
                 </div>
 
-                <div id="gradedFields" class="hidden" style="background: rgba(99,102,241,0.05); padding: 1rem; border-radius: 8px; border: 1px dashed var(--primary); margin-bottom: 1rem;">
+                <div id="gradedFields" class="hidden" style="background: rgba(0,0,0,0.15); padding: 0.8rem; border-radius: 6px; border: 1px dashed var(--border); margin-bottom: 0.8rem;">
                     <div class="form-grid" style="margin-bottom:0;">
-                        <div class="form-group">
-                            <label>Lembaga Grader</label>
-                            <select name="grader" id="graderSelect"><option value="">-- PILIH --</option><option value="PSA">PSA</option><option value="BGS">BGS</option><option value="CGC">CGC</option></select>
-                        </div>
-                        <div class="form-group"><label>Skor (Grade)</label><input type="text" id="gradeInput" name="grade"></div>
-                        <div class="form-group full" style="margin-bottom:0;"><label>Nomor Sertifikasi</label><input type="text" id="certInput" name="cert_number"></div>
+                        <div class="form-group"><label>Grader</label><select name="grader" id="graderSelect"><option value="">--</option><option value="PSA">PSA</option><option value="BGS">BGS</option><option value="CGC">CGC</option><option value="ARS">ARS</option></select></div>
+                        <div class="form-group"><label>Skor</label><input type="text" id="gradeInput" name="grade"></div>
+                        <div class="form-group full" style="margin-bottom:0;"><label>No Sertifikasi</label><input type="text" id="certInput" name="cert_number"></div>
                     </div>
                 </div>
 
                 <div class="form-grid">
-                    <div class="form-group full"><label>Catatan</label><textarea id="notesInput" name="notes"></textarea></div>
+                    <div class="form-group full"><textarea id="notesInput" name="notes" placeholder="Catatan transaksi..."></textarea></div>
                     <div class="form-group full"><label>Kuantitas</label><input type="number" id="qtyInput" name="quantity" value="1" min="1" required></div>
                 </div>
 
@@ -168,9 +192,13 @@
             <div class="tab-header">
                 <div class="tabs">
                     <button class="tab-btn active" id="tabVault" onclick="switchTab('vault')">💎 Vault Portfolio</button>
-                    <button class="tab-btn" id="tabSold" onclick="switchTab('sold')">💰 Riwayat Struk (Sold)</button>
+                    <button class="tab-btn" id="tabSold" onclick="switchTab('sold')">💰 Transaksi (Sold)</button>
                 </div>
-                <button class="btn-bulk-mode" id="btnToggleBulk" onclick="toggleBulkMode()">📦 Mode Bulk Auction</button>
+                <button class="btn-bulk-mode" id="btnToggleBulk" onclick="toggleBulkMode()">📦 Mode Borongan</button>
+            </div>
+            
+            <div style="margin-bottom: 1.2rem;">
+                <input type="text" id="inventorySearchInput" placeholder="🔍 Cari nama kartu atau set..." oninput="filterInventory()">
             </div>
             
             <div class="inventory-grid" id="vaultGrid"></div>
@@ -181,12 +209,34 @@
 
 <script>
     const API_URL = 'http://localhost:3000';
-    let globalData = []; 
-    let editStateId = null; 
-    let isBulkMode = false;
+    let globalData = []; let editStateId = null; let isBulkMode = false;
+    const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
 
-    const formatIDR = (number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(number);
+    /* --- TOAST NOTIFICATION SYSTEM --- */
+    function showToast(msg, isError = false) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--green)';
+        toast.innerText = msg;
+        container.appendChild(toast);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2500);
+    }
 
+    /* --- CUSTOM MODAL SYSTEM --- */
+    function openModal(title, bodyText, inputsHtml, confirmCallback) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalBody').innerHTML = bodyText;
+        document.getElementById('modalInputs').innerHTML = inputsHtml;
+        
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        confirmBtn.onclick = () => { confirmCallback(); };
+        
+        document.getElementById('customModal').classList.remove('hidden');
+    }
+    function closeModal() { document.getElementById('customModal').classList.add('hidden'); }
+
+    /* --- BASIC FUNCTIONS --- */
     function handleCategoryChange() {
         const cat = document.getElementById('categorySelect').value;
         document.getElementById('conditionGroup').classList.toggle('hidden', cat === 'Sealed');
@@ -196,47 +246,47 @@
 
     function switchTab(tab) {
         if(isBulkMode) toggleBulkMode(); 
+        document.getElementById('inventorySearchInput').value = ''; 
         document.getElementById('tabVault').classList.toggle('active', tab === 'vault');
         document.getElementById('tabSold').classList.toggle('active', tab === 'sold');
         document.getElementById('vaultGrid').classList.toggle('hidden', tab !== 'vault');
         document.getElementById('soldGrid').classList.toggle('hidden', tab !== 'sold');
         document.getElementById('btnToggleBulk').classList.toggle('hidden', tab !== 'vault');
+        filterInventory();
     }
 
-    async function cariKartu() {
-        const queryName = document.getElementById('searchInput').value;
-        const querySet = document.getElementById('searchSet').value;
-        const btn = document.getElementById('btnSearch');
-        const hasilDiv = document.getElementById('hasilPencarian');
-
-        if (!queryName.trim() && !querySet.trim()) return alert("Isi minimal Nama Kartu atau Nama Set!");
-        btn.innerText = '...'; hasilDiv.innerHTML = '<i>Connecting...</i>';
-
-        try {
-            const res = await fetch(`${API_URL}/api/search-card?name=${encodeURIComponent(queryName)}&set=${encodeURIComponent(querySet)}`);
-            const cards = await res.json();
-            hasilDiv.innerHTML = '';
-            if (cards.length === 0) return hasilDiv.innerHTML = '<p style="color:#ef4444; font-size:0.8rem;">Tidak ditemukan.</p>';
-
-            cards.forEach(card => {
-                const img = document.createElement('img');
-                img.src = card.images.small;
-                img.className = 'card-preview';
-                img.onclick = () => {
-                    document.querySelectorAll('.card-preview').forEach(el => el.classList.remove('selected'));
-                    img.classList.add('selected');
-                    document.getElementById('nama').value = card.name;
-                    document.getElementById('set').value = card.set.name;
-                    document.getElementById('imageUrl').value = card.images.small; 
-                    document.getElementById('cardNumber').value = card.number || '';
-                    document.getElementById('setCode').value = card.set.ptcgoCode || card.set.id || '';
-                };
-                hasilDiv.appendChild(img);
+    function filterInventory() {
+        const query = document.getElementById('inventorySearchInput').value.toLowerCase();
+        document.querySelectorAll('#vaultGrid .showcase-card').forEach(card => {
+            const txt = card.textContent.toLowerCase();
+            card.classList.toggle('hidden', !txt.includes(query));
+        });
+        document.querySelectorAll('#soldGrid .trx-card').forEach(card => {
+            let anyMatches = false;
+            card.querySelectorAll('.trx-mini-item').forEach(item => {
+                const match = item.textContent.toLowerCase().includes(query);
+                item.classList.toggle('hidden', !match);
+                if(match) anyMatches = true;
             });
-        } catch (error) { hasilDiv.innerHTML = '<p style="color:#ef4444; font-size:0.8rem;">Gagal terkoneksi.</p>'; } 
-        finally { btn.innerText = 'Cari'; }
+            card.classList.toggle('hidden', !anyMatches && query !== '');
+        });
     }
 
+    /* --- QUICK QTY ADJUSTER --- */
+    async function quickAdjustQty(id, action) {
+        if(isBulkMode) return showToast("Matikan mode borongan dulu!", true);
+        try {
+            const res = await fetch(`${API_URL}/api/inventory/${id}/qty`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action })
+            });
+            const result = await res.json();
+            if(res.ok) { loadInventory(); } 
+            else { showToast(result.error, true); }
+        } catch (e) { showToast("Gagal menghubungi server.", true); }
+    }
+
+    /* --- CORE LOGIC --- */
     async function loadInventory() {
         try {
             const res = await fetch(`${API_URL}/api/inventory`);
@@ -246,22 +296,28 @@
             const soldGrid = document.getElementById('soldGrid');
             vaultGrid.innerHTML = ''; soldGrid.innerHTML = '';
 
-            let vaultCount = 0; let soldCount = 0;
-            const groupedSold = {};
+            let vaultCount = 0; let soldCount = 0; const groupedSold = {};
 
             globalData.forEach(item => {
-                const imgSrc = item.image_url || 'https://via.placeholder.com/70x98/1e293b/f8fafc?text=No+Img';
+                const imgSrc = item.image_url || 'https://via.placeholder.com/55x77/111827/ffffff?text=No+Img';
                 
-                // --- RENDER VAULT ---
                 if (item.status === 'Vault' || !item.status) {
                     vaultCount++;
-                    let badges = `<span class="tag">${item.category}</span>`;
-                    if(item.is_holo) badges += `<span class="tag">✨ Holo</span>`;
-                    if(item.grader) badges += `<span class="tag" style="color:#c084fc;">${item.grader}</span>`;
+                    let badges = `<span class="tag">${item.category}</span><span class="tag">${item.language}</span>`;
+                    if(item.is_first_edition) badges += `<span class="tag" style="color:var(--gold)">1st Ed</span>`;
+                    if(item.is_holo) badges += `<span class="tag">Holo</span>`;
+                    if(item.grader) badges += `<span class="tag tag-grader">${item.grader} ${item.grade || ''}</span>`;
 
                     const checkboxHtml = `<div class="bulk-action-wrapper hidden">
                         <input type="checkbox" class="bulk-checkbox" value="${item.id}" onchange="updateBulkCount()">
-                        <input type="number" id="bulk_qty_${item.id}" value="1" min="1" max="${item.quantity}" class="bulk-qty-input">
+                        <input type="number" id="bulk_qty_${item.id}" value="${item.quantity}" min="1" max="${item.quantity}" class="bulk-qty-input">
+                    </div>`;
+
+                    // QUICK ADJUSTER UI
+                    const qtyAdjuster = `<div class="qty-adjuster">
+                        <button class="qty-btn" onclick="quickAdjustQty('${item.id}', 'minus')">-</button>
+                        <span class="qty-val">${item.quantity}</span>
+                        <button class="qty-btn" onclick="quickAdjustQty('${item.id}', 'add')">+</button>
                     </div>`;
                     
                     vaultGrid.innerHTML += `
@@ -270,238 +326,217 @@
                             <div class="card-header">
                                 <img src="${imgSrc}" class="card-thumb" alt="Card">
                                 <div class="card-title-area">
-                                    <h3 class="card-title" title="${item.name}">${item.name} <span style="color:#94a3b8; font-size:0.8rem;">x${item.quantity}</span></h3>
+                                    <h3 class="card-title" title="${item.name}">${item.name} ${qtyAdjuster}</h3>
                                     <p class="card-set">${item.set_name}</p>
-                                    <div class="finance-row"><span class="price-label">Modal:</span><span class="price-value">${parseFloat(item.purchase_price) > 0 ? formatIDR(item.purchase_price) : '-'}</span></div>
+                                    <div class="finance-row"><span style="color:var(--text-muted)">Cost:</span><span>${parseFloat(item.purchase_price) > 0 ? formatIDR(item.purchase_price) : '-'}</span></div>
                                 </div>
                             </div>
                             <div class="card-body">
                                 <div class="meta-tags">${badges}</div>
                                 <div class="card-actions">
-                                    <button class="btn-action" style="background:var(--sold);" onclick="tandaiTerjual('${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.quantity})">💰 JUAL</button>
-                                    <button class="btn-action" style="background:#3b82f6;" onclick="mulaiEdit('${item.id}')">✏️ EDIT</button>
-                                    <button class="btn-action" style="background:var(--danger);" onclick="hapusItem('${item.id}')">🗑️ HAPUS</button>
+                                    <button type="button" class="btn-action" style="background:var(--sold);" onclick="openSingleSellModal('${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.quantity})">Jual</button>
+                                    <button type="button" class="btn-action" style="background:#2563eb;" onclick="mulaiEdit('${item.id}')">Edit</button>
+                                    <button type="button" class="btn-action" style="background:var(--danger);" onclick="hapusItem('${item.id}')">Del</button>
                                 </div>
                             </div>
                         </div>
                     `;
-                } 
-                // --- RENDER SOLD (Grouping Logic) ---
-                else {
+                } else {
                     soldCount++;
                     const tid = item.transaction_id || item.id; 
                     if(!groupedSold[tid]) groupedSold[tid] = { items: [], total_sold: 0, total_modal: 0 };
-                    
                     groupedSold[tid].items.push(item);
                     groupedSold[tid].total_sold += parseFloat(item.sold_price || 0) * item.quantity;
                     groupedSold[tid].total_modal += parseFloat(item.purchase_price || 0) * item.quantity;
                 }
             });
 
-            // Eksekusi Render Riwayat Struk
             for(let tid in groupedSold) {
                 const trx = groupedSold[tid];
                 const profit = trx.total_sold - trx.total_modal;
                 const profitClass = profit >= 0 ? 'profit-plus' : 'profit-minus';
-                const profitSign = profit > 0 ? '+' : '';
                 
                 let miniCards = trx.items.map(i => `
                     <div class="trx-mini-item">
-                        <img src="${i.image_url || 'https://via.placeholder.com/40x56'}" style="width:36px; border-radius:4px; border:1px solid #334155;">
-                        <div style="flex:1;">
-                            <div style="font-size:0.9rem; font-weight:bold; color:var(--text-main);">${i.name}</div>
-                            <div style="font-size:0.7rem; color:var(--text-muted);">${i.set_name} • Modal: ${formatIDR(i.purchase_price)}</div>
+                        <img src="${i.image_url || 'https://via.placeholder.com/35x50/111827/ffffff?text=No+Img'}" style="width:35px; height:50px; object-fit:cover; border-radius:4px; border:1px solid var(--border);">
+                        <div style="flex:1; font-size:0.8rem;">
+                            <b>${i.name}</b> <span style="color:var(--text-muted)">x${i.quantity}</span>
+                            <div style="font-size:0.7rem; color:var(--text-muted)">Cost: ${formatIDR(i.purchase_price)} • Sold: ${formatIDR(i.sold_price)}</div>
                         </div>
-                        <div style="font-weight:900; font-size:1rem; color:var(--green); padding-right:10px;">x${i.quantity}</div>
-                        <button onclick="batalJual('${i.id}')" title="Batalkan Penjualan (Kembalikan kartu ke Vault)" class="btn-undo-sale">↩️ BATAL JUAL</button>
+                        <button onclick="batalJual('${i.id}')" class="btn-undo-sale">↩ Cancel</button>
                     </div>
                 `).join('');
 
                 soldGrid.innerHTML += `
                     <div class="trx-card">
-                        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom: 1.2rem; border-bottom: 1px dashed var(--border); padding-bottom: 1rem;">
-                            <div>
-                                <div style="font-size:0.75rem; font-weight:bold; color:var(--primary); margin-bottom:0.3rem;">ID STRUK: ${tid.substring(0,8).toUpperCase()}</div>
-                                <div style="font-size:0.8rem; color:var(--text-muted);">Total Modal: ${formatIDR(trx.total_modal)}</div>
-                                <div style="font-weight:bold; font-size:1.1rem; color:var(--text-main);">Nilai Terjual: ${formatIDR(trx.total_sold)}</div>
-                            </div>
-                            <div style="text-align:right; background:#0f172a; padding:10px 15px; border-radius:8px; border:1px solid var(--border);">
-                                <div style="font-size:0.7rem; color:var(--text-muted); font-weight:bold;">KEUNTUNGAN P/L</div>
-                                <div class="${profitClass}" style="font-size:1.3rem; font-weight:900;">${profitSign}${formatIDR(profit)}</div>
-                            </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border); padding-bottom: 0.6rem; font-size:0.8rem;">
+                            <div><div style="color:var(--text-muted); font-size:0.7rem;">STRUK ${tid.substring(0,8).toUpperCase()}</div><div>Gross: <b>${formatIDR(trx.total_sold)}</b></div></div>
+                            <div style="text-align:right;"><div style="color:var(--text-muted); font-size:0.7rem;">P/L</div><div class="${profitClass}" style="font-weight:700;">${profit >= 0 ? '+' : ''}${formatIDR(profit)}</div></div>
                         </div>
                         <div>${miniCards}</div>
                     </div>
                 `;
             }
 
-            if(vaultCount === 0) vaultGrid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 3rem; color: var(--text-muted);">Vault masih kosong.</div>`;
-            if(soldCount === 0) soldGrid.innerHTML = `<div style="text-align:center; padding: 3rem; color: var(--text-muted);">Belum ada riwayat penjualan struk.</div>`;
+            if(vaultCount === 0) vaultGrid.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">Vault kosong.</div>`;
+            if(soldCount === 0) soldGrid.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">Belum ada penjualan.</div>`;
 
-            if(isBulkMode) toggleBulkMode();
-
+            filterInventory();
         } catch (error) { console.error(error); }
     }
 
-    /* --- FUNGSI JUAL & BATAL JUAL --- */
-    async function tandaiTerjual(id, namaItem, maxQty) {
-        if(isBulkMode) return alert("Matikan Mode Bulk Auction terlebih dahulu!");
+    /* --- SALE MODALS (Replacing Prompts) --- */
+function openSingleSellModal(id, namaItem, maxQty) {
+        if(isBulkMode) return showToast("Matikan mode borongan dulu!", true);
         
-        let sellQty = 1;
+        let inputsHtml = '';
         if(maxQty > 1) {
-            sellQty = prompt(`Berapa banyak [${namaItem}] yang TERJUAL?\n(Kamu punya ${maxQty} item ini di tumpukan)`, maxQty);
-            if(sellQty === null || sellQty.trim() === '') return;
-            sellQty = parseInt(sellQty);
-            if(isNaN(sellQty) || sellQty < 1 || sellQty > maxQty) return alert('Jumlah kuantitas tidak valid!');
+            // Menggunakan UI Adjuster kustom di dalam modal
+            inputsHtml += `
+                <label style="font-size:0.75rem; display:block; margin-bottom:0.4rem;">Jumlah Terjual (Maks: ${maxQty})</label>
+                <div class="qty-adjuster" style="margin-bottom: 0.8rem; justify-content: space-between; padding: 0.4rem 0.8rem;">
+                    <button type="button" class="qty-btn" style="font-size:1.1rem;" onclick="let el=document.getElementById('modalSellQtyVal'); let v=parseInt(el.innerText); if(v > 1) el.innerText = v - 1;">-</button>
+                    <span id="modalSellQtyVal" style="font-size: 1rem; font-weight: bold;">${maxQty}</span>
+                    <button type="button" class="qty-btn" style="font-size:1.1rem;" onclick="let el=document.getElementById('modalSellQtyVal'); let v=parseInt(el.innerText); if(v < ${maxQty}) el.innerText = v + 1;">+</button>
+                </div>
+            `;
+        } else {
+            inputsHtml += `<span id="modalSellQtyVal" class="hidden">1</span>`;
         }
+        inputsHtml += `<label style="font-size:0.75rem;">Total Harga Jual (Rp)</label><input type="number" id="modalSellPrice" placeholder="Misal: 150000">`;
 
-        const harga = prompt(`Berapa TOTAL harga jual (Rp) untuk ${sellQty}x [${namaItem}] tersebut?\n(Ketik angka saja tanpa titik/koma)`);
-        if(harga === null || harga.trim() === '') return;
+        openModal(`Jual ${namaItem}`, `Atur kuantitas dan harga jual untuk transaksi ini.`, inputsHtml, async () => {
+            // Mengambil nilai kuantitas dari elemen teks batin (inner text) kustom
+            const sellQty = parseInt(document.getElementById('modalSellQtyVal').innerText);
+            const harga = parseFloat(document.getElementById('modalSellPrice').value);
+            
+            if(isNaN(sellQty) || sellQty < 1 || sellQty > maxQty) return showToast('Kuantitas tidak valid!', true);
+            if(isNaN(harga)) return showToast('Harga harus diisi angka!', true);
 
-        try {
-            const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sell_qty: sellQty, sold_price: parseFloat(harga) })
-            });
-            if(!res.ok) throw new Error("Gagal");
-            loadInventory();
-            switchTab('sold'); 
-        } catch (e) {
-            alert('Gagal memproses. PASTIKAN SERVER NODE.JS SUDAH DI-RESTART!');
-        }
+            try {
+                const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sell_qty: sellQty, sold_price: harga })
+                });
+                if(!res.ok) throw new Error();
+                closeModal(); showToast("Berhasil dijual!"); loadInventory(); switchTab('sold'); 
+            } catch (e) { showToast('Gagal memproses.', true); }
+        });
+    }
+
+    function openBulkSellModal() {
+        const checkboxes = document.querySelectorAll('.bulk-checkbox:checked');
+        if(checkboxes.length === 0) return showToast('Pilih minimal 1 item!', true);
+
+        const inputsHtml = `<label style="font-size:0.75rem;">Total Harga Borongan Paket (Rp)</label><input type="number" id="modalBulkPrice" placeholder="Sistem akan memecah harga otomatis">`;
+        
+        openModal(`Jual Borongan (${checkboxes.length} Tipe)`, `Sistem akan membagi rata P/L ke tiap kartu yang dipilih.`, inputsHtml, async () => {
+            const harga = parseFloat(document.getElementById('modalBulkPrice').value);
+            if(isNaN(harga)) return showToast('Harga harus diisi!', true);
+
+            const items = Array.from(checkboxes).map(cb => ({ id: cb.value, sell_qty: document.getElementById(`bulk_qty_${cb.value}`).value }));
+            
+            try {
+                const res = await fetch(`${API_URL}/api/inventory/bulk-sell`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items, total_price: harga })
+                });
+                if(!res.ok) throw new Error();
+                closeModal(); showToast("Borongan sukses!"); loadInventory(); switchTab('sold');
+            } catch(e) { showToast('Gagal memproses.', true); }
+        });
     }
 
     async function batalJual(id) {
-        if(!confirm('Apakah kamu yakin ingin MEMBATALKAN penjualan ini?\nKartu akan ditarik dan dimasukkan kembali ke Vault.')) return;
-        try {
-            const res = await fetch(`${API_URL}/api/inventory/${id}/undo-sell`, { method: 'PUT' });
-            if(!res.ok) throw new Error('Gagal dari server');
-            loadInventory();
-        } catch(e) {
-            alert('Gagal membatalkan. Pastikan server Node.js sudah di-restart!');
-        }
+        if(!confirm('Tarik kartu ini kembali ke Vault?')) return;
+        try { await fetch(`${API_URL}/api/inventory/${id}/undo-sell`, { method: 'PUT' }); showToast("Dikembalikan ke Vault."); loadInventory(); } catch(e) { showToast('Error.', true); }
     }
 
-    /* --- FUNGSI JUAL BORONGAN --- */
+    async function hapusItem(id) {
+        if(!confirm('Hapus permanen dari database?')) return;
+        try { await fetch(`${API_URL}/api/inventory/${id}`, { method: 'DELETE' }); showToast("Terhapus."); loadInventory(); } catch(e) { showToast('Error.', true); }
+    }
+
+    /* --- BULK MODE & OTHERS --- */
     function toggleBulkMode() {
         isBulkMode = !isBulkMode;
         const wrappers = document.querySelectorAll('.bulk-action-wrapper');
-        const bulkBar = document.getElementById('bulkActionBar');
-        const btnToggle = document.getElementById('btnToggleBulk');
+        document.getElementById('bulkActionBar').classList.toggle('hidden', !isBulkMode);
+        document.getElementById('btnToggleBulk').innerText = isBulkMode ? 'Batal' : '📦 Mode Borongan';
+        document.getElementById('btnToggleBulk').style.background = isBulkMode ? 'var(--danger)' : '#1f2937';
+        wrappers.forEach(w => { w.classList.toggle('hidden', !isBulkMode); w.querySelector('.bulk-checkbox').checked = false; });
+        updateBulkCount();
+    }
+    function updateBulkCount() { document.getElementById('bulkCountText').innerText = `${document.querySelectorAll('.bulk-checkbox:checked').length} Tipe Dipilih`; }
 
-        if(isBulkMode) {
-            wrappers.forEach(w => { w.classList.remove('hidden'); w.querySelector('.bulk-checkbox').checked = false; });
-            bulkBar.classList.remove('hidden');
-            btnToggle.innerText = 'Batal Mode Bulk';
-            btnToggle.style.background = 'var(--danger)';
-            updateBulkCount();
-        } else {
-            wrappers.forEach(w => w.classList.add('hidden'));
-            bulkBar.classList.add('hidden');
-            btnToggle.innerText = '📦 Mode Bulk Auction';
-            btnToggle.style.background = '#334155';
-        }
+    function handleExcelImport(event) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' });
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                if (jsonData.length === 0) return showToast('File kosong!', true);
+                const res = await fetch(`${API_URL}/api/inventory/bulk-import`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(jsonData) });
+                if (res.ok) { showToast(`Sukses import ${jsonData.length} item!`); loadInventory(); } else { showToast('Gagal import.', true); }
+            } catch (err) { showToast('Format error.', true); }
+        };
+        reader.readAsArrayBuffer(file);
     }
 
-    function updateBulkCount() {
-        const count = document.querySelectorAll('.bulk-checkbox:checked').length;
-        document.getElementById('bulkCountText').innerText = `${count} Jenis Kartu Terpilih`;
-    }
-
-    async function prosesBulkSell() {
-        const checkboxes = document.querySelectorAll('.bulk-checkbox:checked');
-        if(checkboxes.length === 0) return alert('Pilih minimal 1 jenis kartu untuk dijual borongan!');
-
-        const items = Array.from(checkboxes).map(cb => {
-            return { id: cb.value, sell_qty: document.getElementById(`bulk_qty_${cb.value}`).value };
-        });
-
-        const totalHarga = prompt(`Masukkan TOTAL HARGA BON BORONGAN untuk transaksi ini (Rp):\n(Sistem akan memecah Profit/Loss secara otomatis ke tiap kartu)`);
-        if(!totalHarga || isNaN(totalHarga)) return;
-
+    async function cariKartu() {
+        const qN = document.getElementById('searchInput').value; const qS = document.getElementById('searchSet').value;
+        const btn = document.getElementById('btnSearch'); const hasilDiv = document.getElementById('hasilPencarian');
+        if (!qN.trim() && !qS.trim()) return showToast("Isi parameter cari!", true);
+        btn.innerText = '...'; hasilDiv.innerHTML = '<i>Searching...</i>';
         try {
-            const res = await fetch(`${API_URL}/api/inventory/bulk-sell`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ items, total_price: parseFloat(totalHarga) })
+            const res = await fetch(`${API_URL}/api/search-card?name=${encodeURIComponent(qN)}&set=${encodeURIComponent(qS)}`);
+            const cards = await res.json(); hasilDiv.innerHTML = '';
+            if (cards.length === 0) return hasilDiv.innerHTML = '<p style="color:var(--danger); font-size:0.8rem;">Card Not Found.</p>';
+            cards.forEach(card => {
+                const img = document.createElement('img'); img.src = card.images.small; img.className = 'card-preview';
+                img.onclick = () => {
+                    document.querySelectorAll('.card-preview').forEach(el => el.classList.remove('selected')); img.classList.add('selected');
+                    document.getElementById('nama').value = card.name; document.getElementById('set').value = card.set.name;
+                    document.getElementById('imageUrl').value = card.images.small; document.getElementById('cardNumber').value = card.number || '';
+                    document.getElementById('setCode').value = card.set.ptcgoCode || card.set.id || '';
+                };
+                hasilDiv.appendChild(img);
             });
-            if(!res.ok) throw new Error('Gagal server');
-            loadInventory();
-            switchTab('sold');
-        } catch(e) { alert('Gagal! Pastikan server Node.js sudah di-restart.'); }
-    }
-
-    /* --- FUNGSI LAINNYA --- */
-    async function hapusItem(id) {
-        if(isBulkMode) return;
-        if(!confirm('Yakin ingin menghapus data ini selamanya secara permanen?')) return;
-        try { await fetch(`${API_URL}/api/inventory/${id}`, { method: 'DELETE' }); loadInventory(); } catch(e) {}
+        } catch (error) { hasilDiv.innerHTML = '<p style="color:var(--danger); font-size:0.8rem;">Offline.</p>'; } finally { btn.innerText = 'Cari'; }
     }
 
     function mulaiEdit(id) {
-        if(isBulkMode) return alert("Matikan Mode Bulk terlebih dahulu!");
+        const item = globalData.find(x => x.id === id); if(!item) return;
+        editStateId = id; document.getElementById('formTitle').innerText = 'Edit Entry';
+        ['nama', 'set', 'setCode', 'cardNumber', 'purchasePrice', 'marketPrice', 'qtyInput', 'notesInput', 'gradeInput', 'certInput', 'imageUrl'].forEach(key => {
+            const mapKey = { 'nama':'name', 'set':'set_name', 'setCode':'set_code', 'cardNumber':'card_number', 'purchasePrice':'purchase_price', 'marketPrice':'market_price', 'qtyInput':'quantity', 'notesInput':'notes', 'gradeInput':'grade', 'certInput':'cert_number', 'imageUrl':'image_url' }[key];
+            document.getElementById(key).value = item[mapKey] || '';
+        });
+        ['categorySelect', 'languageSelect', 'conditionSelect', 'graderSelect'].forEach(key => {
+            const mapKey = { 'categorySelect':'category', 'languageSelect':'language', 'conditionSelect':'card_condition', 'graderSelect':'grader' }[key];
+            document.getElementById(key).value = item[mapKey] || '';
+        });
+        document.getElementById('isHolo').checked = item.is_holo === 1; document.getElementById('isFirstEd').checked = item.is_first_edition === 1;
+        handleCategoryChange(); document.getElementById('btnSubmit').innerText = 'UPDATE ENTRY'; document.getElementById('btnCancel').classList.remove('hidden');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        const item = globalData.find(x => x.id === id);
-        if(!item) return;
-
-        editStateId = id;
-        document.getElementById('formTitle').innerHTML = `<span>✏️</span> Edit Data Vault`;
-        
-        document.getElementById('nama').value = item.name;
-        document.getElementById('categorySelect').value = item.category;
-        document.getElementById('languageSelect').value = item.language;
-        document.getElementById('set').value = item.set_name;
-        document.getElementById('setCode').value = item.set_code || '';
-        document.getElementById('cardNumber').value = item.card_number || '';
-        document.getElementById('purchasePrice').value = item.purchase_price || '';
-        document.getElementById('marketPrice').value = item.market_price || '';
-        document.getElementById('qtyInput').value = item.quantity;
-        document.getElementById('conditionSelect').value = item.card_condition || 'NM';
-        document.getElementById('notesInput').value = item.notes || '';
-        document.getElementById('graderSelect').value = item.grader || '';
-        document.getElementById('gradeInput').value = item.grade || '';
-        document.getElementById('certInput').value = item.cert_number || '';
-        document.getElementById('imageUrl').value = item.image_url || '';
-        document.getElementById('isHolo').checked = item.is_holo === 1;
-        document.getElementById('isFirstEd').checked = item.is_first_edition === 1;
-
-        handleCategoryChange();
-        document.getElementById('btnSubmit').innerText = 'UPDATE DATA';
-        document.getElementById('btnSubmit').style.background = '#059669'; 
-        document.getElementById('btnCancel').classList.remove('hidden');
     }
 
     function batalEdit() {
-        editStateId = null;
-        document.getElementById('formKartu').reset();
-        document.getElementById('formTitle').innerHTML = `<span>📥</span> Secure Vault Entry`;
-        document.getElementById('btnSubmit').innerText = 'SIMPAN KE VAULT';
-        document.getElementById('btnSubmit').style.background = 'var(--primary)';
-        document.getElementById('btnCancel').classList.add('hidden');
-        document.getElementById('imageUrl').value = '';
-        handleCategoryChange();
+        editStateId = null; document.getElementById('formKartu').reset(); document.getElementById('formTitle').innerText = 'Vault Entry';
+        document.getElementById('btnSubmit').innerText = 'SIMPAN KE VAULT'; document.getElementById('btnCancel').classList.add('hidden'); handleCategoryChange();
     }
 
     document.getElementById('formKartu').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
+        e.preventDefault(); const formData = new FormData(e.target);
         const url = editStateId ? `${API_URL}/api/inventory/${editStateId}` : `${API_URL}/api/inventory`;
-        const method = editStateId ? 'PUT' : 'POST';
-
         try {
-            const response = await fetch(url, { method: method, body: formData });
-            if(response.ok) {
-                batalEdit();
-                document.getElementById('hasilPencarian').innerHTML = '';
-                loadInventory();
-                switchTab('vault');
-            } else { alert('Gagal memproses data.'); }
-        } catch (error) { alert('Koneksi terputus.'); }
+            const res = await fetch(url, { method: editStateId ? 'PUT' : 'POST', body: formData });
+            if(res.ok) { batalEdit(); loadInventory(); showToast(editStateId ? "Teredit!" : "Tersimpan!"); }
+        } catch (error) { showToast('Error DB.', true); }
     });
 
-    handleCategoryChange();
-    loadInventory();
+    handleCategoryChange(); loadInventory();
 </script>
 </body>
 </html>
