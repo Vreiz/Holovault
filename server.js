@@ -71,7 +71,7 @@ app.put('/api/inventory/:id', multer().none(), async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// API 5: Delete Permanen
+// API 5: Delete
 app.delete('/api/inventory/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM inventory WHERE id = ?', [req.params.id]);
@@ -86,7 +86,6 @@ async function processSale(id, sell_qty, price_per_unit, trx_id) {
     const item = rows[0];
     const sq = parseInt(sell_qty);
     
-    // Jika jual sebagian (Pecah Data)
     if(sq < item.quantity) {
         await pool.query('UPDATE inventory SET quantity = quantity - ? WHERE id = ?', [sq, id]);
         const newId = crypto.randomUUID();
@@ -96,7 +95,6 @@ async function processSale(id, sell_qty, price_per_unit, trx_id) {
             [newId, item.name, item.category, item.set_name, item.set_code, item.card_number, item.language, sq, item.purchase_price, item.market_price, item.image_url, item.notes, item.card_condition, item.is_holo, item.is_first_edition, item.grader, item.grade, item.cert_number, price_per_unit, trx_id]
         );
     } 
-    // Jika jual seluruh tumpukan
     else {
         await pool.query('UPDATE inventory SET status = "Sold", sold_price = ?, transaction_id = ? WHERE id = ?', [price_per_unit, trx_id, id]);
     }
@@ -120,9 +118,9 @@ app.post('/api/inventory/bulk-sell', async (req, res) => {
         const { items, total_price } = req.body; 
         if (!items || items.length === 0) return res.status(400).json({ error: 'Kosong' });
 
-        const trx_id = crypto.randomUUID(); // Buat 1 ID Struk Bon
+        const trx_id = crypto.randomUUID(); 
         const total_qty = items.reduce((sum, item) => sum + parseInt(item.sell_qty), 0);
-        const price_per_unit = (parseFloat(total_price) || 0) / total_qty; // Distribusi Harga
+        const price_per_unit = (parseFloat(total_price) || 0) / total_qty; 
 
         for(let i=0; i<items.length; i++) {
             await processSale(items[i].id, items[i].sell_qty, price_per_unit, trx_id);
@@ -131,13 +129,66 @@ app.post('/api/inventory/bulk-sell', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal borongan' }); }
 });
 
-// API 8: BATALKAN PENJUALAN (KEMBALI KE VAULT)
+// --- API 8: BATALKAN PENJUALAN (SMART AUTO-MERGE QUANTITY) ---
 app.put('/api/inventory/:id/undo-sell', async (req, res) => {
     try {
-        // Mengembalikan status jadi Vault, mengosongkan harga jual dan ID transaksi
-        await pool.query('UPDATE inventory SET status = "Vault", sold_price = 0, transaction_id = NULL WHERE id = ?', [req.params.id]);
-        res.status(200).json({ message: 'Penjualan dibatalkan, kembali ke Vault' });
-    } catch (error) { res.status(500).json({ error: 'Gagal membatalkan' }); }
+        const id = req.params.id;
+        
+        // 1. Ambil data item yang mau dibatalkan
+        const [rows] = await pool.query('SELECT * FROM inventory WHERE id = ?', [id]);
+        if (rows.length === 0) {
+            return res.status(404).json({ error: 'Item tidak ditemukan' });
+        }
+        const soldItem = rows[0];
+
+        // 2. Ambil kandidat item sejenis yang ada di Vault
+        const [vaultRows] = await pool.query(
+            `SELECT * FROM inventory WHERE status = 'Vault' AND name = ? AND category = ? AND set_name = ?`,
+            [soldItem.name, soldItem.category, soldItem.set_name]
+        );
+
+        // 3. Validasi pencocokan seluruh spesifikasi fisik kartu
+        let matchItem = null;
+        for (const vaultItem of vaultRows) {
+            if (
+                vaultItem.set_code === soldItem.set_code &&
+                vaultItem.card_number === soldItem.card_number &&
+                vaultItem.language === soldItem.language &&
+                vaultItem.card_condition === soldItem.card_condition &&
+                vaultItem.is_holo === soldItem.is_holo &&
+                vaultItem.is_first_edition === soldItem.is_first_edition &&
+                vaultItem.grader === soldItem.grader &&
+                vaultItem.grade === soldItem.grade &&
+                vaultItem.cert_number === soldItem.cert_number &&
+                parseFloat(vaultItem.purchase_price) === parseFloat(soldItem.purchase_price)
+            ) {
+                matchItem = vaultItem;
+                break;
+            }
+        }
+
+        if (matchItem) {
+            // JIKA KETEMU INDUKNYA: Tambahkan kuantitas ke baris induk, lalu hapus baris pecahan ini
+            await pool.query(
+                'UPDATE inventory SET quantity = quantity + ? WHERE id = ?',
+                [soldItem.quantity, matchItem.id]
+            );
+            await pool.query('DELETE FROM inventory WHERE id = ?', [id]);
+            console.log(`[Merge Success] Kuantitas dikembalikan ke item induk ID: ${matchItem.id}`);
+        } else {
+            // JIKA INDUKNYA SUDAH DIHAPUS USER: Kembalikan baris ini sebagai entri Vault baru
+            await pool.query(
+                'UPDATE inventory SET status = "Vault", sold_price = 0, transaction_id = NULL WHERE id = ?',
+                [id]
+            );
+            console.log(`[Return Success] Item dikembalikan sebagai entri mandiri baru.`);
+        }
+
+        res.status(200).json({ message: 'Penjualan dibatalkan, quantity berhasil disatukan!' });
+    } catch (error) {
+        console.error('Undo Sell Error:', error);
+        res.status(500).json({ error: 'Gagal membatalkan penjualan' });
+    }
 });
 
 app.listen(3000, () => console.log('Backend MENYALA di http://localhost:3000'));
