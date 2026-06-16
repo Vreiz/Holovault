@@ -129,10 +129,7 @@
             <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelImport(event)">
             <button type="button" onclick="document.getElementById('excelFileInput').click()" style="background: #334155; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📥 Import Excel</button>
             
-            <input type="file" id="syncPriceInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleSyncPrice(event)">
-            <button type="button" onclick="document.getElementById('syncPriceInput').click()" style="background: #0ea5e9; border: 1px solid #3b82f6; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">🔄 Sync Harga Excel</button>
-            
-            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">v7.4 Fixed Sale Flow</div>
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">v7.6 Clean Hub</div>
         </div>
     </header>
 
@@ -176,8 +173,9 @@
                     <div class="form-group full"><label>Set Edisi</label><input type="text" id="set" name="set_name" required></div>
                     <div class="form-group"><label>Kode Set</label><input type="text" id="setCode" name="set_code"></div>
                     <div class="form-group"><label>No Kartu</label><input type="text" id="cardNumber" name="card_number"></div>
-                    <div class="form-group"><label>Harga Modal (Rp)</label><input type="number" step="0.01" id="purchasePrice" name="purchase_price"></div>
-                    <div class="form-group"><label>Harga Pasar (Rp)</label><input type="number" step="0.01" id="marketPrice" name="market_price"></div>
+                    
+                    <div class="form-group"><label>Harga Modal (Rp)</label><input type="text" id="purchasePrice" placeholder="0" oninput="formatRupiah(this)"></div>
+                    <div class="form-group"><label>Harga Pasar (Rp)</label><input type="text" id="marketPrice" placeholder="0" oninput="formatRupiah(this)"></div>
 
                     <div class="checkbox-row" id="specialAttributes">
                         <label class="checkbox-label"><input type="checkbox" id="isHolo" name="is_holo" value="1"> Foil</label>
@@ -256,6 +254,21 @@
 <script>
     const API_URL = 'http://localhost:3000';
     let globalData = []; let editStateId = null; let isBulkMode = false;
+    
+    function formatRupiah(input) {
+        let value = input.value.replace(/\D/g, ''); 
+        if(value !== '') {
+            input.value = new Intl.NumberFormat('id-ID').format(value);
+        } else {
+            input.value = '';
+        }
+    }
+
+    function parseRupiah(value) {
+        if(!value) return 0;
+        return parseFloat(value.toString().replace(/\./g, ''));
+    }
+
     const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
 
     function showToast(msg, isError = false) {
@@ -267,29 +280,27 @@
         setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2500);
     }
 
-    // FUNGSI MODAL YANG SUDAH DIPERBAIKI (TIDAK ADA LAGI BUG TOMBOL MATI)
     function openModal(title, bodyText, inputsHtml, confirmCallback) {
         document.getElementById('modalTitle').innerText = title;
         document.getElementById('modalBody').innerHTML = bodyText;
         document.getElementById('modalInputs').innerHTML = inputsHtml;
         
         const confirmBtn = document.getElementById('modalConfirmBtn');
-        // Mencegah double click secara visual saat memproses data
-        confirmBtn.onclick = async () => {
-            const originalText = confirmBtn.innerText;
-            confirmBtn.innerText = 'Memproses...';
-            confirmBtn.style.opacity = '0.5';
-            confirmBtn.style.pointerEvents = 'none';
-            
-            await confirmCallback();
-            
-            confirmBtn.innerText = originalText;
-            confirmBtn.style.opacity = '1';
-            confirmBtn.style.pointerEvents = 'auto';
+        const newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+        newBtn.onclick = async () => { 
+            const originalText = newBtn.innerText;
+            newBtn.innerText = 'Memproses...';
+            newBtn.style.opacity = '0.5';
+            newBtn.style.pointerEvents = 'none';
+            await confirmCallback(); 
+            newBtn.innerText = originalText;
+            newBtn.style.opacity = '1';
+            newBtn.style.pointerEvents = 'auto';
         };
         document.getElementById('customModal').classList.remove('hidden');
     }
-
+    
     function closeModal() { document.getElementById('customModal').classList.add('hidden'); }
 
     function handleCategoryChange() {
@@ -431,7 +442,6 @@
 
                     const qtyAdjuster = `<div class="qty-adjuster"><button class="qty-btn" onclick="event.stopPropagation(); quickAdjustQty('${item.id}', 'minus')">-</button><span class="qty-val">${item.quantity}</span><button class="qty-btn" onclick="event.stopPropagation(); quickAdjustQty('${item.id}', 'add')">+</button></div>`;
                     
-                    // PERBAIKAN: Meloloskan nama yang memiliki kutip (") agar tombol Jual tidak error/patah
                     const safeName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
                     vaultGrid.innerHTML += `
@@ -482,7 +492,6 @@
                     tglDisplay = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
                 }
 
-                // PERBAIKAN: STRUK TRANSAKSI SEKARANG MENAMPILKAN "MODAL" DAN "TERJUAL" SECARA KESELURUHAN UNTUK TUMPUKAN TERSEBUT
                 let miniCards = trx.items.map(i => `
                     <div class="trx-mini-item" data-set="${i.set_name || ''}">
                         <img src="${i.image_url || 'https://via.placeholder.com/40x56/111827/ffffff?text=No+Img'}" style="width:40px; height:56px; object-fit:cover; border-radius:4px; border:1px solid var(--border);">
@@ -528,12 +537,14 @@
                 </div>
             `;
         } else { inputsHtml += `<input type="hidden" id="modalSellQtyVal" value="1">`; }
-        inputsHtml += `<label style="font-size:0.85rem; font-weight:bold; color:#ffffff;">Total Harga Jual Keseluruhan (Rp)</label><input type="number" id="modalSellPrice" placeholder="Misal: 150000" style="margin-top:0.3rem; font-size:1.1rem; font-weight:bold;">`;
+        inputsHtml += `<label style="font-size:0.85rem; font-weight:bold; color:#ffffff;">Total Harga Jual Keseluruhan (Rp)</label><input type="text" id="modalSellPrice" placeholder="Misal: 150.000" style="margin-top:0.3rem; font-size:1.1rem; font-weight:bold;" oninput="formatRupiah(this)">`;
 
         openModal(`Jual ${namaItem}`, `Silakan atur kuantitas dan harga jual untuk mencatat transaksi.`, inputsHtml, async () => {
-            const sellQty = parseInt(document.getElementById('modalSellQtyVal').value); const harga = parseFloat(document.getElementById('modalSellPrice').value);
+            const sellQty = parseInt(document.getElementById('modalSellQtyVal').value); 
+            const harga = parseRupiah(document.getElementById('modalSellPrice').value);
+            
             if(isNaN(sellQty) || sellQty < 1 || sellQty > maxQty) return showToast(`Kuantitas harus 1 - ${maxQty}!`, true);
-            if(isNaN(harga)) return showToast('Harga belum diisi!', true);
+            if(isNaN(harga) || harga === 0) return showToast('Harga belum diisi!', true);
             try {
                 const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sell_qty: sellQty, sold_price: harga }) });
                 if(res.ok) { closeModal(); showToast("Berhasil dijual!"); loadInventory(); switchTab('sold'); }
@@ -545,10 +556,11 @@
         const selectedCards = document.querySelectorAll('.selected-for-bulk'); 
         if(selectedCards.length === 0) return showToast('Pilih minimal 1 item dengan mengeklik kartunya!', true);
         
-        const inputsHtml = `<label style="font-size:0.85rem; font-weight:bold; color:#ffffff;">Total Harga Borongan Keseluruhan (Rp)</label><input type="number" id="modalBulkPrice" placeholder="Misal: 250000" style="margin-top:0.3rem; font-size:1.1rem; font-weight:bold;">`;
+        const inputsHtml = `<label style="font-size:0.85rem; font-weight:bold; color:#ffffff;">Total Harga Borongan Keseluruhan (Rp)</label><input type="text" id="modalBulkPrice" placeholder="Misal: 250.000" style="margin-top:0.3rem; font-size:1.1rem; font-weight:bold;" oninput="formatRupiah(this)">`;
         
         openModal(`Jual Borongan (${selectedCards.length} Tipe)`, `Sistem akan mencatat total omset keseluruhan di struk dan membagi proporsional nilainya ke tiap kartu untuk pendataan P/L yang sehat.`, inputsHtml, async () => {
-            const harga = parseFloat(document.getElementById('modalBulkPrice').value); if(isNaN(harga)) return showToast('Harga kosong!', true);
+            const harga = parseRupiah(document.getElementById('modalBulkPrice').value); 
+            if(isNaN(harga) || harga === 0) return showToast('Harga kosong!', true);
             
             const items = Array.from(selectedCards).map(card => {
                 const id = card.id.replace('card_', ''); return { id: id, sell_qty: document.getElementById(`bulk_qty_${id}`).value };
@@ -588,7 +600,6 @@
         });
     }
 
-    // --- FUNGSI NUKE VAULT (HANYA HAPUS STATUS VAULT) ---
     function nukeDatabase() {
         openModal('🧨 PERINGATAN BAHAYA!', 'Yakin ingin <b>menghapus permanen seluruh koleksi yang ada di Vault</b> saat ini? <br><br>(Data transaksi/Sold <b>tidak</b> akan terhapus).', '', async () => {
             try {
@@ -634,29 +645,6 @@
         }; reader.readAsArrayBuffer(file);
     }
 
-    function handleSyncPrice(event) {
-        const file = event.target.files[0]; if (!file) return; 
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-            try {
-                showToast("Menganalisis file Excel... Mohon tunggu.", false);
-                const data = new Uint8Array(e.target.result); 
-                const workbook = XLSX.read(data, { type: 'array' });
-                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                
-                if (jsonData.length === 0) return showToast('File kosong!', true);
-                
-                const res = await fetch(`${API_URL}/api/inventory/sync-price`, { 
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(jsonData) 
-                });
-                const responseData = await res.json();
-                if (res.ok) { showToast(responseData.message); loadInventory(); } else { showToast('Gagal sinkronisasi.', true); }
-            } catch (err) { showToast('Error membaca file Excel.', true); }
-            document.getElementById('syncPriceInput').value = '';
-        }; 
-        reader.readAsArrayBuffer(file);
-    }
-
     async function cariKartu() {
         const qN = document.getElementById('searchInput').value; const qS = document.getElementById('searchSet').value;
         const btn = document.getElementById('btnSearch'); const hasilDiv = document.getElementById('hasilPencarian');
@@ -684,10 +672,14 @@
         if(isBulkMode) return;
         const item = globalData.find(x => x.id === id); if(!item) return;
         editStateId = id; document.getElementById('formTitle').innerText = 'Edit Entry';
-        ['nama', 'set', 'setCode', 'cardNumber', 'purchasePrice', 'marketPrice', 'qtyInput', 'notesInput', 'gradeInput', 'certInput', 'imageUrl'].forEach(key => {
-            const mapKey = { 'nama':'name', 'set':'set_name', 'setCode':'set_code', 'cardNumber':'card_number', 'purchasePrice':'purchase_price', 'marketPrice':'market_price', 'qtyInput':'quantity', 'notesInput':'notes', 'gradeInput':'grade', 'certInput':'cert_number', 'imageUrl':'image_url' }[key];
+        ['nama', 'set', 'setCode', 'cardNumber', 'qtyInput', 'notesInput', 'gradeInput', 'certInput', 'imageUrl'].forEach(key => {
+            const mapKey = { 'nama':'name', 'set':'set_name', 'setCode':'set_code', 'cardNumber':'card_number', 'qtyInput':'quantity', 'notesInput':'notes', 'gradeInput':'grade', 'certInput':'cert_number', 'imageUrl':'image_url' }[key];
             document.getElementById(key).value = item[mapKey] || '';
         });
+        
+        document.getElementById('purchasePrice').value = item.purchase_price > 0 ? new Intl.NumberFormat('id-ID').format(item.purchase_price) : '';
+        document.getElementById('marketPrice').value = item.market_price > 0 ? new Intl.NumberFormat('id-ID').format(item.market_price) : '';
+
         ['categorySelect', 'languageSelect', 'conditionSelect', 'graderSelect'].forEach(key => {
             const mapKey = { 'categorySelect':'category', 'languageSelect':'language', 'conditionSelect':'card_condition', 'graderSelect':'grader' }[key];
             document.getElementById(key).value = item[mapKey] || '';
@@ -703,7 +695,12 @@
     }
 
     document.getElementById('formKartu').addEventListener('submit', async (e) => {
-        e.preventDefault(); const formData = new FormData(e.target);
+        e.preventDefault(); 
+        const formData = new FormData(e.target);
+        
+        formData.set('purchase_price', parseRupiah(document.getElementById('purchasePrice').value));
+        formData.set('market_price', parseRupiah(document.getElementById('marketPrice').value));
+
         const url = editStateId ? `${API_URL}/api/inventory/${editStateId}` : `${API_URL}/api/inventory`;
         try {
             const res = await fetch(url, { method: editStateId ? 'PUT' : 'POST', body: formData });
