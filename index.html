@@ -7,15 +7,9 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.mini.min.js"></script>
     <style>
         :root {
-            --bg-main: #090d16; 
-            --bg-card: #111827; 
-            --primary: #4f46e5; 
-            --text-main: #ffffff; 
-            --text-muted: #cbd5e1; 
-            --border: #334155; 
-            --green: #10b981; 
-            --danger: #ef4444; 
-            --sold: #f59e0b;
+            --bg-main: #090d16; --bg-card: #111827; --primary: #4f46e5; 
+            --text-main: #ffffff; --text-muted: #cbd5e1; --border: #334155; 
+            --green: #10b981; --danger: #ef4444; --sold: #f59e0b;
         }
 
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg-main); color: var(--text-main); margin: 0; padding: 1.5rem; -webkit-font-smoothing: antialiased; line-height: 1.5; }
@@ -38,8 +32,6 @@
 
         ::-webkit-input-placeholder { color: #94a3b8; font-weight: normal; }
         ::-moz-placeholder { color: #94a3b8; font-weight: normal; }
-        :-ms-input-placeholder { color: #94a3b8; font-weight: normal; }
-        :-moz-placeholder { color: #94a3b8; font-weight: normal; }
 
         input[type="date"] { color-scheme: dark; cursor: pointer; color: #ffffff; font-weight: 600; }
         input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(1); }
@@ -136,7 +128,11 @@
         <div style="display: flex; gap: 0.8rem; align-items: center;">
             <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelImport(event)">
             <button type="button" onclick="document.getElementById('excelFileInput').click()" style="background: #334155; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📥 Import Excel</button>
-            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">v7.2 Multi-Price Interface</div>
+            
+            <input type="file" id="syncPriceInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleSyncPrice(event)">
+            <button type="button" onclick="document.getElementById('syncPriceInput').click()" style="background: #0ea5e9; border: 1px solid #3b82f6; padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">🔄 Sync Harga Excel</button>
+            
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">v7.4 Fixed Sale Flow</div>
         </div>
     </header>
 
@@ -145,10 +141,12 @@
         <button onclick="toggleSelectAll()" style="background:#3b82f6; padding:0.5rem 1.2rem; border-radius:20px; color:#ffffff; border:none; cursor:pointer; font-size:0.85rem; font-weight:bold; margin-right: 0.5rem;">Pilih Semua</button>
         <button onclick="openBulkSellModal()" style="background:var(--green); padding:0.5rem 1.2rem; border-radius:20px; color:#ffffff; border:none; cursor:pointer; font-size:0.85rem; font-weight:bold;">Jual Borongan</button>
         <button onclick="openBulkDeleteModal()" style="background:var(--danger); padding:0.5rem 1.2rem; border-radius:20px; color:#ffffff; border:none; cursor:pointer; font-size:0.85rem; font-weight:bold;">Hapus Borongan</button>
-        <button onclick="toggleBulkMode()" style="background:transparent; border:2px solid white; padding:0.4rem 1.2rem; border-radius:20px; color:#ffffff; cursor:pointer; font-size:0.85rem; font-weight:bold;">Batal</button>
+        <button onclick="nukeDatabase()" style="background:#b91c1c; padding:0.5rem 1.2rem; border-radius:20px; color:#ffffff; border:2px solid #f87171; cursor:pointer; font-size:0.85rem; font-weight:bold; margin-left: 1rem;">🧨 NUKE VAULT</button>
+        <button onclick="toggleBulkMode()" style="background:transparent; border:2px solid white; padding:0.4rem 1.2rem; border-radius:20px; color:#ffffff; cursor:pointer; font-size:0.85rem; font-weight:bold; margin-left: 0.5rem;">Batal</button>
     </div>
 
     <div class="dashboard-layout">
+        <!-- FORM LEFT -->
         <div class="flat-panel">
             <div class="panel-title" id="formTitle">Vault Entry</div>
             
@@ -209,6 +207,7 @@
             </form>
         </div>
 
+        <!-- RIGHT SHOWCASE -->
         <div>
             <div class="tab-header">
                 <div class="tabs">
@@ -268,16 +267,29 @@
         setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2500);
     }
 
+    // FUNGSI MODAL YANG SUDAH DIPERBAIKI (TIDAK ADA LAGI BUG TOMBOL MATI)
     function openModal(title, bodyText, inputsHtml, confirmCallback) {
         document.getElementById('modalTitle').innerText = title;
         document.getElementById('modalBody').innerHTML = bodyText;
         document.getElementById('modalInputs').innerHTML = inputsHtml;
+        
         const confirmBtn = document.getElementById('modalConfirmBtn');
-        const newBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
-        newBtn.onclick = () => { confirmCallback(); };
+        // Mencegah double click secara visual saat memproses data
+        confirmBtn.onclick = async () => {
+            const originalText = confirmBtn.innerText;
+            confirmBtn.innerText = 'Memproses...';
+            confirmBtn.style.opacity = '0.5';
+            confirmBtn.style.pointerEvents = 'none';
+            
+            await confirmCallback();
+            
+            confirmBtn.innerText = originalText;
+            confirmBtn.style.opacity = '1';
+            confirmBtn.style.pointerEvents = 'auto';
+        };
         document.getElementById('customModal').classList.remove('hidden');
     }
+
     function closeModal() { document.getElementById('customModal').classList.add('hidden'); }
 
     function handleCategoryChange() {
@@ -419,7 +431,9 @@
 
                     const qtyAdjuster = `<div class="qty-adjuster"><button class="qty-btn" onclick="event.stopPropagation(); quickAdjustQty('${item.id}', 'minus')">-</button><span class="qty-val">${item.quantity}</span><button class="qty-btn" onclick="event.stopPropagation(); quickAdjustQty('${item.id}', 'add')">+</button></div>`;
                     
-                    // --- PERBAIKAN TAMPILAN FINANCE-ROW: MENAMPILKAN KEDUA HARGA ---
+                    // PERBAIKAN: Meloloskan nama yang memiliki kutip (") agar tombol Jual tidak error/patah
+                    const safeName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
                     vaultGrid.innerHTML += `
                         <div class="showcase-card ${isBulkMode ? 'is-bulkable' : ''}" id="card_${item.id}" onclick="toggleCardBulk('${item.id}')">
                             <div id="bulk_ui_${item.id}" class="bulk-overlay-ui hidden">
@@ -443,7 +457,7 @@
                             <div class="card-body">
                                 <div class="meta-tags">${badges}</div>
                                 <div class="card-actions">
-                                    <button type="button" class="btn-action" style="background:var(--sold);" onclick="event.stopPropagation(); openSingleSellModal('${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.quantity})">Jual</button>
+                                    <button type="button" class="btn-action" style="background:var(--sold);" onclick="event.stopPropagation(); openSingleSellModal('${item.id}', '${safeName}', ${item.quantity})">Jual</button>
                                     <button type="button" class="btn-action" style="background:#2563eb;" onclick="event.stopPropagation(); mulaiEdit('${item.id}')">Edit</button>
                                     <button type="button" class="btn-action" style="background:var(--danger);" onclick="event.stopPropagation(); hapusItem('${item.id}')">Del</button>
                                 </div>
@@ -468,12 +482,16 @@
                     tglDisplay = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
                 }
 
+                // PERBAIKAN: STRUK TRANSAKSI SEKARANG MENAMPILKAN "MODAL" DAN "TERJUAL" SECARA KESELURUHAN UNTUK TUMPUKAN TERSEBUT
                 let miniCards = trx.items.map(i => `
                     <div class="trx-mini-item" data-set="${i.set_name || ''}">
                         <img src="${i.image_url || 'https://via.placeholder.com/40x56/111827/ffffff?text=No+Img'}" style="width:40px; height:56px; object-fit:cover; border-radius:4px; border:1px solid var(--border);">
                         <div style="flex:1; font-size:0.85rem; color:#ffffff;">
                             <b style="font-size:0.95rem;">${i.name}</b> <span style="color:var(--text-muted); font-weight:bold;">x${i.quantity}</span>
-                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Cost: <span style="color:#ffffff;">${formatIDR(i.purchase_price)}</span> • Sold: <span style="color:#ffffff;">${formatIDR(i.sold_price)}</span></div>
+                            <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
+                                Modal: <span style="color:#ffffff;">${formatIDR(i.purchase_price * i.quantity)}</span> • 
+                                Terjual: <span style="color:var(--green); font-weight:bold;">${formatIDR(i.sold_price * i.quantity)}</span>
+                            </div>
                         </div>
                         <button onclick="batalJual('${i.id}')" class="btn-undo-sale">↩ Cancel</button>
                     </div>
@@ -527,8 +545,9 @@
         const selectedCards = document.querySelectorAll('.selected-for-bulk'); 
         if(selectedCards.length === 0) return showToast('Pilih minimal 1 item dengan mengeklik kartunya!', true);
         
-        const inputsHtml = `<label style="font-size:0.85rem; font-weight:bold; color:#ffffff;">Total Harga Borongan Paket (Rp)</label><input type="number" id="modalBulkPrice" placeholder="Membagi rata harga otomatis" style="margin-top:0.3rem; font-size:1.1rem; font-weight:bold;">`;
-        openModal(`Jual Borongan (${selectedCards.length} Tipe)`, `Sistem otomatis membagi rata P/L ke tiap kartu yang terpilih secara proporsional.`, inputsHtml, async () => {
+        const inputsHtml = `<label style="font-size:0.85rem; font-weight:bold; color:#ffffff;">Total Harga Borongan Keseluruhan (Rp)</label><input type="number" id="modalBulkPrice" placeholder="Misal: 250000" style="margin-top:0.3rem; font-size:1.1rem; font-weight:bold;">`;
+        
+        openModal(`Jual Borongan (${selectedCards.length} Tipe)`, `Sistem akan mencatat total omset keseluruhan di struk dan membagi proporsional nilainya ke tiap kartu untuk pendataan P/L yang sehat.`, inputsHtml, async () => {
             const harga = parseFloat(document.getElementById('modalBulkPrice').value); if(isNaN(harga)) return showToast('Harga kosong!', true);
             
             const items = Array.from(selectedCards).map(card => {
@@ -569,6 +588,17 @@
         });
     }
 
+    // --- FUNGSI NUKE VAULT (HANYA HAPUS STATUS VAULT) ---
+    function nukeDatabase() {
+        openModal('🧨 PERINGATAN BAHAYA!', 'Yakin ingin <b>menghapus permanen seluruh koleksi yang ada di Vault</b> saat ini? <br><br>(Data transaksi/Sold <b>tidak</b> akan terhapus).', '', async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/inventory/nuke`, { method: 'DELETE' });
+                if(res.ok) { closeModal(); showToast("Vault berhasil dikosongkan secara total!"); loadInventory(); toggleBulkMode(); }
+                else throw new Error();
+            } catch(e) { showToast('Gagal menghapus.', true); }
+        });
+    }
+
     function toggleBulkMode() {
         isBulkMode = !isBulkMode; 
         document.getElementById('bulkActionBar').classList.toggle('hidden', !isBulkMode);
@@ -604,6 +634,29 @@
         }; reader.readAsArrayBuffer(file);
     }
 
+    function handleSyncPrice(event) {
+        const file = event.target.files[0]; if (!file) return; 
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                showToast("Menganalisis file Excel... Mohon tunggu.", false);
+                const data = new Uint8Array(e.target.result); 
+                const workbook = XLSX.read(data, { type: 'array' });
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                
+                if (jsonData.length === 0) return showToast('File kosong!', true);
+                
+                const res = await fetch(`${API_URL}/api/inventory/sync-price`, { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(jsonData) 
+                });
+                const responseData = await res.json();
+                if (res.ok) { showToast(responseData.message); loadInventory(); } else { showToast('Gagal sinkronisasi.', true); }
+            } catch (err) { showToast('Error membaca file Excel.', true); }
+            document.getElementById('syncPriceInput').value = '';
+        }; 
+        reader.readAsArrayBuffer(file);
+    }
+
     async function cariKartu() {
         const qN = document.getElementById('searchInput').value; const qS = document.getElementById('searchSet').value;
         const btn = document.getElementById('btnSearch'); const hasilDiv = document.getElementById('hasilPencarian');
@@ -618,23 +671,11 @@
                 const img = document.createElement('img'); img.src = card.images.small; img.className = 'card-preview';
                 img.onclick = () => {
                     document.querySelectorAll('.card-preview').forEach(el => el.classList.remove('selected')); img.classList.add('selected');
-                    document.getElementById('nama').value = card.name; 
-                    document.getElementById('set').value = card.set.name;
-                    document.getElementById('imageUrl').value = card.images.small; 
-                    document.getElementById('cardNumber').value = card.number || '';
-                    const customSetMapping = { 
-    'sv2': 'PAL',        // Paldea Evolved
-    'sv3': 'OBF',        // Obsidian Flames
-    'sv3pt5': 'MEW',     // 151
-    'sv4pt5': 'PAF',     // Paldean Fates
-    'swsh12pt5': 'CRZ',  // Crown Zenith
-    'swsh4pt5': 'SHF',   // Shining Fates
-    'swsh7pt5': 'CEL',   // Celebrations
-    'pgo': 'PGO'         // Pokemon GO
-};
+                    document.getElementById('nama').value = card.name; document.getElementById('set').value = card.set.name;
+                    document.getElementById('imageUrl').value = card.images.small; document.getElementById('cardNumber').value = card.number || '';
+                    const customSetMapping = { 'sv2': 'PAL', 'sv3': 'OBF', 'sv3pt5': 'MEW', 'sv4pt5': 'PAF', 'swsh12pt5': 'CRZ', 'swsh4pt5': 'SHF', 'swsh7pt5': 'CEL', 'pgo': 'PGO' };
                     document.getElementById('setCode').value = (customSetMapping[card.set.id] || card.set.ptcgoCode || card.set.id || '').toUpperCase();
-                }; 
-                hasilDiv.appendChild(img);
+                }; hasilDiv.appendChild(img);
             });
         } catch (error) { hasilDiv.innerHTML = '<p style="color:var(--danger); font-size:0.9rem; font-weight:bold;">Offline.</p>'; } finally { btn.innerText = 'Cari'; }
     }
