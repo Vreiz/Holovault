@@ -624,13 +624,13 @@
                     document.getElementById('cardNumber').value = card.number || '';
                     const customSetMapping = { 
     'sv2': 'PAL',        // Paldea Evolved
+    'sv3': 'OBF',        // Obsidian Flames
     'sv3pt5': 'MEW',     // 151
     'sv4pt5': 'PAF',     // Paldean Fates
     'swsh12pt5': 'CRZ',  // Crown Zenith
     'swsh4pt5': 'SHF',   // Shining Fates
     'swsh7pt5': 'CEL',   // Celebrations
     'pgo': 'PGO'         // Pokemon GO
-    'sv3': 'OBF',        // Obsidian Flames
 };
                     document.getElementById('setCode').value = (customSetMapping[card.set.id] || card.set.ptcgoCode || card.set.id || '').toUpperCase();
                 }; 
