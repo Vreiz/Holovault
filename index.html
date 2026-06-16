@@ -80,7 +80,7 @@
         .card-title-area { flex: 1; overflow: hidden; }
         .card-title { font-size: 0.95rem; font-weight: bold; margin: 0 0 0.2rem 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display:flex; justify-content:space-between; align-items:center; color:#ffffff;}
         .card-set { font-size: 0.75rem; color: var(--text-muted); margin: 0 0 0.4rem 0; font-weight: 500;}
-        .finance-row { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight:600; color:#ffffff;}
+        .finance-row { display: flex; justify-content: space-between; font-size: 0.75rem; font-weight:600; color:#ffffff;}
 
         .card-body { padding: 0.8rem; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; gap: 0.6rem; }
         .meta-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; font-size: 0.7rem; }
@@ -136,7 +136,7 @@
         <div style="display: flex; gap: 0.8rem; align-items: center;">
             <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelImport(event)">
             <button type="button" onclick="document.getElementById('excelFileInput').click()" style="background: #334155; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📥 Import Excel</button>
-            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">v7.1 Dynamic Set Filtering</div>
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">v7.2 Multi-Price Interface</div>
         </div>
     </header>
 
@@ -292,7 +292,7 @@
         document.getElementById('inventorySearchInput').value = ''; 
         document.getElementById('filterStartDate').value = ''; 
         document.getElementById('filterEndDate').value = ''; 
-        document.getElementById('filterSetSelect').value = ''; // Reset filter set saat pindah tab
+        document.getElementById('filterSetSelect').value = ''; 
         
         document.getElementById('tabVault').classList.toggle('active', tab === 'vault');
         document.getElementById('tabSold').classList.toggle('active', tab === 'sold');
@@ -303,25 +303,20 @@
         filterInventory();
     }
 
-    /* --- REALTIME MULTI-FILTER ENGINE (SEARCH + DATE + SET SINKRONISASI) --- */
     function filterInventory() {
         const query = document.getElementById('inventorySearchInput').value.toLowerCase();
         const startDate = document.getElementById('filterStartDate').value; 
         const endDate = document.getElementById('filterEndDate').value; 
-        const selectedSet = document.getElementById('filterSetSelect').value.toLowerCase(); // Ambil nilai set yang dipilih
+        const selectedSet = document.getElementById('filterSetSelect').value.toLowerCase(); 
 
-        // 1. Saring Tab Vault
         document.querySelectorAll('#vaultGrid .showcase-card').forEach(card => {
             const txt = card.textContent.toLowerCase();
             const cardSet = card.querySelector('.card-set').textContent.toLowerCase();
-            
             const matchQuery = txt.includes(query);
             const matchSet = !selectedSet || cardSet === selectedSet;
-            
             card.classList.toggle('hidden', !(matchQuery && matchSet));
         });
 
-        // 2. Saring Tab Sold & Akumulasi Keuangan Otomatis
         let runningTotalSold = 0; let runningTotalProfit = 0;
 
         document.querySelectorAll('#soldGrid .trx-card').forEach(card => {
@@ -378,7 +373,6 @@
 
     function toggleSelectAll() {
         if (!isBulkMode) return;
-        // Hanya memilih kartu yang sedang terlihat di layar (lolos filter search/set)
         const visibleCards = Array.from(document.querySelectorAll('#vaultGrid .showcase-card:not(.hidden)'));
         if (visibleCards.length === 0) return showToast("Tidak ada kartu untuk diseleksi!", true);
 
@@ -401,10 +395,8 @@
             vaultGrid.innerHTML = ''; soldGrid.innerHTML = '';
             let vaultCount = 0; let soldCount = 0; const groupedSold = {};
 
-            /* --- REKONSTRUKSI DROPDOWN FILTER EXPANSION (OTOMATIS & DYNAMIC) --- */
             const setSelect = document.getElementById('filterSetSelect');
             const previousSelection = setSelect.value;
-            // Ambil seluruh nama set unik di database, buang nilai null, lalu urutkan sesuai abjad
             const uniqueSets = [...new Set(globalData.map(item => item.set_name).filter(Boolean))].sort();
             
             setSelect.innerHTML = '<option value="">✨ Semua Set Expansion</option>';
@@ -427,6 +419,7 @@
 
                     const qtyAdjuster = `<div class="qty-adjuster"><button class="qty-btn" onclick="event.stopPropagation(); quickAdjustQty('${item.id}', 'minus')">-</button><span class="qty-val">${item.quantity}</span><button class="qty-btn" onclick="event.stopPropagation(); quickAdjustQty('${item.id}', 'add')">+</button></div>`;
                     
+                    // --- PERBAIKAN TAMPILAN FINANCE-ROW: MENAMPILKAN KEDUA HARGA ---
                     vaultGrid.innerHTML += `
                         <div class="showcase-card ${isBulkMode ? 'is-bulkable' : ''}" id="card_${item.id}" onclick="toggleCardBulk('${item.id}')">
                             <div id="bulk_ui_${item.id}" class="bulk-overlay-ui hidden">
@@ -441,7 +434,10 @@
                                 <div class="card-title-area">
                                     <h3 class="card-title" title="${item.name}">${item.name} ${qtyAdjuster}</h3>
                                     <p class="card-set">${item.set_name}</p>
-                                    <div class="finance-row"><span style="color:var(--text-muted)">Cost:</span><span style="color:#ffffff;">${parseFloat(item.purchase_price) > 0 ? formatIDR(item.purchase_price) : '-'}</span></div>
+                                    <div class="finance-row">
+                                        <div><span style="color:var(--text-muted)">Cost:</span> <span style="color:#ffffff;">${parseFloat(item.purchase_price) > 0 ? formatIDR(item.purchase_price) : '-'}</span></div>
+                                        <div><span style="color:var(--text-muted)">Market:</span> <span style="color:var(--green);">${parseFloat(item.market_price) > 0 ? formatIDR(item.market_price) : '-'}</span></div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="card-body">
@@ -472,7 +468,6 @@
                     tglDisplay = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
                 }
 
-                // MENAMBAHKAN ATRIBUT data-set AGAR STRUK TRANSAKSI JUGAL BISA DIFILTER PER SET
                 let miniCards = trx.items.map(i => `
                     <div class="trx-mini-item" data-set="${i.set_name || ''}">
                         <img src="${i.image_url || 'https://via.placeholder.com/40x56/111827/ffffff?text=No+Img'}" style="width:40px; height:56px; object-fit:cover; border-radius:4px; border:1px solid var(--border);">
@@ -535,9 +530,11 @@
         const inputsHtml = `<label style="font-size:0.85rem; font-weight:bold; color:#ffffff;">Total Harga Borongan Paket (Rp)</label><input type="number" id="modalBulkPrice" placeholder="Membagi rata harga otomatis" style="margin-top:0.3rem; font-size:1.1rem; font-weight:bold;">`;
         openModal(`Jual Borongan (${selectedCards.length} Tipe)`, `Sistem otomatis membagi rata P/L ke tiap kartu yang terpilih secara proporsional.`, inputsHtml, async () => {
             const harga = parseFloat(document.getElementById('modalBulkPrice').value); if(isNaN(harga)) return showToast('Harga kosong!', true);
+            
             const items = Array.from(selectedCards).map(card => {
                 const id = card.id.replace('card_', ''); return { id: id, sell_qty: document.getElementById(`bulk_qty_${id}`).value };
             });
+
             try {
                 const res = await fetch(`${API_URL}/api/inventory/bulk-sell`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items, total_price: harga }) });
                 if(res.ok) { closeModal(); showToast("Borongan sukses!"); loadInventory(); switchTab('sold'); }
@@ -548,6 +545,7 @@
     function openBulkDeleteModal() {
         const selectedCards = document.querySelectorAll('.selected-for-bulk'); 
         if(selectedCards.length === 0) return showToast('Pilih minimal 1 item dengan mengeklik kartunya!', true);
+        
         openModal(`Hapus Borongan (${selectedCards.length} Tipe)`, `Apakah kamu yakin ingin menghapus permanen semua kartu yang dipilih dari Vault? <br><br><b style="color:var(--danger)">Aksi ini tidak bisa dikembalikan.</b>`, '', async () => {
             const ids = Array.from(selectedCards).map(card => card.id.replace('card_', ''));
             try {
@@ -572,16 +570,25 @@
     }
 
     function toggleBulkMode() {
-        isBulkMode = !isBulkMode; document.getElementById('bulkActionBar').classList.toggle('hidden', !isBulkMode);
-        const btn = document.getElementById('btnToggleBulk'); btn.innerText = isBulkMode ? 'Tutup Mode' : '📦 Mode Borongan'; btn.style.background = isBulkMode ? 'var(--danger)' : '#1f2937';
+        isBulkMode = !isBulkMode; 
+        document.getElementById('bulkActionBar').classList.toggle('hidden', !isBulkMode);
+        
+        const btn = document.getElementById('btnToggleBulk');
+        btn.innerText = isBulkMode ? 'Tutup Mode' : '📦 Mode Borongan';
+        btn.style.background = isBulkMode ? 'var(--danger)' : '#1f2937';
+        
         document.querySelectorAll('.showcase-card').forEach(card => {
             card.classList.toggle('is-bulkable', isBulkMode);
             if (!isBulkMode) {
-                card.classList.remove('selected-for-bulk'); const id = card.id.replace('card_', ''); const ui = document.getElementById(`bulk_ui_${id}`); if(ui) ui.classList.add('hidden');
+                card.classList.remove('selected-for-bulk');
+                const id = card.id.replace('card_', '');
+                const ui = document.getElementById(`bulk_ui_${id}`);
+                if(ui) ui.classList.add('hidden');
             }
         });
         updateBulkCount();
     }
+    
     function updateBulkCount() { document.getElementById('bulkCountText').innerText = `${document.querySelectorAll('.selected-for-bulk').length} Tipe Dipilih`; }
 
     function handleExcelImport(event) {
@@ -611,11 +618,14 @@
                 const img = document.createElement('img'); img.src = card.images.small; img.className = 'card-preview';
                 img.onclick = () => {
                     document.querySelectorAll('.card-preview').forEach(el => el.classList.remove('selected')); img.classList.add('selected');
-                    document.getElementById('nama').value = card.name; document.getElementById('set').value = card.set.name;
-                    document.getElementById('imageUrl').value = card.images.small; document.getElementById('cardNumber').value = card.number || '';
+                    document.getElementById('nama').value = card.name; 
+                    document.getElementById('set').value = card.set.name;
+                    document.getElementById('imageUrl').value = card.images.small; 
+                    document.getElementById('cardNumber').value = card.number || '';
                     const customSetMapping = { 'sv3pt5': 'MEW', 'sv4pt5': 'PAF', 'swsh12pt5': 'CRZ', 'swsh4pt5': 'SHF', 'swsh7pt5': 'CEL', 'pgo': 'PGO' };
                     document.getElementById('setCode').value = (customSetMapping[card.set.id] || card.set.ptcgoCode || card.set.id || '').toUpperCase();
-                }; hasilDiv.appendChild(img);
+                }; 
+                hasilDiv.appendChild(img);
             });
         } catch (error) { hasilDiv.innerHTML = '<p style="color:var(--danger); font-size:0.9rem; font-weight:bold;">Offline.</p>'; } finally { btn.innerText = 'Cari'; }
     }
