@@ -108,7 +108,7 @@ app.post('/api/inventory/bulk-sell', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal' }); }
 });
 
-// API 8: Undo Jual (Batal Jual & Gabung Qty Kembali)
+// API 8: Undo Jual
 app.put('/api/inventory/:id/undo-sell', async (req, res) => {
     try {
         const id = req.params.id;
@@ -147,7 +147,7 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal' }); }
 });
 
-// API 10: Quick Adjust Kuantitas Manual (+ / -) di Vault
+// API 10: Quick Adjust Kuantitas
 app.put('/api/inventory/:id/qty', async (req, res) => {
     try {
         const { action } = req.body; 
@@ -161,4 +161,19 @@ app.put('/api/inventory/:id/qty', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal' }); }
 });
 
-app.listen(3000, () => console.log('Holovault Core Engine v6.5 MENYALA di http://localhost:3000'));
+// --- API 11: BULK DELETE (BARU) ---
+app.post('/api/inventory/bulk-delete', async (req, res) => {
+    try {
+        const { ids } = req.body;
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ error: 'Tidak ada data yang dipilih' });
+        }
+        await pool.query('DELETE FROM inventory WHERE id IN (?)', [ids]);
+        res.status(200).json({ message: 'Bulk delete sukses' });
+    } catch (error) { 
+        console.error(error);
+        res.status(500).json({ error: 'Gagal menghapus borongan' }); 
+    }
+});
+
+app.listen(3000, () => console.log('Holovault Core Engine v6.7 MENYALA di http://localhost:3000'));

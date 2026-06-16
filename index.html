@@ -30,7 +30,6 @@
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
         textarea { resize: none; min-height: 50px; }
 
-        /* PERBAIKAN TANGGAL & INPUT ANGKA */
         input[type="date"] { color-scheme: dark; cursor: pointer; }
         input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0.8); }
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
@@ -56,7 +55,7 @@
         
         .btn-bulk-mode { background: #1f2937; border: 1px solid var(--border); color: white; padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.8rem; font-weight: 600; cursor:pointer;}
 
-        #bulkActionBar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #111827; border: 1px solid var(--primary); padding: 0.8rem 1.5rem; border-radius: 30px; z-index: 100; display: flex; gap: 1rem; align-items: center; }
+        #bulkActionBar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #111827; border: 1px solid var(--primary); padding: 0.8rem 1.5rem; border-radius: 30px; z-index: 100; display: flex; gap: 1rem; align-items: center; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
         .bulk-action-wrapper { position: absolute; top: 6px; left: 6px; z-index: 20; display:flex; gap:4px; align-items:center; background: rgba(0,0,0,0.85); padding:4px 6px; border-radius:4px; }
         .bulk-checkbox { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
         .bulk-qty-input { width: 35px; padding: 2px; font-size: 0.75rem; border-radius:3px; background:#090d16; color:white; border:1px solid var(--border); text-align: center; }
@@ -121,17 +120,20 @@
         <div style="display: flex; gap: 0.8rem; align-items: center;">
             <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelImport(event)">
             <button type="button" onclick="document.getElementById('excelFileInput').click()" style="background: #1f2937; border: 1px solid var(--border); padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.8rem; width: auto;">📥 Import Excel</button>
-            <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 500;">v6.6 Interactive UI</div>
+            <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 500;">v6.7 Master Tools</div>
         </div>
     </header>
 
+    <!-- TOMBOL HAPUS BORONGAN DITAMBAHKAN DI SINI -->
     <div id="bulkActionBar" class="hidden">
         <span id="bulkCountText" style="color:white; font-size: 0.85rem; font-weight:bold;">0 Terpilih</span>
-        <button onclick="openBulkSellModal()" style="background:var(--green); padding:0.4rem 1rem; border-radius:15px; width:auto; font-size:0.8rem;">Jual Borongan</button>
+        <button onclick="openBulkSellModal()" style="background:var(--green); padding:0.4rem 1rem; border-radius:15px; width:auto; font-size:0.8rem; font-weight:bold;">Jual Borongan</button>
+        <button onclick="openBulkDeleteModal()" style="background:var(--danger); padding:0.4rem 1rem; border-radius:15px; width:auto; font-size:0.8rem; font-weight:bold;">Hapus Borongan</button>
         <button onclick="toggleBulkMode()" style="background:transparent; border:1px solid white; padding:0.4rem 1rem; border-radius:15px; width:auto; font-size:0.8rem;">Batal</button>
     </div>
 
     <div class="dashboard-layout">
+        <!-- FORM LEFT -->
         <div class="flat-panel">
             <div class="panel-title" id="formTitle">Vault Entry</div>
             
@@ -192,6 +194,7 @@
             </form>
         </div>
 
+        <!-- RIGHT SHOWCASE -->
         <div>
             <div class="tab-header">
                 <div class="tabs">
@@ -252,7 +255,13 @@
         document.getElementById('modalTitle').innerText = title;
         document.getElementById('modalBody').innerHTML = bodyText;
         document.getElementById('modalInputs').innerHTML = inputsHtml;
-        document.getElementById('modalConfirmBtn').onclick = () => { confirmCallback(); };
+        
+        const confirmBtn = document.getElementById('modalConfirmBtn');
+        // Bersihkan event listener sebelumnya untuk mencegah klik ganda
+        const newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+        newBtn.onclick = () => { confirmCallback(); };
+        
         document.getElementById('customModal').classList.remove('hidden');
     }
     function closeModal() { document.getElementById('customModal').classList.add('hidden'); }
@@ -344,7 +353,7 @@
                     if(item.is_holo) badges += `<span class="tag">Holo</span>`;
                     if(item.grader) badges += `<span class="tag tag-grader">${item.grader} ${item.grade || ''}</span>`;
 
-                    const checkboxHtml = `<div class="bulk-action-wrapper hidden"><input type="checkbox" class="bulk-checkbox" value="${item.id}" onchange="updateBulkCount()"><input type="number" id="bulk_qty_${item.id}" value="${item.quantity}" min="1" max="${item.quantity}" class="bulk-qty-input"></div>`;
+                    const checkboxHtml = `<div class="bulk-action-wrapper hidden"><input type="checkbox" class="bulk-checkbox" value="${item.id}" onchange="updateBulkCount()"><input type="number" id="bulk_qty_${item.id}" value="${item.quantity}" min="1" max="${item.quantity}" class="bulk-qty-input hidden"></div>`;
                     const qtyAdjuster = `<div class="qty-adjuster"><button class="qty-btn" onclick="quickAdjustQty('${item.id}', 'minus')">-</button><span class="qty-val">${item.quantity}</span><button class="qty-btn" onclick="quickAdjustQty('${item.id}', 'add')">+</button></div>`;
                     
                     vaultGrid.innerHTML += `
@@ -415,7 +424,6 @@
         } catch (error) { console.error(error); }
     }
 
-    // --- PERBAIKAN: MODAL JUAL DENGAN INPUT ANGKA YANG BISA DIKETIK ---
     function openSingleSellModal(id, namaItem, maxQty) {
         if(isBulkMode) return showToast("Matikan mode borongan dulu!", true);
         
@@ -429,23 +437,15 @@
                     <button type="button" class="qty-btn" style="font-size:1.2rem;" onclick="let el=document.getElementById('modalSellQtyVal'); let v=parseInt(el.value)||0; if(v < ${maxQty}) el.value = v + 1;">+</button>
                 </div>
             `;
-        } else {
-            inputsHtml += `<input type="hidden" id="modalSellQtyVal" value="1">`;
-        }
+        } else { inputsHtml += `<input type="hidden" id="modalSellQtyVal" value="1">`; }
         inputsHtml += `<label style="font-size:0.75rem;">Total Harga Jual Keseluruhan (Rp)</label><input type="number" id="modalSellPrice" placeholder="Misal: 150000">`;
 
         openModal(`Jual ${namaItem}`, `Atur kuantitas dan harga jual untuk transaksi ini.`, inputsHtml, async () => {
-            const sellQty = parseInt(document.getElementById('modalSellQtyVal').value); 
-            const harga = parseFloat(document.getElementById('modalSellPrice').value);
-            
+            const sellQty = parseInt(document.getElementById('modalSellQtyVal').value); const harga = parseFloat(document.getElementById('modalSellPrice').value);
             if(isNaN(sellQty) || sellQty < 1 || sellQty > maxQty) return showToast(`Kuantitas harus 1 - ${maxQty}!`, true);
             if(isNaN(harga)) return showToast('Harga belum diisi!', true);
-
             try {
-                const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, { 
-                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ sell_qty: sellQty, sold_price: harga }) 
-                });
+                const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sell_qty: sellQty, sold_price: harga }) });
                 if(res.ok) { closeModal(); showToast("Berhasil dijual!"); loadInventory(); switchTab('sold'); }
             } catch (e) { showToast('Gagal memproses.', true); }
         });
@@ -464,14 +464,43 @@
         });
     }
 
-    async function batalJual(id) {
-        if(!confirm('Tarik kartu ini kembali ke Vault?')) return;
-        try { await fetch(`${API_URL}/api/inventory/${id}/undo-sell`, { method: 'PUT' }); showToast("Dikembalikan ke Vault."); loadInventory(); } catch(e) { showToast('Error.', true); }
+    // --- FITUR BARU: MODAL HAPUS BORONGAN ---
+    function openBulkDeleteModal() {
+        const checkboxes = document.querySelectorAll('.bulk-checkbox:checked'); 
+        if(checkboxes.length === 0) return showToast('Pilih minimal 1 item untuk dihapus!', true);
+        
+        openModal(`Hapus Borongan (${checkboxes.length} Tipe)`, `Apakah kamu yakin ingin menghapus permanen ${checkboxes.length} kartu ini dari Vault? Data tidak akan bisa dikembalikan.`, '', async () => {
+            const ids = Array.from(checkboxes).map(cb => cb.value);
+            try {
+                const res = await fetch(`${API_URL}/api/inventory/bulk-delete`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids })
+                });
+                if(res.ok) {
+                    closeModal(); showToast(`${checkboxes.length} item berhasil dihapus!`);
+                    loadInventory(); toggleBulkMode(); 
+                } else { throw new Error(); }
+            } catch(e) { showToast('Gagal menghapus.', true); }
+        });
     }
 
-    async function hapusItem(id) {
-        if(!confirm('Hapus permanen?')) return;
-        try { await fetch(`${API_URL}/api/inventory/${id}`, { method: 'DELETE' }); showToast("Terhapus."); loadInventory(); } catch(e) { showToast('Error.', true); }
+    // --- PENGHAPUSAN WINDOWS ALERT/CONFIRM ---
+    function batalJual(id) {
+        openModal('Batalkan Penjualan', 'Tarik kartu ini kembali ke Vault dan gabungkan kuantitasnya?', '', async () => {
+            try { 
+                await fetch(`${API_URL}/api/inventory/${id}/undo-sell`, { method: 'PUT' }); 
+                closeModal(); showToast("Dikembalikan ke Vault."); loadInventory(); 
+            } catch(e) { showToast('Error.', true); }
+        });
+    }
+
+    function hapusItem(id) {
+        openModal('Hapus Permanen', 'Yakin ingin menghapus kartu ini dari database?', '', async () => {
+            try { 
+                await fetch(`${API_URL}/api/inventory/${id}`, { method: 'DELETE' }); 
+                closeModal(); showToast("Terhapus."); loadInventory(); 
+            } catch(e) { showToast('Error.', true); }
+        });
     }
 
     function toggleBulkMode() {
@@ -505,14 +534,23 @@
             const res = await fetch(`${API_URL}/api/search-card?name=${encodeURIComponent(qN)}&set=${encodeURIComponent(qS)}`);
             const cards = await res.json(); hasilDiv.innerHTML = '';
             if (cards.length === 0) return hasilDiv.innerHTML = '<p style="color:var(--danger); font-size:0.8rem;">Card Not Found.</p>';
+            
             cards.forEach(card => {
                 const img = document.createElement('img'); img.src = card.images.small; img.className = 'card-preview';
                 img.onclick = () => {
                     document.querySelectorAll('.card-preview').forEach(el => el.classList.remove('selected')); img.classList.add('selected');
-                    document.getElementById('nama').value = card.name; document.getElementById('set').value = card.set.name;
-                    document.getElementById('imageUrl').value = card.images.small; document.getElementById('cardNumber').value = card.number || '';
-                    document.getElementById('setCode').value = card.set.ptcgoCode || card.set.id || '';
-                }; hasilDiv.appendChild(img);
+                    document.getElementById('nama').value = card.name; 
+                    document.getElementById('set').value = card.set.name;
+                    document.getElementById('imageUrl').value = card.images.small; 
+                    document.getElementById('cardNumber').value = card.number || '';
+                    
+                    const customSetMapping = {
+                        'sv3pt5': 'MEW', 'sv4pt5': 'PAF', 'swsh12pt5': 'CRZ', 
+                        'swsh4pt5': 'SHF', 'swsh7pt5': 'CEL', 'pgo': 'PGO',
+                    };
+                    document.getElementById('setCode').value = (customSetMapping[card.set.id] || card.set.ptcgoCode || card.set.id || '').toUpperCase();
+                }; 
+                hasilDiv.appendChild(img);
             });
         } catch (error) { hasilDiv.innerHTML = '<p style="color:var(--danger); font-size:0.8rem;">Offline.</p>'; } finally { btn.innerText = 'Cari'; }
     }
