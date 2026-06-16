@@ -30,6 +30,12 @@
         input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
         textarea { resize: none; min-height: 50px; }
 
+        /* PERBAIKAN TANGGAL & INPUT ANGKA */
+        input[type="date"] { color-scheme: dark; cursor: pointer; }
+        input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(0.8); }
+        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+
         .checkbox-row { display: flex; gap: 1.5rem; background: var(--bg-main); padding: 0.7rem; border-radius: 6px; border: 1px solid var(--border); grid-column: 1 / -1; }
         .checkbox-label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; color: var(--text-muted); }
 
@@ -55,7 +61,6 @@
         .bulk-checkbox { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
         .bulk-qty-input { width: 35px; padding: 2px; font-size: 0.75rem; border-radius:3px; background:#090d16; color:white; border:1px solid var(--border); text-align: center; }
 
-        /* Qty Adjuster UI */
         .qty-adjuster { display:flex; align-items:center; background:#1f2937; border-radius:12px; overflow:hidden; border:1px solid var(--border); }
         .qty-btn { background:transparent; border:none; color:white; padding: 2px 8px; font-weight:bold; cursor:pointer; }
         .qty-btn:hover { background:var(--primary); }
@@ -78,15 +83,14 @@
         
         #soldGrid { display: flex; flex-direction: column; gap: 1rem; }
         .trx-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
-        .trx-mini-item { display:flex; gap:10px; align-items:center; background: var(--bg-main); padding:6px; border-radius:6px; margin-bottom:6px; border:1px solid var(--border); }
+        .trx-mini-item { display:flex; gap:12px; align-items:center; background: var(--bg-main); padding:8px; border-radius:6px; margin-bottom:6px; border:1px solid var(--border); }
         .btn-undo-sale { background: transparent; border: 1px solid var(--danger); color: var(--danger); font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; font-weight: bold; width: auto; cursor:pointer;}
+        .btn-undo-sale:hover { background:var(--danger); color:white; }
         
-        /* NEW: Toast Notifications */
         #toastContainer { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events:none; }
         .toast { background: #1f2937; border-left: 4px solid var(--primary); padding: 12px 20px; border-radius: 4px; box-shadow: 0 5px 15px rgba(0,0,0,0.4); color: white; font-size: 0.85rem; font-weight: 600; animation: slideIn 0.3s ease; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-        /* NEW: Custom Modals */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         .modal-box { background: var(--bg-card); border: 1px solid var(--border); padding: 1.5rem; border-radius: 8px; width: 320px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
         .modal-title { font-size: 1.1rem; font-weight:bold; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
@@ -117,7 +121,7 @@
         <div style="display: flex; gap: 0.8rem; align-items: center;">
             <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelImport(event)">
             <button type="button" onclick="document.getElementById('excelFileInput').click()" style="background: #1f2937; border: 1px solid var(--border); padding: 0.4rem 0.8rem; border-radius: 4px; font-size: 0.8rem; width: auto;">📥 Import Excel</button>
-            <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 500;">v6.4 No-Alert UI</div>
+            <div style="color: var(--text-muted); font-size: 0.8rem; font-weight: 500;">v6.6 Interactive UI</div>
         </div>
     </header>
 
@@ -200,6 +204,29 @@
             <div style="margin-bottom: 1.2rem;">
                 <input type="text" id="inventorySearchInput" placeholder="🔍 Cari nama kartu atau set..." oninput="filterInventory()">
             </div>
+
+            <div id="soldFilterSection" class="hidden" style="background: var(--bg-card); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; margin-bottom: 1.2rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <label style="display:block; font-size:0.75rem; color:var(--text-muted); margin-bottom:0.3rem; font-weight:600;">DARI TANGGAL</label>
+                        <input type="date" id="filterStartDate" onchange="filterInventory()" onclick="this.showPicker()" style="width:100%; padding:0.5rem; background:var(--bg-main); border:1px solid var(--border); color:white; border-radius:6px;">
+                    </div>
+                    <div>
+                        <label style="display:block; font-size:0.75rem; color:var(--text-muted); margin-bottom:0.3rem; font-weight:600;">HINGGA TANGGAL</label>
+                        <input type="date" id="filterEndDate" onchange="filterInventory()" onclick="this.showPicker()" style="width:100%; padding:0.5rem; background:var(--bg-main); border:1px solid var(--border); color:white; border-radius:6px;">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; border-top: 1px solid var(--border); padding-top: 0.8rem;">
+                    <div>
+                        <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">TOTAL PENJUALAN (OMSET)</div>
+                        <div id="summaryTotalSold" style="font-size:1.2rem; font-weight:800; color:var(--text-main); margin-top:0.2rem;">Rp 0</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">KEUNTUNGAN BERSIH (NET P/L)</div>
+                        <div id="summaryTotalProfit" style="font-size:1.2rem; font-weight:800; color:var(--green); margin-top:0.2rem;">Rp 0</div>
+                    </div>
+                </div>
+            </div>
             
             <div class="inventory-grid" id="vaultGrid"></div>
             <div id="soldGrid" class="hidden"></div>
@@ -212,31 +239,24 @@
     let globalData = []; let editStateId = null; let isBulkMode = false;
     const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
 
-    /* --- TOAST NOTIFICATION SYSTEM --- */
     function showToast(msg, isError = false) {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
         toast.className = 'toast';
         toast.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--green)';
-        toast.innerText = msg;
-        container.appendChild(toast);
+        toast.innerText = msg; container.appendChild(toast);
         setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2500);
     }
 
-    /* --- CUSTOM MODAL SYSTEM --- */
     function openModal(title, bodyText, inputsHtml, confirmCallback) {
         document.getElementById('modalTitle').innerText = title;
         document.getElementById('modalBody').innerHTML = bodyText;
         document.getElementById('modalInputs').innerHTML = inputsHtml;
-        
-        const confirmBtn = document.getElementById('modalConfirmBtn');
-        confirmBtn.onclick = () => { confirmCallback(); };
-        
+        document.getElementById('modalConfirmBtn').onclick = () => { confirmCallback(); };
         document.getElementById('customModal').classList.remove('hidden');
     }
     function closeModal() { document.getElementById('customModal').classList.add('hidden'); }
 
-    /* --- BASIC FUNCTIONS --- */
     function handleCategoryChange() {
         const cat = document.getElementById('categorySelect').value;
         document.getElementById('conditionGroup').classList.toggle('hidden', cat === 'Sealed');
@@ -247,55 +267,71 @@
     function switchTab(tab) {
         if(isBulkMode) toggleBulkMode(); 
         document.getElementById('inventorySearchInput').value = ''; 
+        document.getElementById('filterStartDate').value = ''; 
+        document.getElementById('filterEndDate').value = ''; 
+        
         document.getElementById('tabVault').classList.toggle('active', tab === 'vault');
         document.getElementById('tabSold').classList.toggle('active', tab === 'sold');
         document.getElementById('vaultGrid').classList.toggle('hidden', tab !== 'vault');
         document.getElementById('soldGrid').classList.toggle('hidden', tab !== 'sold');
         document.getElementById('btnToggleBulk').classList.toggle('hidden', tab !== 'vault');
+        document.getElementById('soldFilterSection').classList.toggle('hidden', tab !== 'sold');
         filterInventory();
     }
 
     function filterInventory() {
         const query = document.getElementById('inventorySearchInput').value.toLowerCase();
+        const startDate = document.getElementById('filterStartDate').value; 
+        const endDate = document.getElementById('filterEndDate').value; 
+
         document.querySelectorAll('#vaultGrid .showcase-card').forEach(card => {
             const txt = card.textContent.toLowerCase();
             card.classList.toggle('hidden', !txt.includes(query));
         });
+
+        let runningTotalSold = 0; let runningTotalProfit = 0;
+
         document.querySelectorAll('#soldGrid .trx-card').forEach(card => {
-            let anyMatches = false;
+            const cardDate = card.getAttribute('data-date'); 
+            const cardGross = parseFloat(card.getAttribute('data-gross') || 0);
+            const cardProfit = parseFloat(card.getAttribute('data-profit') || 0);
+
+            let dateMatches = true;
+            if (startDate && cardDate < startDate) dateMatches = false;
+            if (endDate && cardDate > endDate) dateMatches = false;
+
+            let keywordMatches = false;
             card.querySelectorAll('.trx-mini-item').forEach(item => {
                 const match = item.textContent.toLowerCase().includes(query);
                 item.classList.toggle('hidden', !match);
-                if(match) anyMatches = true;
+                if(match) keywordMatches = true;
             });
-            card.classList.toggle('hidden', !anyMatches && query !== '');
+
+            const finalShow = dateMatches && (keywordMatches || query === '');
+            card.classList.toggle('hidden', !finalShow);
+
+            if (finalShow) { runningTotalSold += cardGross; runningTotalProfit += cardProfit; }
         });
+
+        document.getElementById('summaryTotalSold').innerText = formatIDR(runningTotalSold);
+        const profitEl = document.getElementById('summaryTotalProfit');
+        profitEl.innerText = (runningTotalProfit >= 0 ? '+' : '') + formatIDR(runningTotalProfit);
+        profitEl.className = runningTotalProfit >= 0 ? 'profit-plus' : 'profit-minus';
     }
 
-    /* --- QUICK QTY ADJUSTER --- */
     async function quickAdjustQty(id, action) {
         if(isBulkMode) return showToast("Matikan mode borongan dulu!", true);
         try {
-            const res = await fetch(`${API_URL}/api/inventory/${id}/qty`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action })
-            });
-            const result = await res.json();
-            if(res.ok) { loadInventory(); } 
-            else { showToast(result.error, true); }
-        } catch (e) { showToast("Gagal menghubungi server.", true); }
+            const res = await fetch(`${API_URL}/api/inventory/${id}/qty`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) });
+            if(res.ok) loadInventory(); else showToast((await res.json()).error, true);
+        } catch (e) { showToast("Gagal terhubung server.", true); }
     }
 
-    /* --- CORE LOGIC --- */
     async function loadInventory() {
         try {
-            const res = await fetch(`${API_URL}/api/inventory`);
-            globalData = await res.json();
-            
-            const vaultGrid = document.getElementById('vaultGrid');
-            const soldGrid = document.getElementById('soldGrid');
+            const res = await fetch(`${API_URL}/api/inventory`); globalData = await res.json();
+            const vaultGrid = document.getElementById('vaultGrid'); const soldGrid = document.getElementById('soldGrid');
             vaultGrid.innerHTML = ''; soldGrid.innerHTML = '';
-
             let vaultCount = 0; let soldCount = 0; const groupedSold = {};
 
             globalData.forEach(item => {
@@ -308,17 +344,8 @@
                     if(item.is_holo) badges += `<span class="tag">Holo</span>`;
                     if(item.grader) badges += `<span class="tag tag-grader">${item.grader} ${item.grade || ''}</span>`;
 
-                    const checkboxHtml = `<div class="bulk-action-wrapper hidden">
-                        <input type="checkbox" class="bulk-checkbox" value="${item.id}" onchange="updateBulkCount()">
-                        <input type="number" id="bulk_qty_${item.id}" value="${item.quantity}" min="1" max="${item.quantity}" class="bulk-qty-input">
-                    </div>`;
-
-                    // QUICK ADJUSTER UI
-                    const qtyAdjuster = `<div class="qty-adjuster">
-                        <button class="qty-btn" onclick="quickAdjustQty('${item.id}', 'minus')">-</button>
-                        <span class="qty-val">${item.quantity}</span>
-                        <button class="qty-btn" onclick="quickAdjustQty('${item.id}', 'add')">+</button>
-                    </div>`;
+                    const checkboxHtml = `<div class="bulk-action-wrapper hidden"><input type="checkbox" class="bulk-checkbox" value="${item.id}" onchange="updateBulkCount()"><input type="number" id="bulk_qty_${item.id}" value="${item.quantity}" min="1" max="${item.quantity}" class="bulk-qty-input"></div>`;
+                    const qtyAdjuster = `<div class="qty-adjuster"><button class="qty-btn" onclick="quickAdjustQty('${item.id}', 'minus')">-</button><span class="qty-val">${item.quantity}</span><button class="qty-btn" onclick="quickAdjustQty('${item.id}', 'add')">+</button></div>`;
                     
                     vaultGrid.innerHTML += `
                         <div class="showcase-card">
@@ -344,7 +371,7 @@
                 } else {
                     soldCount++;
                     const tid = item.transaction_id || item.id; 
-                    if(!groupedSold[tid]) groupedSold[tid] = { items: [], total_sold: 0, total_modal: 0 };
+                    if(!groupedSold[tid]) groupedSold[tid] = { items: [], total_sold: 0, total_modal: 0, sold_at: item.sold_at };
                     groupedSold[tid].items.push(item);
                     groupedSold[tid].total_sold += parseFloat(item.sold_price || 0) * item.quantity;
                     groupedSold[tid].total_modal += parseFloat(item.purchase_price || 0) * item.quantity;
@@ -352,10 +379,13 @@
             });
 
             for(let tid in groupedSold) {
-                const trx = groupedSold[tid];
-                const profit = trx.total_sold - trx.total_modal;
-                const profitClass = profit >= 0 ? 'profit-plus' : 'profit-minus';
-                
+                const trx = groupedSold[tid]; const profit = trx.total_sold - trx.total_modal; const profitClass = profit >= 0 ? 'profit-plus' : 'profit-minus';
+                let tglDisplay = '-';
+                if(trx.sold_at) {
+                    const d = new Date(trx.sold_at);
+                    tglDisplay = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                }
+
                 let miniCards = trx.items.map(i => `
                     <div class="trx-mini-item">
                         <img src="${i.image_url || 'https://via.placeholder.com/35x50/111827/ffffff?text=No+Img'}" style="width:35px; height:50px; object-fit:cover; border-radius:4px; border:1px solid var(--border);">
@@ -367,10 +397,11 @@
                     </div>
                 `).join('');
 
+                let rawDateStr = trx.sold_at ? trx.sold_at.substring(0, 10) : '';
                 soldGrid.innerHTML += `
-                    <div class="trx-card">
+                    <div class="trx-card" data-date="${rawDateStr}" data-gross="${trx.total_sold}" data-profit="${profit}">
                         <div style="display:flex; justify-content:space-between; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border); padding-bottom: 0.6rem; font-size:0.8rem;">
-                            <div><div style="color:var(--text-muted); font-size:0.7rem;">STRUK ${tid.substring(0,8).toUpperCase()}</div><div>Gross: <b>${formatIDR(trx.total_sold)}</b></div></div>
+                            <div><div style="color:var(--text-muted); font-size:0.7rem;">STRUK ${tid.substring(0,8).toUpperCase()} • ${tglDisplay}</div><div>Gross: <b>${formatIDR(trx.total_sold)}</b></div></div>
                             <div style="text-align:right;"><div style="color:var(--text-muted); font-size:0.7rem;">P/L</div><div class="${profitClass}" style="font-weight:700;">${profit >= 0 ? '+' : ''}${formatIDR(profit)}</div></div>
                         </div>
                         <div>${miniCards}</div>
@@ -380,70 +411,56 @@
 
             if(vaultCount === 0) vaultGrid.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">Vault kosong.</div>`;
             if(soldCount === 0) soldGrid.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted); font-size:0.85rem;">Belum ada penjualan.</div>`;
-
             filterInventory();
         } catch (error) { console.error(error); }
     }
 
-    /* --- SALE MODALS (Replacing Prompts) --- */
-function openSingleSellModal(id, namaItem, maxQty) {
+    // --- PERBAIKAN: MODAL JUAL DENGAN INPUT ANGKA YANG BISA DIKETIK ---
+    function openSingleSellModal(id, namaItem, maxQty) {
         if(isBulkMode) return showToast("Matikan mode borongan dulu!", true);
         
         let inputsHtml = '';
         if(maxQty > 1) {
-            // Menggunakan UI Adjuster kustom di dalam modal
             inputsHtml += `
-                <label style="font-size:0.75rem; display:block; margin-bottom:0.4rem;">Jumlah Terjual (Maks: ${maxQty})</label>
-                <div class="qty-adjuster" style="margin-bottom: 0.8rem; justify-content: space-between; padding: 0.4rem 0.8rem;">
-                    <button type="button" class="qty-btn" style="font-size:1.1rem;" onclick="let el=document.getElementById('modalSellQtyVal'); let v=parseInt(el.innerText); if(v > 1) el.innerText = v - 1;">-</button>
-                    <span id="modalSellQtyVal" style="font-size: 1rem; font-weight: bold;">${maxQty}</span>
-                    <button type="button" class="qty-btn" style="font-size:1.1rem;" onclick="let el=document.getElementById('modalSellQtyVal'); let v=parseInt(el.innerText); if(v < ${maxQty}) el.innerText = v + 1;">+</button>
+                <label style="font-size:0.75rem; display:block; margin-bottom:0.4rem;">Jumlah Terjual (Bisa diketik, Maks: ${maxQty})</label>
+                <div class="qty-adjuster" style="margin-bottom: 0.8rem; display:flex; justify-content: space-between; padding: 0.2rem 0.5rem; background: var(--bg-main);">
+                    <button type="button" class="qty-btn" style="font-size:1.2rem;" onclick="let el=document.getElementById('modalSellQtyVal'); let v=parseInt(el.value)||0; if(v > 1) el.value = v - 1;">-</button>
+                    <input type="number" id="modalSellQtyVal" value="${maxQty}" min="1" max="${maxQty}" style="width: 60px; text-align: center; border: none; background: transparent; color: white; font-size: 1.1rem; font-weight: bold; padding: 0;">
+                    <button type="button" class="qty-btn" style="font-size:1.2rem;" onclick="let el=document.getElementById('modalSellQtyVal'); let v=parseInt(el.value)||0; if(v < ${maxQty}) el.value = v + 1;">+</button>
                 </div>
             `;
         } else {
-            inputsHtml += `<span id="modalSellQtyVal" class="hidden">1</span>`;
+            inputsHtml += `<input type="hidden" id="modalSellQtyVal" value="1">`;
         }
-        inputsHtml += `<label style="font-size:0.75rem;">Total Harga Jual (Rp)</label><input type="number" id="modalSellPrice" placeholder="Misal: 150000">`;
+        inputsHtml += `<label style="font-size:0.75rem;">Total Harga Jual Keseluruhan (Rp)</label><input type="number" id="modalSellPrice" placeholder="Misal: 150000">`;
 
         openModal(`Jual ${namaItem}`, `Atur kuantitas dan harga jual untuk transaksi ini.`, inputsHtml, async () => {
-            // Mengambil nilai kuantitas dari elemen teks batin (inner text) kustom
-            const sellQty = parseInt(document.getElementById('modalSellQtyVal').innerText);
+            const sellQty = parseInt(document.getElementById('modalSellQtyVal').value); 
             const harga = parseFloat(document.getElementById('modalSellPrice').value);
             
-            if(isNaN(sellQty) || sellQty < 1 || sellQty > maxQty) return showToast('Kuantitas tidak valid!', true);
-            if(isNaN(harga)) return showToast('Harga harus diisi angka!', true);
+            if(isNaN(sellQty) || sellQty < 1 || sellQty > maxQty) return showToast(`Kuantitas harus 1 - ${maxQty}!`, true);
+            if(isNaN(harga)) return showToast('Harga belum diisi!', true);
 
             try {
-                const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, {
-                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sell_qty: sellQty, sold_price: harga })
+                const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, { 
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ sell_qty: sellQty, sold_price: harga }) 
                 });
-                if(!res.ok) throw new Error();
-                closeModal(); showToast("Berhasil dijual!"); loadInventory(); switchTab('sold'); 
+                if(res.ok) { closeModal(); showToast("Berhasil dijual!"); loadInventory(); switchTab('sold'); }
             } catch (e) { showToast('Gagal memproses.', true); }
         });
     }
 
     function openBulkSellModal() {
-        const checkboxes = document.querySelectorAll('.bulk-checkbox:checked');
-        if(checkboxes.length === 0) return showToast('Pilih minimal 1 item!', true);
-
-        const inputsHtml = `<label style="font-size:0.75rem;">Total Harga Borongan Paket (Rp)</label><input type="number" id="modalBulkPrice" placeholder="Sistem akan memecah harga otomatis">`;
-        
-        openModal(`Jual Borongan (${checkboxes.length} Tipe)`, `Sistem akan membagi rata P/L ke tiap kartu yang dipilih.`, inputsHtml, async () => {
-            const harga = parseFloat(document.getElementById('modalBulkPrice').value);
-            if(isNaN(harga)) return showToast('Harga harus diisi!', true);
-
+        const checkboxes = document.querySelectorAll('.bulk-checkbox:checked'); if(checkboxes.length === 0) return showToast('Pilih minimal 1 item!', true);
+        const inputsHtml = `<label style="font-size:0.75rem;">Total Harga Borongan Paket (Rp)</label><input type="number" id="modalBulkPrice" placeholder="Membagi rata harga otomatis">`;
+        openModal(`Jual Borongan (${checkboxes.length} Tipe)`, `Sistem otomatis membagi rata keuntungan ke tiap kartu.`, inputsHtml, async () => {
+            const harga = parseFloat(document.getElementById('modalBulkPrice').value); if(isNaN(harga)) return showToast('Harga kosong!', true);
             const items = Array.from(checkboxes).map(cb => ({ id: cb.value, sell_qty: document.getElementById(`bulk_qty_${cb.value}`).value }));
-            
             try {
-                const res = await fetch(`${API_URL}/api/inventory/bulk-sell`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ items, total_price: harga })
-                });
-                if(!res.ok) throw new Error();
-                closeModal(); showToast("Borongan sukses!"); loadInventory(); switchTab('sold');
-            } catch(e) { showToast('Gagal memproses.', true); }
+                const res = await fetch(`${API_URL}/api/inventory/bulk-sell`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items, total_price: harga }) });
+                if(res.ok) { closeModal(); showToast("Borongan sukses!"); loadInventory(); switchTab('sold'); }
+            } catch(e) { showToast('Gagal.', true); }
         });
     }
 
@@ -453,35 +470,30 @@ function openSingleSellModal(id, namaItem, maxQty) {
     }
 
     async function hapusItem(id) {
-        if(!confirm('Hapus permanen dari database?')) return;
+        if(!confirm('Hapus permanen?')) return;
         try { await fetch(`${API_URL}/api/inventory/${id}`, { method: 'DELETE' }); showToast("Terhapus."); loadInventory(); } catch(e) { showToast('Error.', true); }
     }
 
-    /* --- BULK MODE & OTHERS --- */
     function toggleBulkMode() {
-        isBulkMode = !isBulkMode;
-        const wrappers = document.querySelectorAll('.bulk-action-wrapper');
+        isBulkMode = !isBulkMode; const wrappers = document.querySelectorAll('.bulk-action-wrapper');
         document.getElementById('bulkActionBar').classList.toggle('hidden', !isBulkMode);
         document.getElementById('btnToggleBulk').innerText = isBulkMode ? 'Batal' : '📦 Mode Borongan';
         document.getElementById('btnToggleBulk').style.background = isBulkMode ? 'var(--danger)' : '#1f2937';
-        wrappers.forEach(w => { w.classList.toggle('hidden', !isBulkMode); w.querySelector('.bulk-checkbox').checked = false; });
-        updateBulkCount();
+        wrappers.forEach(w => { w.classList.toggle('hidden', !isBulkMode); w.querySelector('.bulk-checkbox').checked = false; }); updateBulkCount();
     }
     function updateBulkCount() { document.getElementById('bulkCountText').innerText = `${document.querySelectorAll('.bulk-checkbox:checked').length} Tipe Dipilih`; }
 
     function handleExcelImport(event) {
-        const file = event.target.files[0]; if (!file) return;
-        const reader = new FileReader();
+        const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
         reader.onload = async function(e) {
             try {
                 const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' });
                 const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 if (jsonData.length === 0) return showToast('File kosong!', true);
                 const res = await fetch(`${API_URL}/api/inventory/bulk-import`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(jsonData) });
-                if (res.ok) { showToast(`Sukses import ${jsonData.length} item!`); loadInventory(); } else { showToast('Gagal import.', true); }
-            } catch (err) { showToast('Format error.', true); }
-        };
-        reader.readAsArrayBuffer(file);
+                if (res.ok) { showToast(`Sukses import ${jsonData.length} item!`); loadInventory(); } else { showToast('Gagal.', true); }
+            } catch (err) { showToast('Error.', true); }
+        }; reader.readAsArrayBuffer(file);
     }
 
     async function cariKartu() {
@@ -500,8 +512,7 @@ function openSingleSellModal(id, namaItem, maxQty) {
                     document.getElementById('nama').value = card.name; document.getElementById('set').value = card.set.name;
                     document.getElementById('imageUrl').value = card.images.small; document.getElementById('cardNumber').value = card.number || '';
                     document.getElementById('setCode').value = card.set.ptcgoCode || card.set.id || '';
-                };
-                hasilDiv.appendChild(img);
+                }; hasilDiv.appendChild(img);
             });
         } catch (error) { hasilDiv.innerHTML = '<p style="color:var(--danger); font-size:0.8rem;">Offline.</p>'; } finally { btn.innerText = 'Cari'; }
     }

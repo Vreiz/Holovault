@@ -15,7 +15,7 @@ const pool = mysql.createPool({
     host: 'localhost', user: 'root', password: '', database: 'pokemon_db'
 });
 
-// API 1: Pencarian
+// API 1: Pencarian API Pusat
 app.get('/api/search-card', async (req, res) => {
     try {
         const { name, set } = req.query;
@@ -30,7 +30,7 @@ app.get('/api/search-card', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal API' }); }
 });
 
-// API 2: Ambil Data
+// API 2: Ambil Data Inventory
 app.get('/api/inventory', async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM inventory ORDER BY created_at DESC');
@@ -38,7 +38,7 @@ app.get('/api/inventory', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal database' }); }
 });
 
-// API 3: Simpan Manual
+// API 3: Simpan Baru
 app.post('/api/inventory', multer().none(), async (req, res) => {
     try {
         const { name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, cert_number, external_image_url, grader, grade } = req.body;
@@ -51,7 +51,7 @@ app.post('/api/inventory', multer().none(), async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// API 4: Update
+// API 4: Update Data
 app.put('/api/inventory/:id', multer().none(), async (req, res) => {
     try {
         const { name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, cert_number, external_image_url, grader, grade } = req.body;
@@ -63,7 +63,7 @@ app.put('/api/inventory/:id', multer().none(), async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// API 5: Delete
+// API 5: Delete Permanen
 app.delete('/api/inventory/:id', async (req, res) => {
     try {
         await pool.query('DELETE FROM inventory WHERE id = ?', [req.params.id]);
@@ -71,7 +71,7 @@ app.delete('/api/inventory/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Failed' }); }
 });
 
-// Algoritme Pecah Penjualan
+// Algoritme Pemisah Kuantitas Saat Penjualan
 async function processSale(id, sell_qty, price_per_unit, trx_id) {
     const [rows] = await pool.query('SELECT * FROM inventory WHERE id = ?', [id]);
     if(rows.length === 0) return;
@@ -80,11 +80,11 @@ async function processSale(id, sell_qty, price_per_unit, trx_id) {
         await pool.query('UPDATE inventory SET quantity = quantity - ? WHERE id = ?', [sq, id]);
         const newId = crypto.randomUUID();
         await pool.query(
-            `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status, sold_price, transaction_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Sold', ?, ?)`,
+            `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status, sold_price, transaction_id, sold_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Sold', ?, ?, NOW())`,
             [newId, item.name, item.category, item.set_name, item.set_code, item.card_number, item.language, sq, item.purchase_price, item.market_price, item.image_url, item.notes, item.card_condition, item.is_holo, item.is_first_edition, item.grader, item.grade, item.cert_number, price_per_unit, trx_id]
         );
     } else {
-        await pool.query('UPDATE inventory SET status = "Sold", sold_price = ?, transaction_id = ? WHERE id = ?', [price_per_unit, trx_id, id]);
+        await pool.query('UPDATE inventory SET status = "Sold", sold_price = ?, transaction_id = ?, sold_at = NOW() WHERE id = ?', [price_per_unit, trx_id, id]);
     }
 }
 
@@ -108,7 +108,7 @@ app.post('/api/inventory/bulk-sell', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal' }); }
 });
 
-// API 8: Undo Jual
+// API 8: Undo Jual (Batal Jual & Gabung Qty Kembali)
 app.put('/api/inventory/:id/undo-sell', async (req, res) => {
     try {
         const id = req.params.id;
@@ -127,13 +127,13 @@ app.put('/api/inventory/:id/undo-sell', async (req, res) => {
             await pool.query('UPDATE inventory SET quantity = quantity + ? WHERE id = ?', [soldItem.quantity, matchItem.id]);
             await pool.query('DELETE FROM inventory WHERE id = ?', [id]);
         } else {
-            await pool.query('UPDATE inventory SET status = "Vault", sold_price = 0, transaction_id = NULL WHERE id = ?', [id]);
+            await pool.query('UPDATE inventory SET status = "Vault", sold_price = 0, transaction_id = NULL, sold_at = NULL WHERE id = ?', [id]);
         }
         res.status(200).json({ message: 'Success' });
     } catch (error) { res.status(500).json({ error: 'Gagal' }); }
 });
 
-// API 9: Bulk Import
+// API 9: Bulk Import dari Excel
 app.post('/api/inventory/bulk-import', async (req, res) => {
     try {
         const items = req.body;
@@ -144,25 +144,21 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
         ]);
         await pool.query(`INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) VALUES ?`, [values]);
         res.status(201).json({ message: 'Bulk import berhasil!' });
-    } catch (error) { res.status(500).json({ error: 'Gagal melakukan query massal' }); }
+    } catch (error) { res.status(500).json({ error: 'Gagal' }); }
 });
 
-// --- API 10: QUICK QTY ADJUST (BARU) ---
+// API 10: Quick Adjust Kuantitas Manual (+ / -) di Vault
 app.put('/api/inventory/:id/qty', async (req, res) => {
     try {
         const { action } = req.body; 
         const [rows] = await pool.query('SELECT quantity FROM inventory WHERE id = ?', [req.params.id]);
         if(rows.length === 0) return res.status(404).json({error: 'Not found'});
-        
         let newQty = rows[0].quantity;
-        if (action === 'add') newQty++;
-        else if (action === 'minus') newQty--;
-        
-        if (newQty < 1) return res.status(400).json({error: 'Kuantitas minimal adalah 1'});
-        
+        if (action === 'add') newQty++; else if (action === 'minus') newQty--;
+        if (newQty < 1) return res.status(400).json({error: 'Minimal 1'});
         await pool.query('UPDATE inventory SET quantity = ? WHERE id = ?', [newQty, req.params.id]);
-        res.status(200).json({ message: 'Quantity updated' });
-    } catch (error) { res.status(500).json({ error: 'Gagal update kuantitas' }); }
+        res.status(200).json({ message: 'Updated' });
+    } catch (error) { res.status(500).json({ error: 'Gagal' }); }
 });
 
-app.listen(3000, () => console.log('Backend MENYALA di http://localhost:3000'));
+app.listen(3000, () => console.log('Holovault Core Engine v6.5 MENYALA di http://localhost:3000'));
