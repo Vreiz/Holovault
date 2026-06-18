@@ -136,7 +136,7 @@
             <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelImport(event)">
             <button type="button" onclick="document.getElementById('excelFileInput').click()" style="background: #334155; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📥 Import Excel</button>
             <button type="button" onclick="exportToExcel()" style="background: #059669; border: 1px solid var(--green); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📤 Export DB</button>
-            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600; margin-left:0.5rem;">v9.0 Master Receipt</div>
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600; margin-left:0.5rem;">v9.2 File Upload Support</div>
         </div>
     </header>
 
@@ -162,13 +162,25 @@
             </div>
 
             <form id="formKartu">
-                <div class="form-group full" style="margin-bottom: 1rem;"><input type="text" id="imageUrl" name="external_image_url" placeholder="Paste link gambar..."></div>
+                
+                <div class="form-group full" style="margin-bottom: 1rem; background: rgba(0,0,0,0.25); padding: 0.8rem; border-radius: 8px; border: 1px dashed var(--border);">
+                    <label style="margin-bottom: 0.5rem;">Gambar Kartu</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <input type="text" id="imageUrl" name="external_image_url" placeholder="Paste link gambar..." style="flex:1;">
+                        <span style="font-size:0.75rem; color:var(--text-muted); font-weight:bold;">ATAU</span>
+                        <input type="file" id="imageFile" name="image_file" accept="image/*" style="width:200px; padding:0.4rem; background:#1f2937; border-radius:6px; color:white; cursor:pointer;">
+                    </div>
+                </div>
+
                 <div class="form-grid">
                     <div class="form-group full"><label>Nama Item</label><input type="text" id="nama" name="name" required></div>
                     <div class="form-group">
                         <label>Kategori</label>
                         <select name="category" id="categorySelect" onchange="handleCategoryChange()" required>
-                            <option value="Single">Single Card</option><option value="Sealed">Sealed Product</option><option value="Slab">Graded Slab</option>
+                            <option value="Single">Single Card</option>
+                            <option value="Sealed">Sealed Product</option>
+                            <option value="Slab">Graded Slab</option>
+                            <option value="Slab Set">Sequential Slab Set</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -195,14 +207,14 @@
                 <div id="gradedFields" class="hidden" style="background: rgba(0,0,0,0.25); padding: 1rem; border-radius: 8px; border: 1px dashed var(--border); margin-bottom: 1rem;">
                     <div class="form-grid" style="margin-bottom:0;">
                         <div class="form-group"><label>Grader</label><select name="grader" id="graderSelect"><option value="">--</option><option value="PSA">PSA</option><option value="BGS">BGS</option><option value="CGC">CGC</option><option value="ARS">ARS</option></select></div>
-                        <div class="form-group"><label>Skor</label><input type="text" id="gradeInput" name="grade"></div>
+                        <div class="form-group"><label>Skor Total</label><input type="text" id="gradeInput" name="grade"></div>
                         <div class="form-group full" style="margin-bottom:0;"><label>No Sertifikasi</label><input type="text" id="certInput" name="cert_number"></div>
                     </div>
                 </div>
 
                 <div class="form-grid">
-                    <div class="form-group full"><label>Catatan Transaksi</label><textarea id="notesInput" name="notes" placeholder="Ketik catatan tambahan disini..."></textarea></div>
-                    <div class="form-group full"><label>Kuantitas</label><input type="number" id="qtyInput" name="quantity" value="1" min="1" required></div>
+                    <div class="form-group full"><label>Catatan / Detail Kartu</label><textarea id="notesInput" name="notes" placeholder="Ketik catatan tambahan disini..."></textarea></div>
+                    <div class="form-group full"><label>Kuantitas (Set)</label><input type="number" id="qtyInput" name="quantity" value="1" min="1" required></div>
                 </div>
 
                 <button type="submit" class="btn-submit" id="btnSubmit">SIMPAN KE VAULT</button>
@@ -293,8 +305,20 @@
     function handleCategoryChange() {
         const cat = document.getElementById('categorySelect').value;
         document.getElementById('conditionGroup').classList.toggle('hidden', cat === 'Sealed');
-        document.getElementById('gradedFields').classList.toggle('hidden', cat !== 'Slab');
         document.getElementById('specialAttributes').classList.toggle('hidden', cat === 'Sealed');
+        
+        const isGraded = cat === 'Slab' || cat === 'Slab Set';
+        document.getElementById('gradedFields').classList.toggle('hidden', !isGraded);
+        
+        if (cat === 'Slab Set') {
+            document.getElementById('certInput').placeholder = "Misal: 88801 - 88809";
+            document.getElementById('nama').placeholder = "Misal: Eeveelution Yu Nagaba (9 Cards)";
+            document.getElementById('gradeInput').placeholder = "Misal: PSA 10";
+        } else {
+            document.getElementById('certInput').placeholder = "";
+            document.getElementById('nama').placeholder = "";
+            document.getElementById('gradeInput').placeholder = "";
+        }
     }
 
     function switchTab(tab) {
@@ -369,8 +393,17 @@
         const itemsToRender = isSearchingVault ? filteredVault : filteredVault.slice(0, vaultDisplayLimit);
 
         itemsToRender.forEach(item => {
-            const imgSrc = item.image_url || 'https://via.placeholder.com/55x77/111827/ffffff?text=No+Img';
-            let badges = `<span class="tag">${item.category}</span><span class="tag">${item.language}</span>`;
+            // PERBAIKAN URL GAMBAR (MENANGANI FILE LOKAL)
+            let imgSrc = item.image_url || 'https://via.placeholder.com/55x77/111827/ffffff?text=No+Img';
+            if (imgSrc.startsWith('/uploads/')) {
+                imgSrc = API_URL + imgSrc;
+            }
+
+            let badges = '';
+            if(item.category === 'Slab Set') { badges += `<span class="tag" style="background: #be185d; color: #fbcfe8;">Sequential Set</span>`; } 
+            else { badges += `<span class="tag">${item.category}</span>`; }
+            
+            badges += `<span class="tag">${item.language}</span>`;
             if(item.is_first_edition) badges += `<span class="tag" style="color:#fbbf24">1st Ed</span>`;
             if(item.is_holo) badges += `<span class="tag">Holo</span>`;
             if(item.grader) badges += `<span class="tag" style="background: rgba(139, 92, 246, 0.2); color: #c4b5fd;">${item.grader} ${item.grade || ''}</span>`;
@@ -448,10 +481,12 @@
                 const finalItemShow = matchQuery && matchSet;
                 if(finalItemShow) contentMatches = true;
 
-                // PERBAIKAN STRUK: Hanya menampilkan Modal tanpa "Terjual individual"
+                let iImgSrc = i.image_url || 'https://via.placeholder.com/40x56/111827/ffffff?text=No+Img';
+                if (iImgSrc.startsWith('/uploads/')) iImgSrc = API_URL + iImgSrc;
+
                 miniCardsHtml += `
                     <div class="trx-mini-item ${finalItemShow ? '' : 'hidden'}">
-                        <img src="${i.image_url || 'https://via.placeholder.com/40x56/111827/ffffff?text=No+Img'}" style="width:40px; height:56px; object-fit:cover; border-radius:4px; border:1px solid var(--border);" loading="lazy">
+                        <img src="${iImgSrc}" style="width:40px; height:56px; object-fit:cover; border-radius:4px; border:1px solid var(--border);" loading="lazy">
                         <div style="flex:1; font-size:0.85rem; color:#ffffff;">
                             <b style="font-size:0.95rem;">${i.name}</b> <span style="color:var(--text-muted); font-weight:bold;">x${i.quantity}</span>
                             <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
@@ -660,6 +695,10 @@
         if(isBulkMode) return;
         const item = globalData.find(x => x.id === id); if(!item) return;
         editStateId = id; document.getElementById('formTitle').innerText = 'Edit Entry';
+        
+        // Membersihkan input file lokal saat masuk mode Edit
+        document.getElementById('imageFile').value = '';
+
         ['nama', 'set', 'setCode', 'cardNumber', 'qtyInput', 'notesInput', 'gradeInput', 'certInput', 'imageUrl'].forEach(key => {
             const mapKey = { 'nama':'name', 'set':'set_name', 'setCode':'set_code', 'cardNumber':'card_number', 'qtyInput':'quantity', 'notesInput':'notes', 'gradeInput':'grade', 'certInput':'cert_number', 'imageUrl':'image_url' }[key];
             document.getElementById(key).value = item[mapKey] || '';

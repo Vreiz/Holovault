@@ -4,12 +4,29 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
+const fs = require('fs');
+
+// Auto-create folder uploads jika belum ada
+if (!fs.existsSync('uploads')) {
+    fs.mkdirSync('uploads');
+}
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// Membuka akses publik ke folder uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Konfigurasi Penyimpanan Gambar Lokal
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => {
+        // Nama file diacak agar tidak ada yang bentrok
+        cb(null, crypto.randomUUID() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
 
 const pool = mysql.createPool({
     host: 'localhost', user: 'root', password: '', database: 'pokemon_db'
@@ -36,24 +53,39 @@ app.get('/api/inventory', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal database' }); }
 });
 
-app.post('/api/inventory', multer().none(), async (req, res) => {
+// API 3: SIMPAN BARU (MENDUKUNG UPLOAD FILE)
+app.post('/api/inventory', upload.single('image_file'), async (req, res) => {
     try {
         const { name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, cert_number, external_image_url, grader, grade } = req.body;
+        
+        // Cek apakah user upload file? Jika ya pakai file, jika tidak pakai link teks
+        let finalImageUrl = external_image_url || null;
+        if (req.file) {
+            finalImageUrl = `/uploads/${req.file.filename}`;
+        }
+
         const id = crypto.randomUUID();
         await pool.query(
             `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault')`,
-            [id, name, category, set_name || '-', set_code || null, card_number || null, language || 'English', quantity || 1, purchase_price || 0, market_price || 0, external_image_url || null, notes || null, card_condition || null, req.body.is_holo?1:0, req.body.is_first_edition?1:0, grader || null, grade || null, cert_number || null]
+            [id, name, category, set_name || '-', set_code || null, card_number || null, language || 'English', quantity || 1, purchase_price || 0, market_price || 0, finalImageUrl, notes || null, card_condition || null, req.body.is_holo?1:0, req.body.is_first_edition?1:0, grader || null, grade || null, cert_number || null]
         );
         res.status(201).json({ message: 'Saved' });
     } catch (error) { res.status(500).json({ error: 'Gagal simpan' }); }
 });
 
-app.put('/api/inventory/:id', multer().none(), async (req, res) => {
+// API 4: UPDATE DATA (MENDUKUNG UPLOAD FILE)
+app.put('/api/inventory/:id', upload.single('image_file'), async (req, res) => {
     try {
         const { name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, cert_number, external_image_url, grader, grade } = req.body;
+        
+        let finalImageUrl = external_image_url || null;
+        if (req.file) {
+            finalImageUrl = `/uploads/${req.file.filename}`;
+        }
+
         await pool.query(
             `UPDATE inventory SET name=?, category=?, set_name=?, set_code=?, card_number=?, language=?, quantity=?, purchase_price=?, market_price=?, image_url=?, notes=?, card_condition=?, is_holo=?, is_first_edition=?, grader=?, grade=?, cert_number=? WHERE id=?`,
-            [name, category, set_name || '-', set_code || null, card_number || null, language || 'English', quantity || 1, purchase_price || 0, market_price || 0, external_image_url || null, notes || null, card_condition || null, req.body.is_holo?1:0, req.body.is_first_edition?1:0, grader || null, grade || null, cert_number || null, req.params.id]
+            [name, category, set_name || '-', set_code || null, card_number || null, language || 'English', quantity || 1, purchase_price || 0, market_price || 0, finalImageUrl, notes || null, card_condition || null, req.body.is_holo?1:0, req.body.is_first_edition?1:0, grader || null, grade || null, cert_number || null, req.params.id]
         );
         res.status(200).json({ message: 'Updated' });
     } catch (error) { res.status(500).json({ error: 'Gagal update' }); }
@@ -107,13 +139,19 @@ app.put('/api/inventory/:id/undo-sell', async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
         const soldItem = rows[0];
 
-        const [vaultRows] = await pool.query(`SELECT * FROM inventory WHERE status = 'Vault' AND name = ? AND category = ? AND set_name = ?`, [soldItem.name, soldItem.category, soldItem.set_name]);
+        // MENCARI PASANGAN VAULT DENGAN SANGAT KETAT (TERMASUK KODE KARTU & CERT)
+        const [vaultRows] = await pool.query(
+            `SELECT * FROM inventory WHERE status = 'Vault' AND name = ? AND category = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND set_code <=> ? AND card_number <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`, 
+            [soldItem.name, soldItem.category, soldItem.set_name, soldItem.language, soldItem.card_condition, soldItem.is_holo, soldItem.is_first_edition, soldItem.set_code, soldItem.card_number, soldItem.grader, soldItem.grade, soldItem.cert_number]
+        );
+        
         let matchItem = null;
         for (const vItem of vaultRows) {
-            if (vItem.set_code === soldItem.set_code && vItem.card_number === soldItem.card_number && vItem.language === soldItem.language && vItem.card_condition === soldItem.card_condition && vItem.is_holo === soldItem.is_holo && vItem.is_first_edition === soldItem.is_first_edition && vItem.grader === soldItem.grader && vItem.grade === soldItem.grade && vItem.cert_number === soldItem.cert_number && parseFloat(vItem.purchase_price) === parseFloat(soldItem.purchase_price)) {
+            if (parseFloat(vItem.purchase_price) === parseFloat(soldItem.purchase_price)) {
                 matchItem = vItem; break;
             }
         }
+        
         if (matchItem) {
             await pool.query('UPDATE inventory SET quantity = quantity + ? WHERE id = ?', [soldItem.quantity, matchItem.id]);
             await pool.query('DELETE FROM inventory WHERE id = ?', [id]);
@@ -124,7 +162,7 @@ app.put('/api/inventory/:id/undo-sell', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal batalkan' }); }
 });
 
-// --- PERBAIKAN: ENGINE IMPORT UPSERT (GABUNGKAN QTY JIKA KARTU SUDAH ADA) ---
+// --- PERBAIKAN: DETEKSI DUPLIKAT SUPER KETAT ---
 app.post('/api/inventory/bulk-import', async (req, res) => {
     try {
         const items = req.body;
@@ -148,21 +186,19 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
             const lang = i.language || 'English';
             const cond = i.card_condition || 'NM';
 
-            // Cek apakah ada kartu yang sama persis di Vault
+            // MENGGUNAKAN SIMBOL <=> (NULL-SAFE EQUAL) UNTUK MENCOCOKKAN PARAMETER KOSONG
             const [existing] = await pool.query(
-                `SELECT id FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ?`,
-                [name, setName, lang, cond, isHolo, is1st]
+                `SELECT id FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND set_code <=> ? AND card_number <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
+                [name, setName, lang, cond, isHolo, is1st, i.set_code || null, i.card_number || null, i.grader || null, i.grade || null, i.cert_number || null]
             );
 
             if (existing.length > 0) {
-                // JIKA ADA: Tambahkan QTY-nya, dan update harga terbarunya
                 await pool.query(
                     `UPDATE inventory SET quantity = quantity + ?, purchase_price = ?, market_price = ?, image_url = COALESCE(?, image_url) WHERE id = ?`,
                     [safeQty, safePP, safeMP, i.image_url || null, existing[0].id]
                 );
                 updatedCount++;
             } else {
-                // JIKA TIDAK ADA: Buat Kotak Baru
                 await pool.query(
                     `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault')`,
                     [crypto.randomUUID(), name, i.category || 'Single', setName, i.set_code || null, i.card_number || null, lang, safeQty, safePP, safeMP, i.image_url || null, i.notes || null, cond, isHolo, is1st, i.grader || null, i.grade || null, i.cert_number || null]
@@ -171,7 +207,7 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
             }
         }
         
-        res.status(201).json({ message: `Selesai! ${insertedCount} Kartu Baru. ${updatedCount} Kartu diupdate Qty-nya.` });
+        res.status(201).json({ message: `Selesai! ${insertedCount} Kartu Baru. ${updatedCount} Kartu digabung.` });
     } catch (error) { 
         console.error("🔥 ERROR MYSQL BULK IMPORT:", error);
         res.status(500).json({ error: error.message || 'Gagal menyimpan ke MySQL' }); 
@@ -200,11 +236,4 @@ app.post('/api/inventory/bulk-delete', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal hapus' }); }
 });
 
-app.delete('/api/inventory/nuke', async (req, res) => {
-    try {
-        await pool.query("DELETE FROM inventory WHERE status = 'Vault' OR status IS NULL");
-        res.status(200).json({ message: 'Sukses' });
-    } catch (error) { res.status(500).json({ error: 'Gagal' }); }
-});
-
-app.listen(3000, () => console.log('Holovault Backend V8.7 MENYALA di http://localhost:3000'));
+app.listen(3000, () => console.log('Holovault Backend V9.2 MENYALA di http://localhost:3000'));
