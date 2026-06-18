@@ -75,14 +75,14 @@
 
         .card-set { font-size: 0.75rem; color: var(--text-muted); margin: 0 0 0.4rem 0; font-weight: 500;}
         .finance-row { 
-    display: flex; 
-    justify-content: space-between; 
-    flex-wrap: wrap; /* Ini kunci utamanya agar teks bisa turun ke bawah */
-    gap: 0.3rem; /* Memberi jarak pernapasan jika teks terpaksa turun */
-    font-size: 0.75rem; 
-    font-weight: 600; 
-    color: #ffffff;
-}
+            display: flex; 
+            justify-content: space-between; 
+            flex-wrap: wrap; /* Ini kunci utamanya agar teks bisa turun ke bawah */
+            gap: 0.3rem; /* Memberi jarak pernapasan jika teks terpaksa turun */
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            color: #ffffff;
+        }
 
         .card-body { padding: 0.8rem; display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; gap: 0.6rem; }
         .meta-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; font-size: 0.7rem; }
@@ -240,18 +240,18 @@
             </div>
             
             <div style="display: grid; grid-template-columns: 1fr 200px 220px; gap: 1rem; margin-bottom: 1.2rem;">
-    <input type="text" id="inventorySearchInput" placeholder="🔍 Cari berdasarkan nama kartu atau kode..." oninput="applyFiltersAndRender()" style="padding:0.8rem; font-size:1rem; border-radius:8px; margin:0;">
-    
-    <select id="sortSelect" onchange="applyFiltersAndRender()" style="padding:0.8rem; font-size:1rem; border-radius:8px; background: var(--bg-card); color: white; border: 1px solid var(--border); cursor: pointer; font-weight:bold;">
-        <option value="terbaru">🕒 Paling Baru</option>
-        <option value="market_tertinggi">📈 Market Tertinggi</option>
-        <option value="market_terendah">📉 Market Terendah</option>
-    </select>
+                <input type="text" id="inventorySearchInput" placeholder="🔍 Cari berdasarkan nama kartu atau kode..." oninput="applyFiltersAndRender()" style="padding:0.8rem; font-size:1rem; border-radius:8px; margin:0;">
+                
+                <select id="sortSelect" onchange="applyFiltersAndRender()" style="padding:0.8rem; font-size:1rem; border-radius:8px; background: var(--bg-card); color: white; border: 1px solid var(--border); cursor: pointer; font-weight:bold;">
+                    <option value="terbaru">🕒 Paling Baru</option>
+                    <option value="market_tertinggi">📈 Market Tertinggi</option>
+                    <option value="market_terendah">📉 Market Terendah</option>
+                </select>
 
-    <select id="filterSetSelect" onchange="applyFiltersAndRender()" style="padding:0.8rem; font-size:1rem; border-radius:8px; background: var(--bg-card); color: white; border: 1px solid var(--border); cursor: pointer; font-weight:bold;">
-        <option value="">✨ Semua Set</option>
-    </select>
-</div>
+                <select id="filterSetSelect" onchange="applyFiltersAndRender()" style="padding:0.8rem; font-size:1rem; border-radius:8px; background: var(--bg-card); color: white; border: 1px solid var(--border); cursor: pointer; font-weight:bold;">
+                    <option value="">✨ Semua Set</option>
+                </select>
+            </div>
 
             <div id="soldFilterSection" class="hidden" style="background: var(--bg-card); border: 1px solid var(--border); padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;">
@@ -404,14 +404,16 @@
             const txt = (item.name + ' ' + item.set_name).toLowerCase();
             return txt.includes(query) && (!selectedSet || item.set_name.toLowerCase() === selectedSet);
         });
-    // --- LOGIKA SORTING HARGA MARKET ---
-const sortVal = document.getElementById('sortSelect') ? document.getElementById('sortSelect').value : 'terbaru';
-if (sortVal === 'market_tertinggi') {
-    filteredVault.sort((a, b) => parseFloat(b.market_price || 0) - parseFloat(a.market_price || 0));
-} else if (sortVal === 'market_terendah') {
-    filteredVault.sort((a, b) => parseFloat(a.market_price || 0) - parseFloat(b.market_price || 0));
-}
-// -----------------------------------
+        
+        // --- LOGIKA SORTING HARGA MARKET ---
+        const sortVal = document.getElementById('sortSelect') ? document.getElementById('sortSelect').value : 'terbaru';
+        if (sortVal === 'market_tertinggi') {
+            filteredVault.sort((a, b) => parseFloat(b.market_price || 0) - parseFloat(a.market_price || 0));
+        } else if (sortVal === 'market_terendah') {
+            filteredVault.sort((a, b) => parseFloat(a.market_price || 0) - parseFloat(b.market_price || 0));
+        }
+        // -----------------------------------
+        
         const itemsToRender = isSearchingVault ? filteredVault : filteredVault.slice(0, vaultDisplayLimit);
 
         itemsToRender.forEach(item => {
@@ -745,8 +747,10 @@ if (sortVal === 'market_tertinggi') {
 
     document.getElementById('formKartu').addEventListener('submit', async (e) => {
         e.preventDefault(); const formData = new FormData(e.target);
+        
+        // PERBAIKAN TYPO DI SINI:
         formData.set('purchase_price', parseRupiah(document.getElementById('purchasePrice').value));
-        formData.set('marketPrice', parseRupiah(document.getElementById('marketPrice').value)); 
+        formData.set('market_price', parseRupiah(document.getElementById('marketPrice').value)); 
 
         const url = editStateId ? `${API_URL}/api/inventory/${editStateId}` : `${API_URL}/api/inventory`;
         try {
