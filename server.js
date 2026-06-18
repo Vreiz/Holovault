@@ -36,15 +36,29 @@ app.get('/api/search-card', async (req, res) => {
     try {
         const { name, set } = req.query;
         let queries = [];
-        if (name) queries.push(`name:"*${name}*"`);
-        if (set) queries.push(`set.name:"*${set}*"`);
+        
+        if (name && name.trim() !== '') {
+            const nameParts = name.trim().split(/\s+/);
+            nameParts.forEach(part => queries.push(`name:*${part}*`));
+        }
+        
+        if (set && set.trim() !== '') {
+            const setParts = set.trim().split(/\s+/);
+            setParts.forEach(part => queries.push(`set.name:*${part}*`));
+        }
+        
         if (queries.length === 0) return res.status(400).json({ error: 'Query kosong' });
         
-        const response = await fetch(`https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&orderBy=-set.releaseDate&pageSize=30`, { headers: { 'User-Agent': 'Holovault/1.0' } });
+        // 🔥 PERBAIKAN: pageSize dinaikkan ekstrem dari 30 menjadi 250 (Batas Maksimal API)
+        const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&orderBy=-set.releaseDate&pageSize=250`;
+        
+        const response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
         const data = await response.json();
         res.status(200).json(data.data || []);
-    } catch (error) { res.status(500).json({ error: 'Gagal API Pusat' }); }
-});
+    } catch (error) { 
+        res.status(500).json({ error: 'Gagal API Pusat' }); 
+    }
+}); 
 
 app.get('/api/inventory', async (req, res) => {
     try {
