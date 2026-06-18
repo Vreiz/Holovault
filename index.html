@@ -239,12 +239,19 @@
                 <button class="btn-bulk-mode" id="btnToggleBulk" onclick="toggleBulkMode()">📦 Mode Borongan</button>
             </div>
             
-            <div style="display: grid; grid-template-columns: 1fr 240px; gap: 1rem; margin-bottom: 1.2rem;">
-                <input type="text" id="inventorySearchInput" placeholder="🔍 Cari berdasarkan nama kartu atau kode..." oninput="applyFiltersAndRender()" style="padding:0.8rem; font-size:1rem; border-radius:8px; margin:0;">
-                <select id="filterSetSelect" onchange="applyFiltersAndRender()" style="padding:0.8rem; font-size:1rem; border-radius:8px; background: var(--bg-card); color: white; border: 1px solid var(--border); cursor: pointer; font-weight:bold;">
-                    <option value="">✨ Semua Set Expansion</option>
-                </select>
-            </div>
+            <div style="display: grid; grid-template-columns: 1fr 200px 220px; gap: 1rem; margin-bottom: 1.2rem;">
+    <input type="text" id="inventorySearchInput" placeholder="🔍 Cari berdasarkan nama kartu atau kode..." oninput="applyFiltersAndRender()" style="padding:0.8rem; font-size:1rem; border-radius:8px; margin:0;">
+    
+    <select id="sortSelect" onchange="applyFiltersAndRender()" style="padding:0.8rem; font-size:1rem; border-radius:8px; background: var(--bg-card); color: white; border: 1px solid var(--border); cursor: pointer; font-weight:bold;">
+        <option value="terbaru">🕒 Paling Baru</option>
+        <option value="market_tertinggi">📈 Market Tertinggi</option>
+        <option value="market_terendah">📉 Market Terendah</option>
+    </select>
+
+    <select id="filterSetSelect" onchange="applyFiltersAndRender()" style="padding:0.8rem; font-size:1rem; border-radius:8px; background: var(--bg-card); color: white; border: 1px solid var(--border); cursor: pointer; font-weight:bold;">
+        <option value="">✨ Semua Set</option>
+    </select>
+</div>
 
             <div id="soldFilterSection" class="hidden" style="background: var(--bg-card); border: 1px solid var(--border); padding: 1.2rem; border-radius: 8px; margin-bottom: 1.5rem;">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;">
@@ -397,7 +404,14 @@
             const txt = (item.name + ' ' + item.set_name).toLowerCase();
             return txt.includes(query) && (!selectedSet || item.set_name.toLowerCase() === selectedSet);
         });
-
+    // --- LOGIKA SORTING HARGA MARKET ---
+const sortVal = document.getElementById('sortSelect') ? document.getElementById('sortSelect').value : 'terbaru';
+if (sortVal === 'market_tertinggi') {
+    filteredVault.sort((a, b) => parseFloat(b.market_price || 0) - parseFloat(a.market_price || 0));
+} else if (sortVal === 'market_terendah') {
+    filteredVault.sort((a, b) => parseFloat(a.market_price || 0) - parseFloat(b.market_price || 0));
+}
+// -----------------------------------
         const itemsToRender = isSearchingVault ? filteredVault : filteredVault.slice(0, vaultDisplayLimit);
 
         itemsToRender.forEach(item => {
