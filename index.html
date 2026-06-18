@@ -127,10 +127,13 @@
 <div class="container">
     <header>
         <h1>HOLOVAULT</h1>
-        <div style="display: flex; gap: 0.8rem; align-items: center;">
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
             <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelImport(event)">
             <button type="button" onclick="document.getElementById('excelFileInput').click()" style="background: #334155; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📥 Import Excel</button>
-            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600;">v7.8 RAM Optimized</div>
+            
+            <button type="button" onclick="exportToExcel()" style="background: #059669; border: 1px solid var(--green); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📤 Export DB</button>
+
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600; margin-left: 0.5rem;">v8.6 Export Ready</div>
         </div>
     </header>
 
@@ -256,26 +259,11 @@
         API_URL = window.location.protocol + '//' + window.location.hostname + ':3000';
     }
 
-    let globalData = []; 
-    let editStateId = null; 
-    let isBulkMode = false;
+    let globalData = []; let editStateId = null; let isBulkMode = false;
+    let vaultDisplayLimit = 20; let selectedBulkIds = new Set(); let bulkQtyMap = {}; 
     
-    // --- STATE MANAGER UNTUK OPTIMASI RAM & BORONGAN ---
-    let vaultDisplayLimit = 20;
-    let selectedBulkIds = new Set();
-    let bulkQtyMap = {}; 
-    
-    function formatRupiah(input) {
-        let value = input.value.replace(/\D/g, ''); 
-        if(value !== '') { input.value = new Intl.NumberFormat('id-ID').format(value); } 
-        else { input.value = ''; }
-    }
-
-    function parseRupiah(value) {
-        if(!value) return 0;
-        return parseFloat(value.toString().replace(/\./g, ''));
-    }
-
+    function formatRupiah(input) { let value = input.value.replace(/\D/g, ''); if(value !== '') { input.value = new Intl.NumberFormat('id-ID').format(value); } else { input.value = ''; } }
+    function parseRupiah(value) { if(!value) return 0; return parseFloat(value.toString().replace(/\./g, '')); }
     const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
 
     function showToast(msg, isError = false) {
@@ -284,31 +272,16 @@
         toast.className = 'toast';
         toast.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--green)';
         toast.innerText = msg; container.appendChild(toast);
-        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 2500);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3500);
     }
 
     function openModal(title, bodyText, inputsHtml, confirmCallback) {
-        document.getElementById('modalTitle').innerText = title;
-        document.getElementById('modalBody').innerHTML = bodyText;
-        document.getElementById('modalInputs').innerHTML = inputsHtml;
-        
-        const confirmBtn = document.getElementById('modalConfirmBtn');
-        const newBtn = confirmBtn.cloneNode(true);
-        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
-        
+        document.getElementById('modalTitle').innerText = title; document.getElementById('modalBody').innerHTML = bodyText; document.getElementById('modalInputs').innerHTML = inputsHtml;
+        const confirmBtn = document.getElementById('modalConfirmBtn'); const newBtn = confirmBtn.cloneNode(true); confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
         newBtn.onclick = async () => { 
-            const originalText = newBtn.innerText;
-            newBtn.innerText = 'Memproses...';
-            newBtn.style.opacity = '0.5';
-            newBtn.style.pointerEvents = 'none';
-            
-            try { await confirmCallback(); } 
-            catch(e) { console.error("System Error:", e); showToast("Terjadi kesalahan sistem: " + e.message, true); } 
-            finally {
-                newBtn.innerText = originalText;
-                newBtn.style.opacity = '1';
-                newBtn.style.pointerEvents = 'auto';
-            }
+            const originalText = newBtn.innerText; newBtn.innerText = 'Memproses...'; newBtn.style.opacity = '0.5'; newBtn.style.pointerEvents = 'none';
+            try { await confirmCallback(); } catch(e) { console.error("System Error:", e); showToast("Terjadi kesalahan sistem: " + e.message, true); } 
+            finally { newBtn.innerText = originalText; newBtn.style.opacity = '1'; newBtn.style.pointerEvents = 'auto'; }
         };
         document.getElementById('customModal').classList.remove('hidden');
     }
@@ -324,26 +297,15 @@
 
     function switchTab(tab) {
         if(isBulkMode) toggleBulkMode(); 
-        document.getElementById('inventorySearchInput').value = ''; 
-        document.getElementById('filterStartDate').value = ''; 
-        document.getElementById('filterEndDate').value = ''; 
-        document.getElementById('filterSetSelect').value = ''; 
-        
-        document.getElementById('tabVault').classList.toggle('active', tab === 'vault');
-        document.getElementById('tabSold').classList.toggle('active', tab === 'sold');
-        document.getElementById('vaultGrid').classList.toggle('hidden', tab !== 'vault');
-        document.getElementById('soldGrid').classList.toggle('hidden', tab !== 'sold');
-        document.getElementById('btnToggleBulk').classList.toggle('hidden', tab !== 'vault');
-        document.getElementById('soldFilterSection').classList.toggle('hidden', tab !== 'sold');
-        
-        vaultDisplayLimit = 20; // Reset ke 20 saat ganti tab
-        applyFiltersAndRender();
+        document.getElementById('inventorySearchInput').value = ''; document.getElementById('filterStartDate').value = ''; 
+        document.getElementById('filterEndDate').value = ''; document.getElementById('filterSetSelect').value = ''; 
+        document.getElementById('tabVault').classList.toggle('active', tab === 'vault'); document.getElementById('tabSold').classList.toggle('active', tab === 'sold');
+        document.getElementById('vaultGrid').classList.toggle('hidden', tab !== 'vault'); document.getElementById('soldGrid').classList.toggle('hidden', tab !== 'sold');
+        document.getElementById('btnToggleBulk').classList.toggle('hidden', tab !== 'vault'); document.getElementById('soldFilterSection').classList.toggle('hidden', tab !== 'sold');
+        vaultDisplayLimit = 20; applyFiltersAndRender();
     }
 
-    // Fungsi untuk merubah nilai quantity khusus saat mode borongan
-    function handleBulkQtyChange(id, val) {
-        bulkQtyMap[id] = parseInt(val) || 1;
-    }
+    function handleBulkQtyChange(id, val) { bulkQtyMap[id] = parseInt(val) || 1; }
 
     async function quickAdjustQty(id, action) {
         if(isBulkMode) return; 
@@ -355,91 +317,51 @@
 
     function toggleCardBulk(id) {
         if (!isBulkMode) return; 
-        const card = document.getElementById(`card_${id}`);
-        const uiOverlay = document.getElementById(`bulk_ui_${id}`);
-        
+        const card = document.getElementById(`card_${id}`); const uiOverlay = document.getElementById(`bulk_ui_${id}`);
         if (selectedBulkIds.has(id)) {
-            selectedBulkIds.delete(id);
-            card.classList.remove('selected-for-bulk');
-            uiOverlay.classList.add('hidden');
+            selectedBulkIds.delete(id); card.classList.remove('selected-for-bulk'); uiOverlay.classList.add('hidden');
         } else {
-            selectedBulkIds.add(id);
-            card.classList.add('selected-for-bulk');
-            uiOverlay.classList.remove('hidden');
-            
-            // Set qty default ke max jika pertama kali diklik
-            if (!bulkQtyMap[id]) {
-                const item = globalData.find(x => x.id === id);
-                if (item) bulkQtyMap[id] = item.quantity;
-            }
+            selectedBulkIds.add(id); card.classList.add('selected-for-bulk'); uiOverlay.classList.remove('hidden');
+            if (!bulkQtyMap[id]) { const item = globalData.find(x => x.id === id); if (item) bulkQtyMap[id] = item.quantity; }
         }
         updateBulkCount();
     }
 
     function toggleSelectAll() {
         if (!isBulkMode) return;
-        
-        // Cek kartu apa saja yang SEDANG TAMPIL di DOM saat ini (yang lolos filter & limit)
         const visibleCards = Array.from(document.querySelectorAll('#vaultGrid .showcase-card'));
         if (visibleCards.length === 0) return showToast("Tidak ada kartu untuk diseleksi!", true);
-
-        // Jika semua kartu yang TAMPIL sudah terpilih, maka Batalkan Semua. Jika belum, Pilih Semua.
         const isAllVisibleSelected = visibleCards.every(card => selectedBulkIds.has(card.id.replace('card_', '')));
         
         visibleCards.forEach(card => {
-            const id = card.id.replace('card_', '');
-            const uiOverlay = document.getElementById(`bulk_ui_${id}`);
-            
+            const id = card.id.replace('card_', ''); const uiOverlay = document.getElementById(`bulk_ui_${id}`);
             if (isAllVisibleSelected) {
-                selectedBulkIds.delete(id);
-                card.classList.remove('selected-for-bulk');
-                uiOverlay.classList.add('hidden');
+                selectedBulkIds.delete(id); card.classList.remove('selected-for-bulk'); uiOverlay.classList.add('hidden');
             } else {
-                selectedBulkIds.add(id);
-                card.classList.add('selected-for-bulk');
-                uiOverlay.classList.remove('hidden');
-                
-                if (!bulkQtyMap[id]) {
-                    const item = globalData.find(x => x.id === id);
-                    if (item) bulkQtyMap[id] = item.quantity;
-                }
+                selectedBulkIds.add(id); card.classList.add('selected-for-bulk'); uiOverlay.classList.remove('hidden');
+                if (!bulkQtyMap[id]) { const item = globalData.find(x => x.id === id); if (item) bulkQtyMap[id] = item.quantity; }
             }
         });
         updateBulkCount();
     }
 
-    function showMoreVault() {
-        vaultDisplayLimit += 20;
-        applyFiltersAndRender();
-    }
+    function showMoreVault() { vaultDisplayLimit += 20; applyFiltersAndRender(); }
 
-    // --- ENGINE RENDERING DATA-DRIVEN ---
     function applyFiltersAndRender() {
         const query = document.getElementById('inventorySearchInput').value.toLowerCase();
-        const startDate = document.getElementById('filterStartDate').value; 
-        const endDate = document.getElementById('filterEndDate').value; 
+        const startDate = document.getElementById('filterStartDate').value; const endDate = document.getElementById('filterEndDate').value; 
         const selectedSet = document.getElementById('filterSetSelect').value.toLowerCase(); 
-
         const isSearchingVault = query !== '' || selectedSet !== '';
         
-        const vaultGrid = document.getElementById('vaultGrid');
-        const soldGrid = document.getElementById('soldGrid');
-        
-        let vaultHtml = ''; 
-        let soldHtml = '';
-        let runningTotalSold = 0; 
-        let runningTotalProfit = 0;
+        const vaultGrid = document.getElementById('vaultGrid'); const soldGrid = document.getElementById('soldGrid');
+        let vaultHtml = ''; let soldHtml = ''; let runningTotalSold = 0; let runningTotalProfit = 0;
 
-        // --- 1. RENDER VAULT ---
         const vaultItems = globalData.filter(item => item.status === 'Vault' || !item.status);
         const filteredVault = vaultItems.filter(item => {
             const txt = (item.name + ' ' + item.set_name).toLowerCase();
-            const matchQuery = txt.includes(query);
-            const matchSet = !selectedSet || item.set_name.toLowerCase() === selectedSet;
-            return matchQuery && matchSet;
+            return txt.includes(query) && (!selectedSet || item.set_name.toLowerCase() === selectedSet);
         });
 
-        // Bypassing Pagination jika sedang Searching
         const itemsToRender = isSearchingVault ? filteredVault : filteredVault.slice(0, vaultDisplayLimit);
 
         itemsToRender.forEach(item => {
@@ -452,10 +374,8 @@
             const qtyAdjuster = `<div class="qty-adjuster"><button class="qty-btn" onclick="event.stopPropagation(); quickAdjustQty('${item.id}', 'minus')">-</button><span class="qty-val">${item.quantity}</span><button class="qty-btn" onclick="event.stopPropagation(); quickAdjustQty('${item.id}', 'add')">+</button></div>`;
             const safeName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
             
-            const isSelected = selectedBulkIds.has(item.id);
-            const selectedClass = isSelected ? 'selected-for-bulk' : '';
-            const overlayHidden = isSelected ? '' : 'hidden';
-            const currentBulkQty = bulkQtyMap[item.id] || item.quantity;
+            const isSelected = selectedBulkIds.has(item.id); const selectedClass = isSelected ? 'selected-for-bulk' : '';
+            const overlayHidden = isSelected ? '' : 'hidden'; const currentBulkQty = bulkQtyMap[item.id] || item.quantity;
 
             vaultHtml += `
                 <div class="showcase-card ${isBulkMode ? 'is-bulkable' : ''} ${selectedClass}" id="card_${item.id}" onclick="toggleCardBulk('${item.id}')">
@@ -469,10 +389,7 @@
                     <div class="card-header">
                         <img src="${imgSrc}" class="card-thumb" alt="Card" loading="lazy">
                         <div class="card-title-area">
-                            <h3 class="card-title" title="${item.name}">
-                                <span class="card-name-text">${item.name}</span>
-                                ${qtyAdjuster}
-                            </h3>
+                            <h3 class="card-title" title="${item.name}"><span class="card-name-text">${item.name}</span>${qtyAdjuster}</h3>
                             <p class="card-set">${item.set_name}</p>
                             <div class="finance-row">
                                 <div><span style="color:var(--text-muted)">Cost:</span> <span style="color:#ffffff;">${parseFloat(item.purchase_price) > 0 ? formatIDR(item.purchase_price) : '-'}</span></div>
@@ -492,18 +409,12 @@
             `;
         });
 
-        // Tampilkan tombol Show More jika data sisa masih ada & tidak sedang melakukan search
         if (!isSearchingVault && filteredVault.length > vaultDisplayLimit) {
             vaultHtml += `<div style="grid-column: 1 / -1; text-align: center; padding: 1.5rem 0;"><button onclick="showMoreVault()" style="background:#1e293b; color:white; border:2px solid var(--primary); padding:0.8rem 2rem; border-radius:30px; font-weight:bold; cursor:pointer; font-size: 0.95rem; transition: 0.2s;">Tampilkan Lebih Banyak (${vaultDisplayLimit} / ${filteredVault.length}) ↓</button></div>`;
         }
-        
-        if (filteredVault.length === 0) {
-            vaultHtml = `<div style="grid-column: 1/-1; text-align:center; padding: 3rem; color: var(--text-muted); font-size:1rem; font-weight:bold;">Tidak ada kartu yang ditemukan.</div>`;
-        }
-        
+        if (filteredVault.length === 0) vaultHtml = `<div style="grid-column: 1/-1; text-align:center; padding: 3rem; color: var(--text-muted); font-size:1rem; font-weight:bold;">Tidak ada kartu yang ditemukan.</div>`;
         vaultGrid.innerHTML = vaultHtml;
 
-        // --- 2. RENDER SOLD TRANSACTIONS ---
         const soldItems = globalData.filter(item => item.status === 'Sold');
         const groupedSold = {};
         soldItems.forEach(item => {
@@ -516,34 +427,26 @@
 
         let soldRenderCount = 0;
         for(let tid in groupedSold) {
-            const trx = groupedSold[tid];
-            const cardDate = trx.sold_at ? trx.sold_at.substring(0, 10) : '';
-
+            const trx = groupedSold[tid]; const cardDate = trx.sold_at ? trx.sold_at.substring(0, 10) : '';
             let dateMatches = true;
             if (startDate && cardDate < startDate) dateMatches = false;
             if (endDate && cardDate > endDate) dateMatches = false;
 
-            let contentMatches = false;
-            let miniCardsHtml = '';
-
+            let contentMatches = false; let miniCardsHtml = '';
             trx.items.forEach(i => {
                 const itemSet = (i.set_name || '').toLowerCase();
                 const matchQuery = (i.name + ' ' + (i.set_name||'')).toLowerCase().includes(query);
                 const matchSet = !selectedSet || itemSet === selectedSet;
-                
                 const finalItemShow = matchQuery && matchSet;
                 if(finalItemShow) contentMatches = true;
 
-                const hiddenClass = finalItemShow ? '' : 'hidden';
-                
                 miniCardsHtml += `
-                    <div class="trx-mini-item ${hiddenClass}">
+                    <div class="trx-mini-item ${finalItemShow ? '' : 'hidden'}">
                         <img src="${i.image_url || 'https://via.placeholder.com/40x56/111827/ffffff?text=No+Img'}" style="width:40px; height:56px; object-fit:cover; border-radius:4px; border:1px solid var(--border);" loading="lazy">
                         <div style="flex:1; font-size:0.85rem; color:#ffffff;">
                             <b style="font-size:0.95rem;">${i.name}</b> <span style="color:var(--text-muted); font-weight:bold;">x${i.quantity}</span>
                             <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
-                                Modal: <span style="color:#ffffff;">${formatIDR(i.purchase_price * i.quantity)}</span> • 
-                                Terjual: <span style="color:var(--green); font-weight:bold;">${formatIDR(i.sold_price * i.quantity)}</span>
+                                Modal: <span style="color:#ffffff;">${formatIDR(i.purchase_price * i.quantity)}</span> • Terjual: <span style="color:var(--green); font-weight:bold;">${formatIDR(i.sold_price * i.quantity)}</span>
                             </div>
                         </div>
                         <button onclick="batalJual('${i.id}')" class="btn-undo-sale">↩ Cancel</button>
@@ -551,18 +454,13 @@
                 `;
             });
 
-            const finalShow = dateMatches && (contentMatches || (query === '' && !selectedSet));
-
-            if (finalShow) {
-                soldRenderCount++;
-                const profit = trx.total_sold - trx.total_modal;
-                const profitClass = profit >= 0 ? 'profit-plus' : 'profit-minus';
+            if (dateMatches && (contentMatches || (query === '' && !selectedSet))) {
+                soldRenderCount++; const profit = trx.total_sold - trx.total_modal; const profitClass = profit >= 0 ? 'profit-plus' : 'profit-minus';
                 let tglDisplay = '-';
                 if(trx.sold_at) {
                     const d = new Date(trx.sold_at);
                     tglDisplay = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
                 }
-
                 soldHtml += `
                     <div class="trx-card">
                         <div style="display:flex; justify-content:space-between; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; font-size:0.85rem;">
@@ -572,8 +470,7 @@
                         <div>${miniCardsHtml}</div>
                     </div>
                 `;
-                runningTotalSold += trx.total_sold; 
-                runningTotalProfit += profit;
+                runningTotalSold += trx.total_sold; runningTotalProfit += profit;
             }
         }
 
@@ -588,22 +485,14 @@
 
     async function loadInventory() {
         try {
-            const res = await fetch(`${API_URL}/api/inventory`); 
-            globalData = await res.json();
-            
-            // Populasikan filter drop-down Set Expansion
-            const setSelect = document.getElementById('filterSetSelect');
-            const previousSelection = setSelect.value;
+            const res = await fetch(`${API_URL}/api/inventory`); globalData = await res.json();
+            const setSelect = document.getElementById('filterSetSelect'); const previousSelection = setSelect.value;
             const uniqueSets = [...new Set(globalData.map(item => item.set_name).filter(Boolean))].sort();
-            
             setSelect.innerHTML = '<option value="">✨ Semua Set Expansion</option>';
             uniqueSets.forEach(setName => {
-                const opt = document.createElement('option');
-                opt.value = setName; opt.innerText = setName;
-                if(setName === previousSelection) opt.selected = true;
-                setSelect.appendChild(opt);
+                const opt = document.createElement('option'); opt.value = setName; opt.innerText = setName;
+                if(setName === previousSelection) opt.selected = true; setSelect.appendChild(opt);
             });
-
             applyFiltersAndRender();
         } catch (error) { console.error("Load Inventory Error:", error); }
     }
@@ -612,99 +501,56 @@
         if(isBulkMode) return; 
         let inputsHtml = '';
         if(maxQty > 1) {
-            inputsHtml += `
-                <label style="font-size:0.85rem; display:block; margin-bottom:0.4rem; font-weight:bold; color:#ffffff;">Jumlah Terjual (Maks: ${maxQty})</label>
+            inputsHtml += `<label style="font-size:0.85rem; display:block; margin-bottom:0.4rem; font-weight:bold; color:#ffffff;">Jumlah Terjual (Maks: ${maxQty})</label>
                 <div class="qty-adjuster" style="margin-bottom: 1rem; display:flex; justify-content: space-between; padding: 0.4rem 0.6rem; background: var(--bg-main);">
                     <button type="button" class="qty-btn" style="font-size:1.4rem;" onclick="let el=document.getElementById('modalSellQtyVal'); let v=parseInt(el.value)||0; if(v > 1) el.value = v - 1;">-</button>
                     <input type="number" id="modalSellQtyVal" value="${maxQty}" min="1" max="${maxQty}" style="width: 70px; text-align: center; border: none; background: transparent; color: white; font-size: 1.2rem; font-weight: bold; padding: 0;">
                     <button type="button" class="qty-btn" style="font-size:1.4rem;" onclick="let el=document.getElementById('modalSellQtyVal'); let v=parseInt(el.value)||0; if(v < ${maxQty}) el.value = v + 1;">+</button>
-                </div>
-            `;
+                </div>`;
         } else { inputsHtml += `<input type="hidden" id="modalSellQtyVal" value="1">`; }
         inputsHtml += `<label style="font-size:0.85rem; font-weight:bold; color:#ffffff;">Total Harga Jual Keseluruhan (Rp)</label><input type="text" id="modalSellPrice" placeholder="Misal: 150.000" style="margin-top:0.3rem; font-size:1.1rem; font-weight:bold;" oninput="formatRupiah(this)">`;
 
         openModal(`Jual ${namaItem}`, `Silakan atur kuantitas dan harga jual untuk mencatat transaksi.`, inputsHtml, async () => {
-            const sellQtyElement = document.getElementById('modalSellQtyVal');
-            const hargaElement = document.getElementById('modalSellPrice');
+            const sellQtyElement = document.getElementById('modalSellQtyVal'); const hargaElement = document.getElementById('modalSellPrice');
+            const sellQty = parseInt(sellQtyElement.value); const harga = parseRupiah(hargaElement.value);
+            if(isNaN(sellQty) || sellQty < 1 || sellQty > maxQty) { showToast(`Kuantitas harus 1 - ${maxQty}!`, true); return; }
+            if(isNaN(harga) || harga === 0) { showToast('Harga belum diisi!', true); return; }
             
-            if(!sellQtyElement || !hargaElement) throw new Error("Gagal membaca input modal.");
-            
-            const sellQty = parseInt(sellQtyElement.value); 
-            const harga = parseRupiah(hargaElement.value);
-            
-            if(isNaN(sellQty) || sellQty < 1 || sellQty > maxQty) {
-                showToast(`Kuantitas harus 1 - ${maxQty}!`, true);
-                return;
-            }
-            if(isNaN(harga) || harga === 0) {
-                showToast('Harga belum diisi!', true);
-                return;
-            }
-            
-            const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, { 
-                method: 'PUT', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ sell_qty: sellQty, sold_price: harga }) 
-            });
-            
-            if(res.ok) { 
-                closeModal(); 
-                showToast("Berhasil dijual!"); 
-                loadInventory(); 
-                switchTab('sold'); 
-            } else {
-                showToast('Gagal terhubung ke API Server.', true);
-            }
+            const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sell_qty: sellQty, sold_price: harga }) });
+            if(res.ok) { closeModal(); showToast("Berhasil dijual!"); loadInventory(); switchTab('sold'); } else { showToast('Gagal terhubung ke API Server.', true); }
         });
     }
 
     function openBulkSellModal() {
-        if(selectedBulkIds.size === 0) return showToast('Pilih minimal 1 item dengan mengeklik kartunya!', true);
-        
+        const selectedCards = document.querySelectorAll('.selected-for-bulk'); 
+        if(selectedCards.length === 0) return showToast('Pilih minimal 1 item dengan mengeklik kartunya!', true);
         const inputsHtml = `<label style="font-size:0.85rem; font-weight:bold; color:#ffffff;">Total Harga Borongan Keseluruhan (Rp)</label><input type="text" id="modalBulkPrice" placeholder="Misal: 250.000" style="margin-top:0.3rem; font-size:1.1rem; font-weight:bold;" oninput="formatRupiah(this)">`;
         
-        openModal(`Jual Borongan (${selectedBulkIds.size} Tipe)`, `Sistem akan mencatat total omset keseluruhan di struk dan membagi proporsional nilainya ke tiap kartu.`, inputsHtml, async () => {
-            const hargaElement = document.getElementById('modalBulkPrice');
-            if(!hargaElement) throw new Error("Gagal membaca input harga modal.");
+        openModal(`Jual Borongan (${selectedCards.length} Tipe)`, `Sistem akan mencatat total omset keseluruhan di struk dan membagi proporsional nilainya ke tiap kartu.`, inputsHtml, async () => {
+            const harga = parseRupiah(document.getElementById('modalBulkPrice').value); 
+            if(isNaN(harga) || harga === 0) { showToast('Harga kosong!', true); return; }
             
-            const harga = parseRupiah(hargaElement.value); 
-            if(isNaN(harga) || harga === 0) {
-                showToast('Harga kosong!', true);
-                return;
-            }
-            
-            const items = Array.from(selectedBulkIds).map(id => {
-                return { id: id, sell_qty: bulkQtyMap[id] || 1 };
-            });
-
+            const items = Array.from(selectedCards).map(card => { const id = card.id.replace('card_', ''); return { id: id, sell_qty: document.getElementById(`bulk_qty_${id}`).value }; });
             const res = await fetch(`${API_URL}/api/inventory/bulk-sell`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items, total_price: harga }) });
-            if(res.ok) { 
-                closeModal(); showToast("Borongan sukses!"); 
-                selectedBulkIds.clear(); bulkQtyMap = {};
-                loadInventory(); switchTab('sold'); 
-            } else { showToast('Gagal koneksi ke server.', true); }
+            if(res.ok) { closeModal(); showToast("Borongan sukses!"); loadInventory(); switchTab('sold'); } else { showToast('Gagal koneksi ke server.', true); }
         });
     }
 
     function openBulkDeleteModal() {
-        if(selectedBulkIds.size === 0) return showToast('Pilih minimal 1 item dengan mengeklik kartunya!', true);
+        const selectedCards = document.querySelectorAll('.selected-for-bulk'); 
+        if(selectedCards.length === 0) return showToast('Pilih minimal 1 item dengan mengeklik kartunya!', true);
         
-        openModal(`Hapus Borongan (${selectedBulkIds.size} Tipe)`, `Apakah kamu yakin ingin menghapus permanen semua kartu yang dipilih dari Vault? <br><br><b style="color:var(--danger)">Aksi ini tidak bisa dikembalikan.</b>`, '', async () => {
-            const ids = Array.from(selectedBulkIds);
+        openModal(`Hapus Borongan (${selectedCards.length} Tipe)`, `Apakah kamu yakin ingin menghapus permanen semua kartu yang dipilih dari Vault? <br><br><b style="color:var(--danger)">Aksi ini tidak bisa dikembalikan.</b>`, '', async () => {
+            const ids = Array.from(selectedCards).map(card => card.id.replace('card_', ''));
             const res = await fetch(`${API_URL}/api/inventory/bulk-delete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) });
-            if(res.ok) { 
-                closeModal(); showToast(`${selectedBulkIds.size} item berhasil terhapus!`); 
-                selectedBulkIds.clear(); bulkQtyMap = {};
-                loadInventory(); toggleBulkMode(); 
-            } else { throw new Error("Gagal koneksi API."); }
+            if(res.ok) { closeModal(); showToast(`${selectedCards.length} item berhasil terhapus!`); loadInventory(); toggleBulkMode(); } else { throw new Error("Gagal koneksi API."); }
         });
     }
 
     function batalJual(id) {
         openModal('Batalkan Penjualan', 'Tarik kartu ini kembali ke Vault dan gabungkan kuantitasnya ke tumpukan semula?', '', async () => {
             const res = await fetch(`${API_URL}/api/inventory/${id}/undo-sell`, { method: 'PUT' }); 
-            if(res.ok) { closeModal(); showToast("Berhasil kembali ke Vault."); loadInventory(); }
-            else { throw new Error("Gagal koneksi API."); }
+            if(res.ok) { closeModal(); showToast("Berhasil kembali ke Vault."); loadInventory(); } else { throw new Error("Gagal koneksi API."); }
         });
     }
 
@@ -712,47 +558,105 @@
         if(isBulkMode) return;
         openModal('Hapus Permanen', 'Yakin ingin menghapus kartu ini dari database?', '', async () => {
             const res = await fetch(`${API_URL}/api/inventory/${id}`, { method: 'DELETE' }); 
-            if(res.ok) { closeModal(); showToast("Item terhapus permanen."); loadInventory(); }
-            else { throw new Error("Gagal koneksi API."); }
+            if(res.ok) { closeModal(); showToast("Item terhapus permanen."); loadInventory(); } else { throw new Error("Gagal koneksi API."); }
         });
     }
 
     function nukeDatabase() {
         openModal('🧨 PERINGATAN BAHAYA!', 'Yakin ingin <b>menghapus permanen seluruh koleksi yang ada di Vault</b> saat ini? <br><br>(Data transaksi/Sold <b>tidak</b> akan terhapus).', '', async () => {
             const res = await fetch(`${API_URL}/api/inventory/nuke`, { method: 'DELETE' });
-            if(res.ok) { closeModal(); showToast("Vault berhasil dikosongkan secara total!"); loadInventory(); toggleBulkMode(); }
-            else { throw new Error("Gagal mengeksekusi perintah server."); }
+            if(res.ok) { closeModal(); showToast("Vault berhasil dikosongkan secara total!"); loadInventory(); toggleBulkMode(); } else { throw new Error("Gagal mengeksekusi perintah server."); }
         });
     }
 
     function toggleBulkMode() {
-        isBulkMode = !isBulkMode; 
-        document.getElementById('bulkActionBar').classList.toggle('hidden', !isBulkMode);
+        isBulkMode = !isBulkMode; document.getElementById('bulkActionBar').classList.toggle('hidden', !isBulkMode);
+        const btn = document.getElementById('btnToggleBulk'); btn.innerText = isBulkMode ? 'Tutup Mode' : '📦 Mode Borongan'; btn.style.background = isBulkMode ? 'var(--danger)' : '#1f2937';
         
-        const btn = document.getElementById('btnToggleBulk');
-        btn.innerText = isBulkMode ? 'Tutup Mode' : '📦 Mode Borongan';
-        btn.style.background = isBulkMode ? 'var(--danger)' : '#1f2937';
-        
-        if (!isBulkMode) {
-            selectedBulkIds.clear();
-            bulkQtyMap = {};
-        }
-        applyFiltersAndRender();
+        document.querySelectorAll('.showcase-card').forEach(card => {
+            card.classList.toggle('is-bulkable', isBulkMode);
+            if (!isBulkMode) { card.classList.remove('selected-for-bulk'); const ui = document.getElementById(`bulk_ui_${card.id.replace('card_', '')}`); if(ui) ui.classList.add('hidden'); }
+        });
+        if (!isBulkMode) { selectedBulkIds.clear(); bulkQtyMap = {}; }
         updateBulkCount();
     }
-    
     function updateBulkCount() { document.getElementById('bulkCountText').innerText = `${selectedBulkIds.size} Tipe Dipilih`; }
+
+    // --- MESIN EKSPORT EXCEL ---
+    function exportToExcel() {
+        if (globalData.length === 0) return showToast('Tidak ada data di database untuk diexport!', true);
+        
+        showToast("Menyiapkan file Excel...", false);
+        
+        // Pemetaan data agar formatnya ramah untuk di-import kembali nanti
+        const exportData = globalData.map(item => ({
+            name: item.name,
+            category: item.category,
+            set_name: item.set_name,
+            set_code: item.set_code || '',
+            card_number: item.card_number || '',
+            language: item.language,
+            quantity: item.quantity,
+            purchase_price: item.purchase_price,
+            market_price: item.market_price,
+            card_condition: item.card_condition,
+            is_holo: item.is_holo === 1 ? 'YES' : 'NO',
+            is_first_edition: item.is_first_edition === 1 ? 'YES' : 'NO',
+            grader: item.grader || '',
+            grade: item.grade || '',
+            cert_number: item.cert_number || '',
+            notes: item.notes || '',
+            image_url: item.image_url || '',
+            status: item.status || 'Vault',
+            sold_price: item.sold_price || '',
+            sold_at: item.sold_at || '',
+            id: item.id
+        }));
+
+        try {
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Holovault_DB");
+            
+            // Nama file dengan tanggal hari ini
+            const dateStr = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(workbook, `Holovault_Backup_${dateStr}.xlsx`);
+            
+            showToast('✅ Berhasil mengunduh Database!');
+        } catch (error) {
+            console.error("Export Error:", error);
+            showToast('Gagal membuat file Excel.', true);
+        }
+    }
 
     function handleExcelImport(event) {
         const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
         reader.onload = async function(e) {
             try {
+                showToast("Menganalisis file Excel...", false);
                 const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' });
                 const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 if (jsonData.length === 0) return showToast('File kosong!', true);
+
+                jsonData.forEach(item => {
+                    Object.keys(item).forEach(key => { if (item[key] === "NULL" || item[key] === "null") item[key] = null; });
+                    if(item.img_url) item.image_url = item.img_url; 
+                    
+                    if(String(item.is_holo).trim().toUpperCase() === 'YES' || item.is_holo == 1) item.is_holo = 1; else item.is_holo = 0;
+                    if(String(item.is_first_edition).trim().toUpperCase() === 'YES' || item.is_first_edition == 1) item.is_first_edition = 1; else item.is_first_edition = 0;
+                    
+                    let q = parseInt(item.quantity); item.quantity = (isNaN(q) || q < 1) ? 1 : q;
+                });
+
                 const res = await fetch(`${API_URL}/api/inventory/bulk-import`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(jsonData) });
-                if (res.ok) { showToast(`Sukses import ${jsonData.length} item!`); loadInventory(); } else { showToast('Gagal import. Cek struktur file.', true); }
-            } catch (err) { showToast('Error membaca file.', true); }
+                if (res.ok) { showToast(`Sukses import ${jsonData.length} item!`); loadInventory(); } 
+                else { const errData = await res.json(); showToast('Gagal API: ' + (errData.error || 'Server menolak data.'), true); }
+            } catch (err) { 
+                console.error(err);
+                if (err.message === "Failed to fetch") { showToast('Error: Server Node.js terputus / mati.', true); } 
+                else { showToast('Error sistem: ' + err.message, true); }
+            }
+            document.getElementById('excelFileInput').value = '';
         }; reader.readAsArrayBuffer(file);
     }
 
@@ -806,17 +710,14 @@
     }
 
     document.getElementById('formKartu').addEventListener('submit', async (e) => {
-        e.preventDefault(); 
-        const formData = new FormData(e.target);
-        
+        e.preventDefault(); const formData = new FormData(e.target);
         formData.set('purchase_price', parseRupiah(document.getElementById('purchasePrice').value));
         formData.set('market_price', parseRupiah(document.getElementById('marketPrice').value));
 
         const url = editStateId ? `${API_URL}/api/inventory/${editStateId}` : `${API_URL}/api/inventory`;
         try {
             const res = await fetch(url, { method: editStateId ? 'PUT' : 'POST', body: formData });
-            if(res.ok) { batalEdit(); loadInventory(); showToast(editStateId ? "Teredit!" : "Tersimpan!"); }
-            else { throw new Error("Gagal menyimpan ke database."); }
+            if(res.ok) { batalEdit(); loadInventory(); showToast(editStateId ? "Teredit!" : "Tersimpan!"); } else { throw new Error("Gagal menyimpan ke database."); }
         } catch (error) { showToast('Error DB: ' + error.message, true); }
     });
 
