@@ -106,6 +106,11 @@
 
         .profit-plus { color: var(--green); } .profit-minus { color: var(--danger); }
         .hidden { display: none !important; }
+        
+        .btn-show-more { background:#1e293b; color:white; border:2px solid var(--primary); padding:0.8rem 2rem; border-radius:30px; font-weight:bold; cursor:pointer; font-size: 0.95rem; transition: 0.2s; }
+        .btn-show-more:hover { background:var(--primary); }
+        .btn-show-all { background:var(--primary); color:white; border:none; padding:0.8rem 2rem; border-radius:30px; font-weight:bold; cursor:pointer; font-size: 0.95rem; transition: 0.2s; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4); }
+        .btn-show-all:hover { background:#4338ca; transform: translateY(-2px); }
     </style>
 </head>
 <body>
@@ -130,10 +135,8 @@
         <div style="display: flex; gap: 0.5rem; align-items: center;">
             <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelImport(event)">
             <button type="button" onclick="document.getElementById('excelFileInput').click()" style="background: #334155; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📥 Import Excel</button>
-            
             <button type="button" onclick="exportToExcel()" style="background: #059669; border: 1px solid var(--green); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📤 Export DB</button>
-
-            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600; margin-left: 0.5rem;">v8.6 Export Ready</div>
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600; margin-left:0.5rem;">v8.9 UI Clean Up</div>
         </div>
     </header>
 
@@ -142,7 +145,6 @@
         <button onclick="toggleSelectAll()" style="background:#3b82f6; padding:0.5rem 1.2rem; border-radius:20px; color:#ffffff; border:none; cursor:pointer; font-size:0.85rem; font-weight:bold; margin-right: 0.5rem;">Pilih Semua</button>
         <button onclick="openBulkSellModal()" style="background:var(--green); padding:0.5rem 1.2rem; border-radius:20px; color:#ffffff; border:none; cursor:pointer; font-size:0.85rem; font-weight:bold;">Jual Borongan</button>
         <button onclick="openBulkDeleteModal()" style="background:var(--danger); padding:0.5rem 1.2rem; border-radius:20px; color:#ffffff; border:none; cursor:pointer; font-size:0.85rem; font-weight:bold;">Hapus Borongan</button>
-        <button onclick="nukeDatabase()" style="background:#b91c1c; padding:0.5rem 1.2rem; border-radius:20px; color:#ffffff; border:2px solid #f87171; cursor:pointer; font-size:0.85rem; font-weight:bold; margin-left: 1rem;">🧨 NUKE VAULT</button>
         <button onclick="toggleBulkMode()" style="background:transparent; border:2px solid white; padding:0.4rem 1.2rem; border-radius:20px; color:#ffffff; cursor:pointer; font-size:0.85rem; font-weight:bold; margin-left: 0.5rem;">Batal</button>
     </div>
 
@@ -346,6 +348,8 @@
     }
 
     function showMoreVault() { vaultDisplayLimit += 20; applyFiltersAndRender(); }
+    
+    function showAllVault() { vaultDisplayLimit = globalData.length; applyFiltersAndRender(); }
 
     function applyFiltersAndRender() {
         const query = document.getElementById('inventorySearchInput').value.toLowerCase();
@@ -410,7 +414,11 @@
         });
 
         if (!isSearchingVault && filteredVault.length > vaultDisplayLimit) {
-            vaultHtml += `<div style="grid-column: 1 / -1; text-align: center; padding: 1.5rem 0;"><button onclick="showMoreVault()" style="background:#1e293b; color:white; border:2px solid var(--primary); padding:0.8rem 2rem; border-radius:30px; font-weight:bold; cursor:pointer; font-size: 0.95rem; transition: 0.2s;">Tampilkan Lebih Banyak (${vaultDisplayLimit} / ${filteredVault.length}) ↓</button></div>`;
+            vaultHtml += `
+            <div style="grid-column: 1 / -1; display: flex; justify-content: center; gap: 1rem; padding: 1.5rem 0;">
+                <button onclick="showMoreVault()" class="btn-show-more">Tampilkan Lebih Banyak (${vaultDisplayLimit} / ${filteredVault.length}) ↓</button>
+                <button onclick="showAllVault()" class="btn-show-all">Tampilkan Semua 🚀</button>
+            </div>`;
         }
         if (filteredVault.length === 0) vaultHtml = `<div style="grid-column: 1/-1; text-align:center; padding: 3rem; color: var(--text-muted); font-size:1rem; font-weight:bold;">Tidak ada kartu yang ditemukan.</div>`;
         vaultGrid.innerHTML = vaultHtml;
@@ -562,13 +570,6 @@
         });
     }
 
-    function nukeDatabase() {
-        openModal('🧨 PERINGATAN BAHAYA!', 'Yakin ingin <b>menghapus permanen seluruh koleksi yang ada di Vault</b> saat ini? <br><br>(Data transaksi/Sold <b>tidak</b> akan terhapus).', '', async () => {
-            const res = await fetch(`${API_URL}/api/inventory/nuke`, { method: 'DELETE' });
-            if(res.ok) { closeModal(); showToast("Vault berhasil dikosongkan secara total!"); loadInventory(); toggleBulkMode(); } else { throw new Error("Gagal mengeksekusi perintah server."); }
-        });
-    }
-
     function toggleBulkMode() {
         isBulkMode = !isBulkMode; document.getElementById('bulkActionBar').classList.toggle('hidden', !isBulkMode);
         const btn = document.getElementById('btnToggleBulk'); btn.innerText = isBulkMode ? 'Tutup Mode' : '📦 Mode Borongan'; btn.style.background = isBulkMode ? 'var(--danger)' : '#1f2937';
@@ -582,51 +583,20 @@
     }
     function updateBulkCount() { document.getElementById('bulkCountText').innerText = `${selectedBulkIds.size} Tipe Dipilih`; }
 
-    // --- MESIN EKSPORT EXCEL ---
     function exportToExcel() {
-        if (globalData.length === 0) return showToast('Tidak ada data di database untuk diexport!', true);
-        
+        const vaultItems = globalData.filter(item => item.status === 'Vault' || !item.status);
+        if (vaultItems.length === 0) return showToast('Tidak ada kartu di Vault untuk diexport!', true);
         showToast("Menyiapkan file Excel...", false);
-        
-        // Pemetaan data agar formatnya ramah untuk di-import kembali nanti
-        const exportData = globalData.map(item => ({
-            name: item.name,
-            category: item.category,
-            set_name: item.set_name,
-            set_code: item.set_code || '',
-            card_number: item.card_number || '',
-            language: item.language,
-            quantity: item.quantity,
-            purchase_price: item.purchase_price,
-            market_price: item.market_price,
-            card_condition: item.card_condition,
-            is_holo: item.is_holo === 1 ? 'YES' : 'NO',
-            is_first_edition: item.is_first_edition === 1 ? 'YES' : 'NO',
-            grader: item.grader || '',
-            grade: item.grade || '',
-            cert_number: item.cert_number || '',
-            notes: item.notes || '',
-            image_url: item.image_url || '',
-            status: item.status || 'Vault',
-            sold_price: item.sold_price || '',
-            sold_at: item.sold_at || '',
-            id: item.id
+        const exportData = vaultItems.map(item => ({
+            name: item.name, category: item.category, set_name: item.set_name, set_code: item.set_code || '', card_number: item.card_number || '', language: item.language,
+            quantity: item.quantity, purchase_price: item.purchase_price, market_price: item.market_price, card_condition: item.card_condition,
+            is_holo: item.is_holo === 1 ? 'YES' : 'NO', is_first_edition: item.is_first_edition === 1 ? 'YES' : 'NO', grader: item.grader || '', grade: item.grade || '',
+            cert_number: item.cert_number || '', notes: item.notes || '', image_url: item.image_url || ''
         }));
-
         try {
-            const worksheet = XLSX.utils.json_to_sheet(exportData);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Holovault_DB");
-            
-            // Nama file dengan tanggal hari ini
-            const dateStr = new Date().toISOString().slice(0, 10);
-            XLSX.writeFile(workbook, `Holovault_Backup_${dateStr}.xlsx`);
-            
-            showToast('✅ Berhasil mengunduh Database!');
-        } catch (error) {
-            console.error("Export Error:", error);
-            showToast('Gagal membuat file Excel.', true);
-        }
+            const worksheet = XLSX.utils.json_to_sheet(exportData); const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, worksheet, "Holovault");
+            const dateStr = new Date().toISOString().slice(0, 10); XLSX.writeFile(workbook, `Holovault_Backup_${dateStr}.xlsx`); showToast('✅ Berhasil mengunduh Excel!');
+        } catch (error) { console.error("Export Error:", error); showToast('Gagal membuat file Excel.', true); }
     }
 
     function handleExcelImport(event) {
@@ -641,20 +611,17 @@
                 jsonData.forEach(item => {
                     Object.keys(item).forEach(key => { if (item[key] === "NULL" || item[key] === "null") item[key] = null; });
                     if(item.img_url) item.image_url = item.img_url; 
-                    
                     if(String(item.is_holo).trim().toUpperCase() === 'YES' || item.is_holo == 1) item.is_holo = 1; else item.is_holo = 0;
                     if(String(item.is_first_edition).trim().toUpperCase() === 'YES' || item.is_first_edition == 1) item.is_first_edition = 1; else item.is_first_edition = 0;
-                    
                     let q = parseInt(item.quantity); item.quantity = (isNaN(q) || q < 1) ? 1 : q;
                 });
 
                 const res = await fetch(`${API_URL}/api/inventory/bulk-import`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(jsonData) });
-                if (res.ok) { showToast(`Sukses import ${jsonData.length} item!`); loadInventory(); } 
+                if (res.ok) { const successData = await res.json(); showToast(successData.message); loadInventory(); } 
                 else { const errData = await res.json(); showToast('Gagal API: ' + (errData.error || 'Server menolak data.'), true); }
             } catch (err) { 
                 console.error(err);
-                if (err.message === "Failed to fetch") { showToast('Error: Server Node.js terputus / mati.', true); } 
-                else { showToast('Error sistem: ' + err.message, true); }
+                if (err.message === "Failed to fetch") { showToast('Error: Server Node.js terputus / mati.', true); } else { showToast('Error sistem: ' + err.message, true); }
             }
             document.getElementById('excelFileInput').value = '';
         }; reader.readAsArrayBuffer(file);
@@ -712,7 +679,7 @@
     document.getElementById('formKartu').addEventListener('submit', async (e) => {
         e.preventDefault(); const formData = new FormData(e.target);
         formData.set('purchase_price', parseRupiah(document.getElementById('purchasePrice').value));
-        formData.set('market_price', parseRupiah(document.getElementById('marketPrice').value));
+        formData.set('marketPrice', parseRupiah(document.getElementById('marketPrice').value)); 
 
         const url = editStateId ? `${API_URL}/api/inventory/${editStateId}` : `${API_URL}/api/inventory`;
         try {

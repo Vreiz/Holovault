@@ -124,48 +124,54 @@ app.put('/api/inventory/:id/undo-sell', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal batalkan' }); }
 });
 
-// --- PERBAIKAN: AUTO-CLAMP KUANTITAS & HARGA AGAR DATABASE TIDAK MENOLAK DATA ---
+// --- PERBAIKAN: ENGINE IMPORT UPSERT (GABUNGKAN QTY JIKA KARTU SUDAH ADA) ---
 app.post('/api/inventory/bulk-import', async (req, res) => {
     try {
         const items = req.body;
         if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'Data kosong' });
 
-        const values = items.map(i => {
-            // Tembok Baja: Mencegah angka 0 atau minus masuk ke database
+        let insertedCount = 0;
+        let updatedCount = 0;
+
+        for (const i of items) {
             const parsedQty = parseInt(i.quantity);
             const safeQty = (isNaN(parsedQty) || parsedQty < 1) ? 1 : parsedQty;
-            
             const parsedPP = parseFloat(i.purchase_price);
             const safePP = (isNaN(parsedPP) || parsedPP < 0) ? 0 : parsedPP;
-            
             const parsedMP = parseFloat(i.market_price);
             const safeMP = (isNaN(parsedMP) || parsedMP < 0) ? 0 : parsedMP;
 
-            return [
-                crypto.randomUUID(), 
-                i.name || 'Unnamed Card', 
-                i.category || 'Single', 
-                i.set_name || '-', 
-                i.set_code || null, 
-                i.card_number || null, 
-                i.language || 'English', 
-                safeQty, 
-                safePP, 
-                safeMP, 
-                i.image_url || null, 
-                i.notes || null, 
-                i.card_condition || 'NM', 
-                parseInt(i.is_holo) || 0, 
-                parseInt(i.is_first_edition) || 0, 
-                i.grader || null, 
-                i.grade || null, 
-                i.cert_number || null, 
-                'Vault'
-            ];
-        });
+            const isHolo = parseInt(i.is_holo) || 0;
+            const is1st = parseInt(i.is_first_edition) || 0;
+            const name = i.name || 'Unnamed Card';
+            const setName = i.set_name || '-';
+            const lang = i.language || 'English';
+            const cond = i.card_condition || 'NM';
+
+            // Cek apakah ada kartu yang sama persis di Vault
+            const [existing] = await pool.query(
+                `SELECT id FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ?`,
+                [name, setName, lang, cond, isHolo, is1st]
+            );
+
+            if (existing.length > 0) {
+                // JIKA ADA: Tambahkan QTY-nya, dan update harga terbarunya
+                await pool.query(
+                    `UPDATE inventory SET quantity = quantity + ?, purchase_price = ?, market_price = ?, image_url = COALESCE(?, image_url) WHERE id = ?`,
+                    [safeQty, safePP, safeMP, i.image_url || null, existing[0].id]
+                );
+                updatedCount++;
+            } else {
+                // JIKA TIDAK ADA: Buat Kotak Baru
+                await pool.query(
+                    `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault')`,
+                    [crypto.randomUUID(), name, i.category || 'Single', setName, i.set_code || null, i.card_number || null, lang, safeQty, safePP, safeMP, i.image_url || null, i.notes || null, cond, isHolo, is1st, i.grader || null, i.grade || null, i.cert_number || null]
+                );
+                insertedCount++;
+            }
+        }
         
-        await pool.query(`INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) VALUES ?`, [values]);
-        res.status(201).json({ message: 'Bulk import berhasil!' });
+        res.status(201).json({ message: `Selesai! ${insertedCount} Kartu Baru. ${updatedCount} Kartu diupdate Qty-nya.` });
     } catch (error) { 
         console.error("🔥 ERROR MYSQL BULK IMPORT:", error);
         res.status(500).json({ error: error.message || 'Gagal menyimpan ke MySQL' }); 
@@ -201,4 +207,4 @@ app.delete('/api/inventory/nuke', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal' }); }
 });
 
-app.listen(3000, () => console.log('Holovault Backend V8.2 MENYALA di http://localhost:3000'));
+app.listen(3000, () => console.log('Holovault Backend V8.7 MENYALA di http://localhost:3000'));
