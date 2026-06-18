@@ -136,7 +136,7 @@
             <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelImport(event)">
             <button type="button" onclick="document.getElementById('excelFileInput').click()" style="background: #334155; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📥 Import Excel</button>
             <button type="button" onclick="exportToExcel()" style="background: #059669; border: 1px solid var(--green); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📤 Export DB</button>
-            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600; margin-left:0.5rem;">v8.9 UI Clean Up</div>
+            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600; margin-left:0.5rem;">v9.0 Master Receipt</div>
         </div>
     </header>
 
@@ -274,7 +274,7 @@
         toast.className = 'toast';
         toast.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--green)';
         toast.innerText = msg; container.appendChild(toast);
-        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3500);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 4000); }, 3500);
     }
 
     function openModal(title, bodyText, inputsHtml, confirmCallback) {
@@ -282,7 +282,7 @@
         const confirmBtn = document.getElementById('modalConfirmBtn'); const newBtn = confirmBtn.cloneNode(true); confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
         newBtn.onclick = async () => { 
             const originalText = newBtn.innerText; newBtn.innerText = 'Memproses...'; newBtn.style.opacity = '0.5'; newBtn.style.pointerEvents = 'none';
-            try { await confirmCallback(); } catch(e) { console.error("System Error:", e); showToast("Terjadi kesalahan sistem: " + e.message, true); } 
+            try { await confirmCallback(); } catch(e) { console.error("System Error:", e); showToast("Kesalahan Database: " + e.message, true); } 
             finally { newBtn.innerText = originalText; newBtn.style.opacity = '1'; newBtn.style.pointerEvents = 'auto'; }
         };
         document.getElementById('customModal').classList.remove('hidden');
@@ -313,8 +313,8 @@
         if(isBulkMode) return; 
         try {
             const res = await fetch(`${API_URL}/api/inventory/${id}/qty`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) });
-            if(res.ok) loadInventory(); else showToast((await res.json()).error, true);
-        } catch (e) { showToast("Gagal terhubung ke API.", true); }
+            if(res.ok) loadInventory(); else { const err = await res.json().catch(()=>({})); throw new Error(err.error || "Gagal mengubah qty"); }
+        } catch (e) { showToast(e.message, true); }
     }
 
     function toggleCardBulk(id) {
@@ -448,13 +448,14 @@
                 const finalItemShow = matchQuery && matchSet;
                 if(finalItemShow) contentMatches = true;
 
+                // PERBAIKAN STRUK: Hanya menampilkan Modal tanpa "Terjual individual"
                 miniCardsHtml += `
                     <div class="trx-mini-item ${finalItemShow ? '' : 'hidden'}">
                         <img src="${i.image_url || 'https://via.placeholder.com/40x56/111827/ffffff?text=No+Img'}" style="width:40px; height:56px; object-fit:cover; border-radius:4px; border:1px solid var(--border);" loading="lazy">
                         <div style="flex:1; font-size:0.85rem; color:#ffffff;">
                             <b style="font-size:0.95rem;">${i.name}</b> <span style="color:var(--text-muted); font-weight:bold;">x${i.quantity}</span>
                             <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">
-                                Modal: <span style="color:#ffffff;">${formatIDR(i.purchase_price * i.quantity)}</span> • Terjual: <span style="color:var(--green); font-weight:bold;">${formatIDR(i.sold_price * i.quantity)}</span>
+                                Total Modal: <span style="color:#ffffff;">${formatIDR(i.purchase_price * i.quantity)}</span>
                             </div>
                         </div>
                         <button onclick="batalJual('${i.id}')" class="btn-undo-sale">↩ Cancel</button>
@@ -525,7 +526,8 @@
             if(isNaN(harga) || harga === 0) { showToast('Harga belum diisi!', true); return; }
             
             const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sell_qty: sellQty, sold_price: harga }) });
-            if(res.ok) { closeModal(); showToast("Berhasil dijual!"); loadInventory(); switchTab('sold'); } else { showToast('Gagal terhubung ke API Server.', true); }
+            if(res.ok) { closeModal(); showToast("Berhasil dijual!"); loadInventory(); switchTab('sold'); } 
+            else { const err = await res.json().catch(()=>({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
         });
     }
 
@@ -540,7 +542,8 @@
             
             const items = Array.from(selectedCards).map(card => { const id = card.id.replace('card_', ''); return { id: id, sell_qty: document.getElementById(`bulk_qty_${id}`).value }; });
             const res = await fetch(`${API_URL}/api/inventory/bulk-sell`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items, total_price: harga }) });
-            if(res.ok) { closeModal(); showToast("Borongan sukses!"); loadInventory(); switchTab('sold'); } else { showToast('Gagal koneksi ke server.', true); }
+            if(res.ok) { closeModal(); showToast("Borongan sukses!"); loadInventory(); switchTab('sold'); } 
+            else { const err = await res.json().catch(()=>({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
         });
     }
 
@@ -551,14 +554,16 @@
         openModal(`Hapus Borongan (${selectedCards.length} Tipe)`, `Apakah kamu yakin ingin menghapus permanen semua kartu yang dipilih dari Vault? <br><br><b style="color:var(--danger)">Aksi ini tidak bisa dikembalikan.</b>`, '', async () => {
             const ids = Array.from(selectedCards).map(card => card.id.replace('card_', ''));
             const res = await fetch(`${API_URL}/api/inventory/bulk-delete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) });
-            if(res.ok) { closeModal(); showToast(`${selectedCards.length} item berhasil terhapus!`); loadInventory(); toggleBulkMode(); } else { throw new Error("Gagal koneksi API."); }
+            if(res.ok) { closeModal(); showToast(`${selectedCards.length} item berhasil terhapus!`); loadInventory(); toggleBulkMode(); } 
+            else { const err = await res.json().catch(()=>({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
         });
     }
 
     function batalJual(id) {
         openModal('Batalkan Penjualan', 'Tarik kartu ini kembali ke Vault dan gabungkan kuantitasnya ke tumpukan semula?', '', async () => {
             const res = await fetch(`${API_URL}/api/inventory/${id}/undo-sell`, { method: 'PUT' }); 
-            if(res.ok) { closeModal(); showToast("Berhasil kembali ke Vault."); loadInventory(); } else { throw new Error("Gagal koneksi API."); }
+            if(res.ok) { closeModal(); showToast("Berhasil kembali ke Vault."); loadInventory(); } 
+            else { const err = await res.json().catch(()=>({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
         });
     }
 
@@ -566,7 +571,8 @@
         if(isBulkMode) return;
         openModal('Hapus Permanen', 'Yakin ingin menghapus kartu ini dari database?', '', async () => {
             const res = await fetch(`${API_URL}/api/inventory/${id}`, { method: 'DELETE' }); 
-            if(res.ok) { closeModal(); showToast("Item terhapus permanen."); loadInventory(); } else { throw new Error("Gagal koneksi API."); }
+            if(res.ok) { closeModal(); showToast("Item terhapus permanen."); loadInventory(); } 
+            else { const err = await res.json().catch(()=>({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
         });
     }
 
