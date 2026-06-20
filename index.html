@@ -416,12 +416,9 @@
         
         const itemsToRender = isSearchingVault ? filteredVault : filteredVault.slice(0, vaultDisplayLimit);
 
-        itemsToRender.forEach(item => {
-            // PERBAIKAN URL GAMBAR (MENANGANI FILE LOKAL)
+itemsToRender.forEach(item => {
             let imgSrc = item.image_url || 'https://via.placeholder.com/55x77/111827/ffffff?text=No+Img';
-            if (imgSrc.startsWith('/uploads/')) {
-                imgSrc = API_URL + imgSrc;
-            }
+            if (imgSrc.startsWith('/uploads/')) imgSrc = API_URL + imgSrc;
 
             let badges = '';
             if(item.category === 'Slab Set') { badges += `<span class="tag" style="background: #be185d; color: #fbcfe8;">Sequential Set</span>`; } 
@@ -432,14 +429,28 @@
             if(item.is_holo) badges += `<span class="tag">Holo</span>`;
             if(item.grader) badges += `<span class="tag" style="background: rgba(139, 92, 246, 0.2); color: #c4b5fd;">${item.grader} ${item.grade || ''}</span>`;
 
-            const qtyAdjuster = `<div class="qty-adjuster"><button class="qty-btn" onclick="event.stopPropagation(); quickAdjustQty('${item.id}', 'minus')">-</button><span class="qty-val">${item.quantity}</span><button class="qty-btn" onclick="event.stopPropagation(); quickAdjustQty('${item.id}', 'add')">+</button></div>`;
+            // --- TAMBAHAN LOGIKA BARANG HABIS (QTY 0) ---
+            const isSoldOut = parseInt(item.quantity) === 0;
             const safeName = item.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
             
+            // Tombol minus mati jika qty sudah 0
+            const minusAction = isSoldOut ? '' : `onclick="event.stopPropagation(); quickAdjustQty('${item.id}', 'minus')"`;
+            const qtyAdjuster = `<div class="qty-adjuster"><button class="qty-btn" ${minusAction} ${isSoldOut ? 'style="opacity:0.5;cursor:not-allowed;"' : ''}>-</button><span class="qty-val" style="${isSoldOut ? 'color:var(--danger);' : ''}">${item.quantity}</span><button class="qty-btn" onclick="event.stopPropagation(); quickAdjustQty('${item.id}', 'add')">+</button></div>`;
+            
+            // Tombol jual berubah jadi abu-abu dan mati
+            const sellBtnHtml = isSoldOut 
+                ? `<button type="button" class="btn-action" style="background:#475569; cursor:not-allowed; opacity: 0.8;" onclick="event.stopPropagation();" disabled>Habis</button>`
+                : `<button type="button" class="btn-action" style="background:var(--sold);" onclick="event.stopPropagation(); openSingleSellModal('${item.id}', '${safeName}', ${item.quantity})">Jual</button>`;
+
+            // Efek gambar meredup jika stok habis
+            const imgStyle = isSoldOut ? 'opacity: 0.3; filter: grayscale(1);' : '';
+            // ---------------------------------------------
+
             const isSelected = selectedBulkIds.has(item.id); const selectedClass = isSelected ? 'selected-for-bulk' : '';
             const overlayHidden = isSelected ? '' : 'hidden'; const currentBulkQty = bulkQtyMap[item.id] || item.quantity;
 
             vaultHtml += `
-                <div class="showcase-card ${isBulkMode ? 'is-bulkable' : ''} ${selectedClass}" id="card_${item.id}" onclick="toggleCardBulk('${item.id}')">
+                <div class="showcase-card ${isBulkMode && !isSoldOut ? 'is-bulkable' : ''} ${selectedClass}" id="card_${item.id}" onclick="${!isSoldOut ? `toggleCardBulk('${item.id}')` : ''}">
                     <div id="bulk_ui_${item.id}" class="bulk-overlay-ui ${overlayHidden}">
                         <div class="check-circle">✓</div>
                         <div style="display:flex; flex-direction:column; align-items:center;" onclick="event.stopPropagation()">
@@ -448,7 +459,7 @@
                         </div>
                     </div>
                     <div class="card-header">
-                        <img src="${imgSrc}" class="card-thumb" alt="Card" loading="lazy">
+                        <img src="${imgSrc}" class="card-thumb" style="${imgStyle}" alt="Card" loading="lazy">
                         <div class="card-title-area">
                             <h3 class="card-title" title="${item.name}"><span class="card-name-text">${item.name}</span>${qtyAdjuster}</h3>
                             <p class="card-set">${item.set_name}</p>
@@ -461,7 +472,7 @@
                     <div class="card-body">
                         <div class="meta-tags">${badges}</div>
                         <div class="card-actions">
-                            <button type="button" class="btn-action" style="background:var(--sold);" onclick="event.stopPropagation(); openSingleSellModal('${item.id}', '${safeName}', ${item.quantity})">Jual</button>
+                            ${sellBtnHtml}
                             <button type="button" class="btn-action" style="background:#2563eb;" onclick="event.stopPropagation(); mulaiEdit('${item.id}')">Edit</button>
                             <button type="button" class="btn-action" style="background:var(--danger);" onclick="event.stopPropagation(); hapusItem('${item.id}')">Del</button>
                         </div>

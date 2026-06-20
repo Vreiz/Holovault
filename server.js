@@ -49,7 +49,7 @@ app.get('/api/search-card', async (req, res) => {
         
         if (queries.length === 0) return res.status(400).json({ error: 'Query kosong' });
         
-        // 🔥 PERBAIKAN: pageSize dinaikkan ekstrem dari 30 menjadi 250 (Batas Maksimal API)
+        // Memakai pageSize 250 untuk tarikan maksimal
         const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&orderBy=-set.releaseDate&pageSize=250`;
         
         const response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
@@ -72,7 +72,6 @@ app.post('/api/inventory', upload.single('image_file'), async (req, res) => {
     try {
         const { name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, cert_number, external_image_url, grader, grade } = req.body;
         
-        // Cek apakah user upload file? Jika ya pakai file, jika tidak pakai link teks
         let finalImageUrl = external_image_url || null;
         if (req.file) {
             finalImageUrl = `/uploads/${req.file.filename}`;
@@ -112,29 +111,56 @@ app.delete('/api/inventory/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal hapus' }); }
 });
 
+// --- LOGIKA PENJUALAN BARU (ANTI-CRASH & TIDAK MENGHILANGKAN ENTRY) ---
 async function processSale(id, sell_qty, price_per_unit, trx_id) {
     const [rows] = await pool.query('SELECT * FROM inventory WHERE id = ?', [id]);
     if(rows.length === 0) return;
     const item = rows[0]; const sq = parseInt(sell_qty);
-    if(sq < item.quantity) {
-        await pool.query('UPDATE inventory SET quantity = quantity - ? WHERE id = ?', [sq, id]);
-        const newId = crypto.randomUUID();
-        await pool.query(
-            `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status, sold_price, transaction_id, sold_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Sold', ?, ?, NOW())`,
-            [newId, item.name, item.category, item.set_name, item.set_code, item.card_number, item.language, sq, item.purchase_price, item.market_price, item.image_url, item.notes, item.card_condition, item.is_holo, item.is_first_edition, item.grader, item.grade, item.cert_number, price_per_unit, trx_id]
-        );
-    } else {
-        await pool.query('UPDATE inventory SET status = "Sold", sold_price = ?, transaction_id = ?, sold_at = NOW() WHERE id = ?', [price_per_unit, trx_id, id]);
-    }
+    
+    // 1. Kurangi kuantitas di Vault
+    await pool.query('UPDATE inventory SET quantity = quantity - ? WHERE id = ?', [sq, id]);
+    
+    // 2. Buat duplikat struk di Tab Transaksi dengan "|| null" Fallback
+    const newId = crypto.randomUUID();
+    await pool.query(
+        `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status, sold_price, transaction_id, sold_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Sold', ?, ?, NOW())`,
+        [
+            newId, 
+            item.name || 'Unknown', 
+            item.category || 'Single', 
+            item.set_name || '-', 
+            item.set_code || null, 
+            item.card_number || null, 
+            item.language || 'English', 
+            sq, 
+            item.purchase_price || 0, 
+            item.market_price || 0, 
+            item.image_url || null, 
+            item.notes || null, 
+            item.card_condition || null, 
+            item.is_holo || 0, 
+            item.is_first_edition || 0, 
+            item.grader || null, 
+            item.grade || null, 
+            item.cert_number || null, 
+            price_per_unit || 0, 
+            trx_id || null
+        ]
+    );
 }
 
+// 🔥 API JUAL SATUAN (SEBELUMNYA HILANG)
 app.put('/api/inventory/:id/sell', async (req, res) => {
     try {
         await processSale(req.params.id, req.body.sell_qty || 1, (req.body.sold_price || 0) / (req.body.sell_qty || 1), crypto.randomUUID());
         res.status(200).json({ message: 'Sold' });
-    } catch (error) { res.status(500).json({ error: 'Gagal jual' }); }
+    } catch (error) { 
+        console.error("ERROR JUAL SINGLE:", error);
+        res.status(500).json({ error: error.message || 'Gagal jual satuan' }); 
+    }
 });
 
+// API JUAL BORONGAN
 app.post('/api/inventory/bulk-sell', async (req, res) => {
     try {
         const { items, total_price } = req.body; 
@@ -143,7 +169,10 @@ app.post('/api/inventory/bulk-sell', async (req, res) => {
         const price_per_unit = total_price / total_qty;
         for(let i=0; i<items.length; i++) { await processSale(items[i].id, items[i].sell_qty, price_per_unit, trx_id); }
         res.status(200).json({ message: 'Success' });
-    } catch (error) { res.status(500).json({ error: 'Gagal borongan' }); }
+    } catch (error) { 
+        console.error("ERROR JUAL BORONGAN:", error);
+        res.status(500).json({ error: error.message || 'Gagal jual borongan' }); 
+    }
 });
 
 app.put('/api/inventory/:id/undo-sell', async (req, res) => {
@@ -153,7 +182,7 @@ app.put('/api/inventory/:id/undo-sell', async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
         const soldItem = rows[0];
 
-        // MENCARI PASANGAN VAULT DENGAN SANGAT KETAT (TERMASUK KODE KARTU & CERT)
+        // MENCARI PASANGAN VAULT DENGAN SANGAT KETAT
         const [vaultRows] = await pool.query(
             `SELECT * FROM inventory WHERE status = 'Vault' AND name = ? AND category = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND set_code <=> ? AND card_number <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`, 
             [soldItem.name, soldItem.category, soldItem.set_name, soldItem.language, soldItem.card_condition, soldItem.is_holo, soldItem.is_first_edition, soldItem.set_code, soldItem.card_number, soldItem.grader, soldItem.grade, soldItem.cert_number]
@@ -176,7 +205,7 @@ app.put('/api/inventory/:id/undo-sell', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal batalkan' }); }
 });
 
-// --- PERBAIKAN: DETEKSI DUPLIKAT SUPER KETAT ---
+// --- PERBAIKAN: DETEKSI DUPLIKAT KETAT & FIX BUG EXCEL 7 DIGIT ---
 app.post('/api/inventory/bulk-import', async (req, res) => {
     try {
         const items = req.body;
@@ -188,10 +217,17 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
         for (const i of items) {
             const parsedQty = parseInt(i.quantity);
             const safeQty = (isNaN(parsedQty) || parsedQty < 1) ? 1 : parsedQty;
-            const parsedPP = parseFloat(i.purchase_price);
-            const safePP = (isNaN(parsedPP) || parsedPP < 0) ? 0 : parsedPP;
-            const parsedMP = parseFloat(i.market_price);
-            const safeMP = (isNaN(parsedMP) || parsedMP < 0) ? 0 : parsedMP;
+            
+            // Fungsi pembersih angka ajaib untuk Excel
+            const cleanNumber = (val) => {
+                if (val === null || val === undefined || val === '') return 0;
+                const strVal = String(val).replace(/[^0-9]/g, ''); 
+                const parsed = parseInt(strVal, 10);
+                return isNaN(parsed) ? 0 : parsed;
+            };
+
+            const safePP = cleanNumber(i.purchase_price);
+            const safeMP = cleanNumber(i.market_price);
 
             const isHolo = parseInt(i.is_holo) || 0;
             const is1st = parseInt(i.is_first_edition) || 0;
@@ -200,7 +236,6 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
             const lang = i.language || 'English';
             const cond = i.card_condition || 'NM';
 
-            // MENGGUNAKAN SIMBOL <=> (NULL-SAFE EQUAL) UNTUK MENCOCOKKAN PARAMETER KOSONG
             const [existing] = await pool.query(
                 `SELECT id FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND set_code <=> ? AND card_number <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
                 [name, setName, lang, cond, isHolo, is1st, i.set_code || null, i.card_number || null, i.grader || null, i.grade || null, i.cert_number || null]
@@ -220,7 +255,6 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
                 insertedCount++;
             }
         }
-        
         res.status(201).json({ message: `Selesai! ${insertedCount} Kartu Baru. ${updatedCount} Kartu digabung.` });
     } catch (error) { 
         console.error("🔥 ERROR MYSQL BULK IMPORT:", error);
@@ -228,6 +262,7 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
     }
 });
 
+// IZINKAN QTY MANUAL TURUN HINGGA 0 (Kode ganda sudah dihapus)
 app.put('/api/inventory/:id/qty', async (req, res) => {
     try {
         const { action } = req.body; 
@@ -235,7 +270,9 @@ app.put('/api/inventory/:id/qty', async (req, res) => {
         if(rows.length === 0) return res.status(404).json({error: 'Not found'});
         let newQty = rows[0].quantity;
         if (action === 'add') newQty++; else if (action === 'minus') newQty--;
-        if (newQty < 1) return res.status(400).json({error: 'Minimal 1'});
+        
+        if (newQty < 0) return res.status(400).json({error: 'Minimal 0'}); 
+        
         await pool.query('UPDATE inventory SET quantity = ? WHERE id = ?', [newQty, req.params.id]);
         res.status(200).json({ message: 'Updated' });
     } catch (error) { res.status(500).json({ error: 'Gagal' }); }
@@ -250,4 +287,4 @@ app.post('/api/inventory/bulk-delete', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal hapus' }); }
 });
 
-app.listen(3000, () => console.log('Holovault Backend V9.2 MENYALA di http://localhost:3000'));
+app.listen(3000, () => console.log('Holovault Backend V9.3 MENYALA di http://localhost:3000'));
