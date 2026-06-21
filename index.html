@@ -601,31 +601,56 @@ itemsToRender.forEach(item => {
         });
     }
 
-    function openBulkSellModal() {
-        const selectedCards = document.querySelectorAll('.selected-for-bulk'); 
-        if(selectedCards.length === 0) return showToast('Pilih minimal 1 item dengan mengeklik kartunya!', true);
+function openBulkSellModal() {
+        // Pengecekan lewat memori, bukan layar
+        if(selectedBulkIds.size === 0) return showToast('Pilih minimal 1 item dengan mengeklik kartunya!', true);
         const inputsHtml = `<label style="font-size:0.85rem; font-weight:bold; color:#ffffff;">Total Harga Borongan Keseluruhan (Rp)</label><input type="text" id="modalBulkPrice" placeholder="Misal: 250.000" style="margin-top:0.3rem; font-size:1.1rem; font-weight:bold;" oninput="formatRupiah(this)">`;
         
-        openModal(`Jual Borongan (${selectedCards.length} Tipe)`, `Sistem akan mencatat total omset keseluruhan di struk dan membagi proporsional nilainya ke tiap kartu.`, inputsHtml, async () => {
+        openModal(`Jual Borongan (${selectedBulkIds.size} Tipe)`, `Sistem akan mencatat total omset keseluruhan di struk dan membagi proporsional nilainya ke tiap kartu.`, inputsHtml, async () => {
             const harga = parseRupiah(document.getElementById('modalBulkPrice').value); 
             if(isNaN(harga) || harga === 0) { showToast('Harga kosong!', true); return; }
             
-            const items = Array.from(selectedCards).map(card => { const id = card.id.replace('card_', ''); return { id: id, sell_qty: document.getElementById(`bulk_qty_${id}`).value }; });
+            // 🔥 PERBAIKAN: Merakit keranjang langsung dari Memori (Set)
+            const items = Array.from(selectedBulkIds).map(id => {
+                let qty = bulkQtyMap[id];
+                // Jika user tidak mengubah angka qty di layar, ambil qty asli dari database
+                if (!qty) { 
+                    const itemData = globalData.find(x => x.id === id); 
+                    qty = itemData ? itemData.quantity : 1; 
+                }
+                return { id: id, sell_qty: qty }; 
+            });
+
             const res = await fetch(`${API_URL}/api/inventory/bulk-sell`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items, total_price: harga }) });
-            if(res.ok) { closeModal(); showToast("Borongan sukses!"); loadInventory(); switchTab('sold'); } 
-            else { const err = await res.json().catch(()=>({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
+            if(res.ok) { 
+                closeModal(); 
+                showToast("Borongan sukses!"); 
+                toggleBulkMode(); // Langsung matikan mode borongan agar rapi
+                loadInventory(); 
+                switchTab('sold'); 
+            } else { 
+                const err = await res.json().catch(()=>({})); 
+                throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); 
+            }
         });
     }
 
     function openBulkDeleteModal() {
-        const selectedCards = document.querySelectorAll('.selected-for-bulk'); 
-        if(selectedCards.length === 0) return showToast('Pilih minimal 1 item dengan mengeklik kartunya!', true);
+        if(selectedBulkIds.size === 0) return showToast('Pilih minimal 1 item dengan mengeklik kartunya!', true);
         
-        openModal(`Hapus Borongan (${selectedCards.length} Tipe)`, `Apakah kamu yakin ingin menghapus permanen semua kartu yang dipilih dari Vault? <br><br><b style="color:var(--danger)">Aksi ini tidak bisa dikembalikan.</b>`, '', async () => {
-            const ids = Array.from(selectedCards).map(card => card.id.replace('card_', ''));
+        openModal(`Hapus Borongan (${selectedBulkIds.size} Tipe)`, `Apakah kamu yakin ingin menghapus permanen semua kartu yang dipilih dari Vault? <br><br><b style="color:var(--danger)">Aksi ini tidak bisa dikembalikan.</b>`, '', async () => {
+            // 🔥 PERBAIKAN: Merakit ID yang dihapus langsung dari Memori (Set)
+            const ids = Array.from(selectedBulkIds);
             const res = await fetch(`${API_URL}/api/inventory/bulk-delete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) });
-            if(res.ok) { closeModal(); showToast(`${selectedCards.length} item berhasil terhapus!`); loadInventory(); toggleBulkMode(); } 
-            else { const err = await res.json().catch(()=>({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
+            if(res.ok) { 
+                closeModal(); 
+                showToast(`${ids.length} item berhasil terhapus!`); 
+                toggleBulkMode(); // Langsung matikan mode borongan agar rapi
+                loadInventory(); 
+            } else { 
+                const err = await res.json().catch(()=>({})); 
+                throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); 
+            }
         });
     }
 
