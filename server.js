@@ -17,7 +17,8 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Membuka akses publik ke folder uploads
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
+// Membuka akses agar Node.js menampilkan file index.html dan CSS kamu
+app.use(express.static(__dirname));
 // Konfigurasi Penyimpanan Gambar Lokal
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
@@ -29,7 +30,18 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 const pool = mysql.createPool({
-    host: 'localhost', user: 'root', password: '', database: 'pokemon_db'
+    host: 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com',
+    port: 4000,
+    user: 'bHEitaKtTPBTcrk.root',
+    password: 'qPOxc0nuVez63w32',
+    database: 'test', // Ingat, gunakan 'test', jangan 'sys' ya!
+    ssl: {
+        minVersion: 'TLSv1.2',
+        rejectUnauthorized: true
+    },
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
 app.get('/api/search-card', async (req, res) => {
@@ -205,20 +217,28 @@ app.put('/api/inventory/:id/undo-sell', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal batalkan' }); }
 });
 
-// --- PERBAIKAN: DETEKSI DUPLIKAT KETAT & FIX BUG EXCEL 7 DIGIT ---
+// --- PERBAIKAN: BULK IMPORT DENGAN FITUR ROLLBACK (TRANSAKSI) ---
 app.post('/api/inventory/bulk-import', async (req, res) => {
+    // 1. Kita minta jalur koneksi khusus (bukan pool biasa) untuk transaksi ini
+    const conn = await pool.getConnection(); 
+    
     try {
         const items = req.body;
-        if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'Data kosong' });
+        if (!Array.isArray(items) || items.length === 0) {
+            conn.release();
+            return res.status(400).json({ error: 'Data kosong' });
+        }
 
         let insertedCount = 0;
         let updatedCount = 0;
+
+        // 2. MULAI MODE TRANSAKSI (Jika ada error, data tidak akan disimpan permanen)
+        await conn.beginTransaction(); 
 
         for (const i of items) {
             const parsedQty = parseInt(i.quantity);
             const safeQty = (isNaN(parsedQty) || parsedQty < 1) ? 1 : parsedQty;
             
-            // Fungsi pembersih angka ajaib untuk Excel
             const cleanNumber = (val) => {
                 if (val === null || val === undefined || val === '') return 0;
                 const strVal = String(val).replace(/[^0-9]/g, ''); 
@@ -236,29 +256,39 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
             const lang = i.language || 'English';
             const cond = i.card_condition || 'NM';
 
-            const [existing] = await pool.query(
+            // PENTING: Gunakan 'conn.query', BUKAN 'pool.query' agar tetap di dalam jalur Transaksi
+            const [existing] = await conn.query(
                 `SELECT id FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND set_code <=> ? AND card_number <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
                 [name, setName, lang, cond, isHolo, is1st, i.set_code || null, i.card_number || null, i.grader || null, i.grade || null, i.cert_number || null]
             );
 
             if (existing.length > 0) {
-                await pool.query(
+                await conn.query(
                     `UPDATE inventory SET quantity = quantity + ?, purchase_price = ?, market_price = ?, image_url = COALESCE(?, image_url) WHERE id = ?`,
                     [safeQty, safePP, safeMP, i.image_url || null, existing[0].id]
                 );
                 updatedCount++;
             } else {
-                await pool.query(
+                await conn.query(
                     `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault')`,
                     [crypto.randomUUID(), name, i.category || 'Single', setName, i.set_code || null, i.card_number || null, lang, safeQty, safePP, safeMP, i.image_url || null, i.notes || null, cond, isHolo, is1st, i.grader || null, i.grade || null, i.cert_number || null]
                 );
                 insertedCount++;
             }
         }
+        
+        // 3. JIKA SUKSES SEMUA: Simpan Permanen ke Brankas (Commit)
+        await conn.commit(); 
         res.status(201).json({ message: `Selesai! ${insertedCount} Kartu Baru. ${updatedCount} Kartu digabung.` });
+        
     } catch (error) { 
-        console.error("🔥 ERROR MYSQL BULK IMPORT:", error);
-        res.status(500).json({ error: error.message || 'Gagal menyimpan ke MySQL' }); 
+        // 4. JIKA ADA SATU SAJA YANG ERROR: Batalkan Semuanya (Rollback) ke kondisi semula
+        await conn.rollback(); 
+        console.error("🔥 ERROR MYSQL BULK IMPORT - AUTO ROLLBACK DILAKUKAN:", error);
+        res.status(500).json({ error: error.message || 'Gagal import, seluruh data dibatalkan (Rollback)' }); 
+    } finally {
+        // 5. Selalu lepas koneksi agar tidak membuat server macet
+        conn.release(); 
     }
 });
 
