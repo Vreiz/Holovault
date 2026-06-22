@@ -358,35 +358,52 @@
 
 function toggleCardBulk(id) {
         if (!isBulkMode) return; 
-        const card = document.getElementById(`card_${id}`); const uiOverlay = document.getElementById(`bulk_ui_${id}`);
+        const card = document.getElementById(`card_${id}`); 
+        const uiOverlay = document.getElementById(`bulk_ui_${id}`);
+        const qtyInput = document.getElementById(`bulk_qty_${id}`); // Ambil elemen kotaknya
+
         if (selectedBulkIds.has(id)) {
-            selectedBulkIds.delete(id); card.classList.remove('selected-for-bulk'); uiOverlay.classList.add('hidden');
+            selectedBulkIds.delete(id); 
+            card.classList.remove('selected-for-bulk'); 
+            uiOverlay.classList.add('hidden');
             delete bulkQtyMap[id]; // Bersihkan memori jika batal dipilih
         } else {
-            selectedBulkIds.add(id); card.classList.add('selected-for-bulk'); uiOverlay.classList.remove('hidden');
+            selectedBulkIds.add(id); 
+            card.classList.add('selected-for-bulk'); 
+            uiOverlay.classList.remove('hidden');
             
-            // 🔥 UBAH DI SINI: Default langsung diset ke 1 (Tidak perlu cari item.quantity lagi)
-            if (!bulkQtyMap[id]) bulkQtyMap[id] = 1; 
+            // Set memori ke 1
+            bulkQtyMap[id] = 1; 
+            // 🔥 PAKSA ANGKA DI LAYAR MENJADI 1 SAAT DIKLIK
+            if (qtyInput) qtyInput.value = 1; 
         }
         updateBulkCount();
     }
 
-    function toggleSelectAll() {
+function toggleSelectAll() {
         if (!isBulkMode) return;
         const visibleCards = Array.from(document.querySelectorAll('#vaultGrid .showcase-card'));
         if (visibleCards.length === 0) return showToast("Tidak ada kartu untuk diseleksi!", true);
         const isAllVisibleSelected = visibleCards.every(card => selectedBulkIds.has(card.id.replace('card_', '')));
         
         visibleCards.forEach(card => {
-            const id = card.id.replace('card_', ''); const uiOverlay = document.getElementById(`bulk_ui_${id}`);
+            const id = card.id.replace('card_', ''); 
+            const uiOverlay = document.getElementById(`bulk_ui_${id}`);
+            const qtyInput = document.getElementById(`bulk_qty_${id}`); // Ambil elemen kotaknya
+
             if (isAllVisibleSelected) {
-                selectedBulkIds.delete(id); card.classList.remove('selected-for-bulk'); uiOverlay.classList.add('hidden');
+                selectedBulkIds.delete(id); 
+                card.classList.remove('selected-for-bulk'); 
+                uiOverlay.classList.add('hidden');
                 delete bulkQtyMap[id];
             } else {
-                selectedBulkIds.add(id); card.classList.add('selected-for-bulk'); uiOverlay.classList.remove('hidden');
+                selectedBulkIds.add(id); 
+                card.classList.add('selected-for-bulk'); 
+                uiOverlay.classList.remove('hidden');
                 
-                // 🔥 UBAH DI SINI JUGA: Default langsung diset ke 1
-                if (!bulkQtyMap[id]) bulkQtyMap[id] = 1;
+                bulkQtyMap[id] = 1;
+                // 🔥 PAKSA SEMUA ANGKA DI LAYAR MENJADI 1
+                if (qtyInput) qtyInput.value = 1;
             }
         });
         updateBulkCount();
