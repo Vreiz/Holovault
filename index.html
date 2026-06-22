@@ -356,14 +356,17 @@
         } catch (e) { showToast(e.message, true); }
     }
 
-    function toggleCardBulk(id) {
+function toggleCardBulk(id) {
         if (!isBulkMode) return; 
         const card = document.getElementById(`card_${id}`); const uiOverlay = document.getElementById(`bulk_ui_${id}`);
         if (selectedBulkIds.has(id)) {
             selectedBulkIds.delete(id); card.classList.remove('selected-for-bulk'); uiOverlay.classList.add('hidden');
+            delete bulkQtyMap[id]; // Bersihkan memori jika batal dipilih
         } else {
             selectedBulkIds.add(id); card.classList.add('selected-for-bulk'); uiOverlay.classList.remove('hidden');
-            if (!bulkQtyMap[id]) { const item = globalData.find(x => x.id === id); if (item) bulkQtyMap[id] = item.quantity; }
+            
+            // 🔥 UBAH DI SINI: Default langsung diset ke 1 (Tidak perlu cari item.quantity lagi)
+            if (!bulkQtyMap[id]) bulkQtyMap[id] = 1; 
         }
         updateBulkCount();
     }
@@ -378,9 +381,12 @@
             const id = card.id.replace('card_', ''); const uiOverlay = document.getElementById(`bulk_ui_${id}`);
             if (isAllVisibleSelected) {
                 selectedBulkIds.delete(id); card.classList.remove('selected-for-bulk'); uiOverlay.classList.add('hidden');
+                delete bulkQtyMap[id];
             } else {
                 selectedBulkIds.add(id); card.classList.add('selected-for-bulk'); uiOverlay.classList.remove('hidden');
-                if (!bulkQtyMap[id]) { const item = globalData.find(x => x.id === id); if (item) bulkQtyMap[id] = item.quantity; }
+                
+                // 🔥 UBAH DI SINI JUGA: Default langsung diset ke 1
+                if (!bulkQtyMap[id]) bulkQtyMap[id] = 1;
             }
         });
         updateBulkCount();
