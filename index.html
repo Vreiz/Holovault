@@ -140,11 +140,16 @@
 <div class="container">
     <header>
         <h1>HOLOVAULT</h1>
-        <div style="display: flex; gap: 0.5rem; align-items: center;">
-            <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelImport(event)">
-            <button type="button" onclick="document.getElementById('excelFileInput').click()" style="background: #334155; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📥 Import Excel</button>
-            <button type="button" onclick="exportToExcel()" style="background: #059669; border: 1px solid var(--green); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; width: auto; cursor:pointer;">📤 Export DB</button>
-            <div style="color: var(--text-muted); font-size: 0.85rem; font-weight: 600; margin-left:0.5rem;">v9.2 File Upload Support</div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            
+            <input type="file" id="excelAppendInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelUpload(event, 'append')">
+            <input type="file" id="excelReplaceInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleExcelUpload(event, 'replace')">
+            
+            <button type="button" onclick="document.getElementById('excelAppendInput').click()" style="background: #3b82f6; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;">➕ Tambah CSV</button>
+            <button type="button" onclick="document.getElementById('excelReplaceInput').click()" style="background: #ef4444; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;">🔄 Replace CSV</button>
+            
+            <button type="button" onclick="exportToExcel()" style="background: #059669; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;">📤 Export DB</button>
+            <button type="button" onclick="exportSoldToCSV()" style="background: #10b981; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;">📥 Export Penjualan</button>
         </div>
     </header>
 
@@ -470,7 +475,7 @@ itemsToRender.forEach(item => {
             // ---------------------------------------------
 
             const isSelected = selectedBulkIds.has(item.id); const selectedClass = isSelected ? 'selected-for-bulk' : '';
-            const overlayHidden = isSelected ? '' : 'hidden'; const currentBulkQty = bulkQtyMap[item.id] || item.quantity;
+            const overlayHidden = isSelected ? '' : 'hidden'; const currentBulkQty = bulkQtyMap[item.id] || 1;
 
             vaultHtml += `
                 <div class="showcase-card ${isBulkMode && !isSoldOut ? 'is-bulkable' : ''} ${selectedClass}" id="card_${item.id}" onclick="${!isSoldOut ? `toggleCardBulk('${item.id}')` : ''}">
@@ -722,33 +727,176 @@ function openBulkSellModal() {
             const dateStr = new Date().toISOString().slice(0, 10); XLSX.writeFile(workbook, `Holovault_Backup_${dateStr}.xlsx`); showToast('✅ Berhasil mengunduh Excel!');
         } catch (error) { console.error("Export Error:", error); showToast('Gagal membuat file Excel.', true); }
     }
+async function exportSoldToCSV() {
+        try {
+            showToast("Menyiapkan laporan penjualan...", false);
+            
+            // Tarik seluruh data dan saring hanya status 'Sold'
+            const response = await fetch(`${API_URL}/api/inventory`);
+            const allData = await response.json();
+            const soldItems = allData.filter(item => item.status === 'Sold');
 
-    function handleExcelImport(event) {
-        const file = event.target.files[0]; if (!file) return; const reader = new FileReader();
+            if (soldItems.length === 0) {
+                showToast("Belum ada data penjualan yang bisa di-export!", true);
+                return;
+            }
+
+            // Header kolom. \ufeff digunakan agar MS Excel membaca teks dengan sempurna
+            let csvContent = "\ufeffNama Kartu,Set/Edisi,Kondisi,Bahasa,Qty Terjual,Harga Modal,Harga Terjual,Total Omset\n";
+
+            soldItems.forEach(item => {
+                const name = `"${item.name || ''}"`;
+                const set = `"${item.set_name || ''}"`;
+                const condition = item.card_condition || '';
+                const lang = item.language || '';
+                const qty = item.quantity || 0;
+                const buyPrice = item.purchase_price || 0;
+                const sellPrice = item.market_price || 0; 
+                const totalOmset = qty * sellPrice; 
+
+                csvContent += `${name},${set},${condition},${lang},${qty},${buyPrice},${sellPrice},${totalOmset}\n`;
+            });
+
+            // Eksekusi auto-download ke laptop
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            
+            const today = new Date().toISOString().split('T')[0];
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Laporan_Penjualan_Holovault_${today}.csv`);
+            
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast("✅ Berhasil mengunduh Laporan Penjualan!");
+        } catch (error) {
+            console.error("Gagal melakukan export:", error);
+            showToast("Terjadi kesalahan saat menarik data penjualan.", true);
+        }
+    }
+function parseNewCSVFormat(jsonData) {
+        return jsonData.map(item => {
+            // Deteksi Otomatis Kolom Dinamis (Misal: Market Price (As of 2026-07-04))
+            const mpKey = Object.keys(item).find(key => key.toLowerCase().includes('market price'));
+            const rawMP = mpKey ? item[mpKey] : (item['market_price'] || 0);
+            const cleanMP = Math.round(parseFloat(String(rawMP).replace(/,/g, '')) || 0); // Hapus tanda koma
+
+            const rawPP = item['Average Cost Paid'] || item['purchase_price'] || 0;
+            const cleanPP = Math.round(parseFloat(String(rawPP).replace(/,/g, '')) || 0);
+
+            // Kategori (Singles/Sealed/Slab)
+            let cat = item['category'] || 'Single';
+            const portfolioName = String(item['Portfolio Name'] || item['Category'] || '');
+            if (portfolioName.toLowerCase().includes('sealed')) cat = 'Sealed';
+            if (String(item['Grade'] || '').toUpperCase() !== 'UNGRADED' && item['Grade']) cat = 'Slab';
+
+            // Kondisi (NM/LP/MP)
+            let rawCond = String(item['Card Condition'] || item['card_condition'] || '').toUpperCase();
+            let cond = 'NM'; // Default
+            if(rawCond.includes('LIGHTLY') || rawCond === 'LP') cond = 'LP';
+            else if(rawCond.includes('MODERATELY') || rawCond === 'MP') cond = 'MP';
+            else if(rawCond.includes('HEAVILY') || rawCond === 'HP') cond = 'HP';
+            else if(rawCond.includes('DAMAGED') || rawCond === 'DMG') cond = 'DMG';
+            else if(rawCond.includes('MINT') || rawCond === 'M') cond = 'M';
+            if(rawCond.includes('NEAR MINT') || rawCond === 'NM') cond = 'NM'; 
+
+            // Grader & Grade (Pisahkan "PSA 10" jadi "PSA" dan "10")
+            let grader = item['grader'] || null;
+            let gradeVal = item['grade'] || null;
+            if (cat === 'Slab' && item['Grade']) {
+                let gStr = String(item['Grade']);
+                let parts = gStr.split(' ');
+                if (parts.length >= 2) {
+                    grader = parts[0];
+                    gradeVal = parts.slice(1).join(' ');
+                } else {
+                    grader = gStr;
+                }
+            }
+
+            // Deteksi Bahasa Otomatis (Jika ada tulisan "JP")
+            let lang = item['language'] || 'English';
+            if (String(item['Product Name']).includes('(JP)') || String(item['Set']).includes('(JP)')) {
+                lang = 'Japanese';
+            }
+
+            return {
+                name: String(item['Product Name'] || item['name'] || 'Unknown').replace(' (JP)', ''),
+                set_name: item['Set'] || item['set_name'] || '-',
+                category: cat,
+                language: lang,
+                card_number: item['Card Number'] || item['card_number'] || null,
+                quantity: parseInt(item['Quantity'] || item['quantity']) || 1,
+                purchase_price: cleanPP,
+                market_price: cleanMP,
+                image_url: item['img_url'] || item['image_url'] || null,
+                is_holo: (String(item['Variance'] || '').toLowerCase().includes('holo') || parseInt(item['is_holo']) === 1 || String(item['is_holo']) === 'YES') ? 1 : 0,
+                is_first_edition: (String(item['Variance'] || '').toLowerCase().includes('1st') || parseInt(item['is_first_edition']) === 1 || String(item['is_first_edition']) === 'YES') ? 1 : 0,
+                card_condition: cond,
+                grader: grader,
+                grade: gradeVal,
+                notes: item['Notes'] || item['notes'] || null
+            };
+        });
+    }
+
+    function handleExcelUpload(event, mode) {
+        const file = event.target.files[0];
+        if (!file) return; 
+        const reader = new FileReader();
+        
         reader.onload = async function(e) {
             try {
-                showToast("Menganalisis file Excel...", false);
-                const data = new Uint8Array(e.target.result); const workbook = XLSX.read(data, { type: 'array' });
-                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-                if (jsonData.length === 0) return showToast('File kosong!', true);
+                const data = new Uint8Array(e.target.result); 
+                const workbook = XLSX.read(data, { type: 'array' });
+                const rawJsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                if (rawJsonData.length === 0) return showToast('File kosong!', true);
 
-                jsonData.forEach(item => {
-                    Object.keys(item).forEach(key => { if (item[key] === "NULL" || item[key] === "null") item[key] = null; });
-                    if(item.img_url) item.image_url = item.img_url; 
-                    if(String(item.is_holo).trim().toUpperCase() === 'YES' || item.is_holo == 1) item.is_holo = 1; else item.is_holo = 0;
-                    if(String(item.is_first_edition).trim().toUpperCase() === 'YES' || item.is_first_edition == 1) item.is_first_edition = 1; else item.is_first_edition = 0;
-                    let q = parseInt(item.quantity); item.quantity = (isNaN(q) || q < 1) ? 1 : q;
-                });
+                // Parsing data menggunakan Mesin Penerjemah
+                const processedData = parseNewCSVFormat(rawJsonData);
 
-                const res = await fetch(`${API_URL}/api/inventory/bulk-import`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(jsonData) });
-                if (res.ok) { const successData = await res.json(); showToast(successData.message); loadInventory(); } 
-                else { const errData = await res.json(); showToast('Gagal API: ' + (errData.error || 'Server menolak data.'), true); }
+                // Fungsi eksekusi yang akan dilempar ke Backend
+                const eksekusiUpload = async () => {
+                    showToast(`Memproses ${processedData.length} baris data...`, false);
+                    const apiUrl = mode === 'replace' ? `${API_URL}/api/inventory/bulk-replace` : `${API_URL}/api/inventory/bulk-import`;
+                    const res = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(processedData) });
+                    if (res.ok) { 
+                        const successData = await res.json(); 
+                        closeModal(); // Pastikan modal peringatan tertutup
+                        showToast(successData.message); 
+                        loadInventory(); 
+                    } else { 
+                        const errData = await res.json(); 
+                        closeModal();
+                        showToast('Gagal API: ' + (errData.error || 'Server menolak data.'), true); 
+                    }
+                };
+
+                // Jika mode Replace, munculkan peringatan Pop-up terlebih dahulu
+                if (mode === 'replace') {
+                    openModal(
+                        'Peringatan REPLACE!', 
+                        `Kamu akan menghapus <b style="color:var(--danger)">SELURUH KARTU DI VAULT</b> dan menggantinya dengan <b>${processedData.length}</b> kartu dari file Excel ini.<br><br><i>Transaksi yang sudah "Sold" akan tetap aman.</i><br><br>Lanjutkan?`, 
+                        '', 
+                        eksekusiUpload
+                    );
+                } else {
+                    // Jika mode tambah, langsung eksekusi tanpa peringatan
+                    await eksekusiUpload();
+                }
+
             } catch (err) { 
                 console.error(err);
-                if (err.message === "Failed to fetch") { showToast('Error: Server Node.js terputus / mati.', true); } else { showToast('Error sistem: ' + err.message, true); }
+                showToast('Error sistem membaca Excel.', true); 
             }
-            document.getElementById('excelFileInput').value = '';
-        }; reader.readAsArrayBuffer(file);
+            // Bersihkan memori file picker agar bisa klik file yang sama dua kali
+            document.getElementById('excelAppendInput').value = '';
+            document.getElementById('excelReplaceInput').value = '';
+        }; 
+        reader.readAsArrayBuffer(file);
     }
 
     async function cariKartu() {

@@ -291,7 +291,46 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
         conn.release(); 
     }
 });
+// --- API BARU: BULK REPLACE (Hapus semua Vault, lalu masukkan baru) ---
+app.post('/api/inventory/bulk-replace', async (req, res) => {
+    const conn = await pool.getConnection(); 
+    try {
+        const items = req.body;
+        if (!Array.isArray(items) || items.length === 0) {
+            conn.release();
+            return res.status(400).json({ error: 'Data kosong' });
+        }
 
+        let insertedCount = 0;
+        await conn.beginTransaction(); 
+
+        // 1. HAPUS SEMUA DATA YANG BERSTATUS 'Vault' (Data Sold tetap aman)
+        await conn.query(`DELETE FROM inventory WHERE status = 'Vault'`);
+
+        // 2. INSERT SEMUA DATA DARI CSV SEBAGAI DATA BARU
+        for (const i of items) {
+            const safeQty = parseInt(i.quantity) || 1;
+            const safePP = parseFloat(i.purchase_price) || 0;
+            const safeMP = parseFloat(i.market_price) || 0;
+
+            await conn.query(
+                `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault')`,
+                [crypto.randomUUID(), i.name || 'Unnamed', i.category || 'Single', i.set_name || '-', i.set_code || null, i.card_number || null, i.language || 'English', safeQty, safePP, safeMP, i.image_url || null, i.notes || null, i.card_condition || 'NM', i.is_holo || 0, i.is_first_edition || 0, i.grader || null, i.grade || null, i.cert_number || null]
+            );
+            insertedCount++;
+        }
+        
+        await conn.commit(); 
+        res.status(201).json({ message: `Selesai! Seluruh Vault di-replace dengan ${insertedCount} kartu baru.` });
+        
+    } catch (error) { 
+        await conn.rollback(); 
+        console.error("ERROR MYSQL BULK REPLACE:", error);
+        res.status(500).json({ error: error.message || 'Gagal replace data' }); 
+    } finally {
+        conn.release(); 
+    }
+});
 // IZINKAN QTY MANUAL TURUN HINGGA 0 (Kode ganda sudah dihapus)
 app.put('/api/inventory/:id/qty', async (req, res) => {
     try {
