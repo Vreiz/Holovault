@@ -859,7 +859,7 @@
 
                 <div style="display: grid; grid-template-columns: 1fr 200px 220px; gap: 1rem; margin-bottom: 1.2rem;">
                     <input type="text" id="inventorySearchInput"
-                        placeholder="🔍 Cari berdasarkan nama kartu atau kode..." oninput="applyFiltersAndRender()"
+                        placeholder="🔍 Cari nama, nomor kartu, atau kode set..." oninput="applyFiltersAndRender()"
                         style="padding:0.8rem; font-size:1rem; border-radius:8px; margin:0;">
 
                     <select id="sortSelect" onchange="applyFiltersAndRender()"
@@ -1061,7 +1061,7 @@
 
             const vaultItems = globalData.filter(item => item.status === 'Vault' || !item.status);
             const filteredVault = vaultItems.filter(item => {
-                const txt = (item.name + ' ' + item.set_name).toLowerCase();
+                const txt = (item.name + ' ' + item.set_name + ' ' + (item.card_number || '') + ' ' + (item.set_code || '')).toLowerCase();
                 return txt.includes(query) && (!selectedSet || item.set_name.toLowerCase() === selectedSet);
             });
 
@@ -1174,7 +1174,7 @@
                 let contentMatches = false; let miniCardsHtml = '';
                 trx.items.forEach(i => {
                     const itemSet = (i.set_name || '').toLowerCase();
-                    const matchQuery = (i.name + ' ' + (i.set_name || '')).toLowerCase().includes(query);
+                    const matchQuery = (i.name + ' ' + (i.set_name || '') + ' ' + (i.card_number || '') + ' ' + (i.set_code || '')).toLowerCase().includes(query);
                     const matchSet = !selectedSet || itemSet === selectedSet;
                     const finalItemShow = matchQuery && matchSet;
                     if (finalItemShow) contentMatches = true;

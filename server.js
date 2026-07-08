@@ -417,7 +417,7 @@ async function runBackgroundImageFetch() {
                 let searchResults = [];
 
                 if (card.language === 'Japanese') {
-                    // JP: Tetap pakai crawler pokellector
+                    // JP: Pakai crawler pokellector JP
                     const query = card.name + (card.set_name && card.set_name !== '-' ? " " + card.set_name : "");
                     const res = await axios.get(`http://localhost:3000/api/search-jp?query=${encodeURIComponent(query)}`);
                     searchResults = res.data || [];
@@ -447,6 +447,15 @@ async function runBackgroundImageFetch() {
                         data = await response.json();
                         searchResults = data.data || [];
                     }
+
+                    // EN: Jika API gagal total, coba tanpa set name (broadest search)
+                    if (searchResults.length === 0 && card.set_name && card.set_name !== '-') {
+                        console.log(`[BG-FETCH] Retry tanpa set: "${card.name}"`);
+                        const fbUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(`name:"${card.name}"`)}&pageSize=20`;
+                        const fbResponse = await fetch(fbUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+                        const fbData = await fbResponse.json();
+                        searchResults = fbData.data || [];
+                    }
                 }
 
                 // Gunakan Smart Matcher untuk memilih kartu yang paling cocok
@@ -455,50 +464,24 @@ async function runBackgroundImageFetch() {
                 if (bestMatch) {
                     await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, card.id]);
                     console.log(`[BG-FETCH] ✅ ${card.name} -> ${bestMatch.images.small}`);
-                } else if (card.set_name && card.set_name !== '-') {
-                    // FALLBACK: Coba tanpa set name + tanpa card number (broadest search)
-                    let fbResults = [];
-                    if (card.language === 'Japanese') {
-                        const fbRes = await axios.get(`http://localhost:3000/api/search-jp?query=${encodeURIComponent(card.name)}`);
-                        fbResults = fbRes.data || [];
-                    } else {
-                        const fbUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(`name:"${card.name}"`)}&pageSize=20`;
-                        const fbResponse = await fetch(fbUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
-                        const fbData = await fbResponse.json();
-                        fbResults = fbData.data || [];
+                } else {
+                    // FALLBACK UNIVERSAL: Pokellector EN (juga punya gambar set Jepang!)
+                    console.log(`[BG-FETCH] Primary gagal untuk ${card.name}, coba Pokellector EN...`);
+                    let pokResults = await crawlPokellectorEN(card.name, card.set_name);
+                    bestMatch = findBestMatch(pokResults, card.name, card.set_name, card.card_number);
+
+                    if (!bestMatch && card.set_name && card.set_name !== '-') {
+                        // Pokellector EN tanpa set (broadest)
+                        pokResults = await crawlPokellectorEN(card.name, '');
+                        bestMatch = findBestMatch(pokResults, card.name, card.set_name, card.card_number);
                     }
 
-                    bestMatch = findBestMatch(fbResults, card.name, card.set_name, card.card_number);
                     if (bestMatch) {
                         await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, card.id]);
-                        console.log(`[BG-FETCH] ✅ (fallback) ${card.name} -> ${bestMatch.images.small}`);
-                    } else {
-                        // FALLBACK 2: Pokellector English
-                        const pokResults = await crawlPokellectorEN(card.name, card.set_name);
-                        bestMatch = findBestMatch(pokResults, card.name, card.set_name, card.card_number);
-                        if (bestMatch) {
-                            await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, card.id]);
-                            console.log(`[BG-FETCH] ✅ (pokellector) ${card.name} -> ${bestMatch.images.small}`);
-                        } else {
-                            await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
-                            console.log(`[BG-FETCH] ❌ ${card.name} -> NOT_FOUND`);
-                        }
-                    }
-                } else {
-                    // Bahkan tanpa set, coba Pokellector sebagai last resort
-                    if (card.language !== 'Japanese') {
-                        const pokResults = await crawlPokellectorEN(card.name, '');
-                        const bestMatch = findBestMatch(pokResults, card.name, '', card.card_number);
-                        if (bestMatch) {
-                            await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, card.id]);
-                            console.log(`[BG-FETCH] ✅ (pokellector-noset) ${card.name} -> ${bestMatch.images.small}`);
-                        } else {
-                            await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
-                            console.log(`[BG-FETCH] ❌ ${card.name} -> NOT_FOUND (no set)`);
-                        }
+                        console.log(`[BG-FETCH] ✅ (pokellector) ${card.name} -> ${bestMatch.images.small}`);
                     } else {
                         await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
-                        console.log(`[BG-FETCH] ❌ ${card.name} -> NOT_FOUND (no set)`);
+                        console.log(`[BG-FETCH] ❌ ${card.name} -> NOT_FOUND`);
                     }
                 }
             } catch (err) {
