@@ -321,6 +321,131 @@ app.put('/api/inventory/:id/undo-sell', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal batalkan' }); }
 });
 
+// =====================================================================
+// SMART MATCHER: Cari kartu yang paling cocok dari hasil API
+// =====================================================================
+function findBestMatch(searchResults, targetName, targetSetName, targetNumber) {
+    if (!searchResults || searchResults.length === 0) return null;
+
+    // Normalisasi target
+    const tName = (targetName || '').trim().toLowerCase();
+    const tSet = (targetSetName || '').trim().toLowerCase();
+    // Ambil nomor kartu tanpa leading zero dan tanpa bagian "/xxx"
+    const tNum = (targetNumber || '').split('/')[0].replace(/^0+/, '').toLowerCase();
+
+    let bestCard = null;
+    let bestScore = -1;
+
+    for (const card of searchResults) {
+        if (!card.images || !card.images.small) continue;
+        let score = 0;
+
+        const cName = (card.name || '').trim().toLowerCase();
+        const cSet = (card.set && card.set.name ? card.set.name : '').trim().toLowerCase();
+        const cNum = (card.number || '').replace(/^0+/, '').toLowerCase();
+
+        // +50 poin: Nama kartu PERSIS sama
+        if (cName === tName) score += 50;
+        // +10 poin: Nama mengandung target (partial match)
+        else if (cName.includes(tName) || tName.includes(cName)) score += 10;
+
+        // +30 poin: Set name cocok
+        if (tSet && cSet && (cSet === tSet || cSet.includes(tSet) || tSet.includes(cSet))) score += 30;
+
+        // +40 poin: Nomor kartu PERSIS cocok (ini yang paling penting untuk membedakan variant)
+        if (tNum && cNum && cNum === tNum) score += 40;
+
+        if (score > bestScore) {
+            bestScore = score;
+            bestCard = card;
+        }
+    }
+
+    return bestCard;
+}
+
+// =====================================================================
+// BACKGROUND AUTO-FETCH FUNCTION (V2 - SMART MATCHING)
+// =====================================================================
+async function runBackgroundImageFetch() {
+    try {
+        // Ambil kartu yang belum punya gambar, TERMASUK card_number untuk smart matching
+        const [rows] = await pool.query("SELECT id, name, set_name, card_number, language FROM inventory WHERE image_url IS NULL OR image_url = ''");
+        console.log(`[BG-FETCH] Memproses ${rows.length} kartu tanpa gambar...`);
+
+        for (const card of rows) {
+            try {
+                let searchResults = [];
+
+                if (card.language === 'Japanese') {
+                    // JP: Tetap pakai crawler pokellector
+                    const query = card.name + (card.set_name && card.set_name !== '-' ? " " + card.set_name : "");
+                    const res = await axios.get(`http://localhost:3000/api/search-jp?query=${encodeURIComponent(query)}`);
+                    searchResults = res.data || [];
+                } else {
+                    // EN: Langsung panggil API pokemontcg.io dengan exact name search
+                    let queries = [];
+                    // Gunakan exact name match untuk background fetch (bukan wildcard)
+                    queries.push(`name:"${card.name}"`);
+                    if (card.set_name && card.set_name !== '-') {
+                        queries.push(`set.name:"${card.set_name}"`);
+                    }
+                    // Jika ada card_number, tambahkan sebagai filter tambahan
+                    const cleanNum = card.card_number ? card.card_number.split('/')[0].replace(/^0+/, '') : '';
+                    if (cleanNum) {
+                        queries.push(`number:${cleanNum}`);
+                    }
+
+                    const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
+                    const response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+                    const data = await response.json();
+                    searchResults = data.data || [];
+                }
+
+                // Gunakan Smart Matcher untuk memilih kartu yang paling cocok
+                let bestMatch = findBestMatch(searchResults, card.name, card.set_name, card.card_number);
+
+                if (bestMatch) {
+                    await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, card.id]);
+                    console.log(`[BG-FETCH] ✅ ${card.name} -> ${bestMatch.images.small}`);
+                } else if (card.set_name && card.set_name !== '-') {
+                    // FALLBACK: Coba tanpa set name + tanpa card number (broadest search)
+                    let fbResults = [];
+                    if (card.language === 'Japanese') {
+                        const fbRes = await axios.get(`http://localhost:3000/api/search-jp?query=${encodeURIComponent(card.name)}`);
+                        fbResults = fbRes.data || [];
+                    } else {
+                        const fbUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(`name:"${card.name}"`)}&pageSize=20`;
+                        const fbResponse = await fetch(fbUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+                        const fbData = await fbResponse.json();
+                        fbResults = fbData.data || [];
+                    }
+
+                    bestMatch = findBestMatch(fbResults, card.name, card.set_name, card.card_number);
+                    if (bestMatch) {
+                        await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, card.id]);
+                        console.log(`[BG-FETCH] ✅ (fallback) ${card.name} -> ${bestMatch.images.small}`);
+                    } else {
+                        await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
+                        console.log(`[BG-FETCH] ❌ ${card.name} -> NOT_FOUND`);
+                    }
+                } else {
+                    await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
+                    console.log(`[BG-FETCH] ❌ ${card.name} -> NOT_FOUND (no set)`);
+                }
+            } catch (err) {
+                console.error(`[BG-FETCH] ERROR ${card.name}:`, err.message);
+                await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
+            }
+            // Delay 2 detik per kartu untuk mencegah Rate Limit API
+            await new Promise(r => setTimeout(r, 2000));
+        }
+        console.log(`[BG-FETCH] Selesai memproses ${rows.length} kartu.`);
+    } catch (e) {
+        console.error("[BG-FETCH] Fatal error:", e);
+    }
+}
+
 // --- PERBAIKAN: BULK IMPORT DENGAN FITUR ROLLBACK (TRANSAKSI) ---
 app.post('/api/inventory/bulk-import', async (req, res) => {
     // 1. Kita minta jalur koneksi khusus (bukan pool biasa) untuk transaksi ini
@@ -361,15 +486,16 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
             const cond = i.card_condition || 'NM';
 
             // PENTING: Gunakan 'conn.query', BUKAN 'pool.query' agar tetap di dalam jalur Transaksi
+            // Relaxed check: Ignore set_code and card_number when merging to prevent duplicates
             const [existing] = await conn.query(
-                `SELECT id FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND set_code <=> ? AND card_number <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
-                [name, setName, lang, cond, isHolo, is1st, i.set_code || null, i.card_number || null, i.grader || null, i.grade || null, i.cert_number || null]
+                `SELECT id FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
+                [name, setName, lang, cond, isHolo, is1st, i.grader || null, i.grade || null, i.cert_number || null]
             );
 
             if (existing.length > 0) {
                 await conn.query(
-                    `UPDATE inventory SET quantity = quantity + ?, purchase_price = ?, market_price = ?, image_url = COALESCE(?, image_url) WHERE id = ?`,
-                    [safeQty, safePP, safeMP, i.image_url || null, existing[0].id]
+                    `UPDATE inventory SET quantity = quantity + ?, purchase_price = ?, market_price = ?, image_url = COALESCE(?, image_url), card_number = COALESCE(card_number, ?), set_code = COALESCE(set_code, ?) WHERE id = ?`,
+                    [safeQty, safePP, safeMP, i.image_url || null, i.card_number || null, i.set_code || null, existing[0].id]
                 );
                 updatedCount++;
             } else {
@@ -385,6 +511,9 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
         await conn.commit(); 
         res.status(201).json({ message: `Selesai! ${insertedCount} Kartu Baru. ${updatedCount} Kartu digabung.` });
         
+        // Trigger background fetch secara asinkron (jangan di-await)
+        runBackgroundImageFetch().catch(console.error);
+
     } catch (error) { 
         // 4. JIKA ADA SATU SAJA YANG ERROR: Batalkan Semuanya (Rollback) ke kondisi semula
         await conn.rollback(); 
@@ -427,6 +556,9 @@ app.post('/api/inventory/bulk-replace', async (req, res) => {
         await conn.commit(); 
         res.status(201).json({ message: `Selesai! Seluruh Vault di-replace dengan ${insertedCount} kartu baru.` });
         
+        // Trigger background fetch secara asinkron (jangan di-await)
+        runBackgroundImageFetch().catch(console.error);
+        
     } catch (error) { 
         await conn.rollback(); 
         console.error("ERROR MYSQL BULK REPLACE:", error);
@@ -460,4 +592,87 @@ app.post('/api/inventory/bulk-delete', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal hapus' }); }
 });
 
-app.listen(3000, () => console.log('Holovault Backend V9.3 MENYALA di http://localhost:3000'));
+// =====================================================================
+// API BARU: RE-FETCH GAMBAR (Reset NOT_FOUND & gambar yang salah)
+// =====================================================================
+app.post('/api/refetch-images', async (req, res) => {
+    try {
+        // Reset semua NOT_FOUND menjadi NULL agar bisa di-fetch ulang
+        const [resetResult] = await pool.query("UPDATE inventory SET image_url = NULL WHERE image_url = 'NOT_FOUND'");
+        const resetCount = resetResult.affectedRows || 0;
+
+        // Hitung total yang akan di-proses
+        const [countResult] = await pool.query("SELECT COUNT(*) as c FROM inventory WHERE image_url IS NULL OR image_url = ''");
+        const totalToFetch = countResult[0].c;
+
+        res.status(200).json({ 
+            message: `Re-fetch dimulai! ${resetCount} kartu NOT_FOUND di-reset. Total ${totalToFetch} kartu akan di-proses.`,
+            total: totalToFetch 
+        });
+
+        // Jalankan background fetch secara async
+        runBackgroundImageFetch().catch(console.error);
+    } catch (error) {
+        console.error("Refetch error:", error);
+        res.status(500).json({ error: 'Gagal memulai re-fetch' });
+    }
+});
+
+// API: Re-fetch gambar untuk 1 kartu spesifik
+app.post('/api/refetch-image/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        // Reset image_url agar bisa di-fetch ulang
+        await pool.query("UPDATE inventory SET image_url = NULL WHERE id = ?", [id]);
+        
+        // Fetch ulang kartu ini saja
+        const [rows] = await pool.query("SELECT id, name, set_name, card_number, language FROM inventory WHERE id = ?", [id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Kartu tidak ditemukan' });
+        
+        const card = rows[0];
+        let searchResults = [];
+
+        if (card.language === 'Japanese') {
+            const query = card.name + (card.set_name && card.set_name !== '-' ? " " + card.set_name : "");
+            const jpRes = await axios.get(`http://localhost:3000/api/search-jp?query=${encodeURIComponent(query)}`);
+            searchResults = jpRes.data || [];
+        } else {
+            let queries = [];
+            queries.push(`name:"${card.name}"`);
+            if (card.set_name && card.set_name !== '-') queries.push(`set.name:"${card.set_name}"`);
+            const cleanNum = card.card_number ? card.card_number.split('/')[0].replace(/^0+/, '') : '';
+            if (cleanNum) queries.push(`number:${cleanNum}`);
+
+            const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
+            const response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+            const data = await response.json();
+            searchResults = data.data || [];
+        }
+
+        const bestMatch = findBestMatch(searchResults, card.name, card.set_name, card.card_number);
+        if (bestMatch) {
+            await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, id]);
+            res.status(200).json({ message: 'Gambar ditemukan!', image_url: bestMatch.images.small });
+        } else {
+            await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [id]);
+            res.status(200).json({ message: 'Gambar tidak ditemukan', image_url: 'NOT_FOUND' });
+        }
+    } catch (error) {
+        console.error("Single refetch error:", error);
+        res.status(500).json({ error: 'Gagal re-fetch' });
+    }
+});
+
+// API: Force reset semua gambar yang salah (clear all external images untuk re-fetch)
+app.post('/api/reset-all-images', async (req, res) => {
+    try {
+        // Reset SEMUA gambar external (bukan upload lokal) menjadi NULL
+        const [result] = await pool.query("UPDATE inventory SET image_url = NULL WHERE image_url LIKE 'https://%' OR image_url = 'NOT_FOUND'");
+        const resetCount = result.affectedRows || 0;
+        res.status(200).json({ message: `${resetCount} gambar di-reset. Gunakan Re-fetch untuk mengambil ulang.`, reset: resetCount });
+    } catch (error) {
+        res.status(500).json({ error: 'Gagal reset' });
+    }
+});
+
+app.listen(3000, () => console.log('Holovault Backend V10.0 SMART-FETCH MENYALA di http://localhost:3000'));

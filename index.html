@@ -150,6 +150,8 @@
             
             <button type="button" onclick="exportToExcel()" style="background: #059669; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;">📤 Export DB</button>
             <button type="button" onclick="exportSoldToCSV()" style="background: #10b981; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;">📥 Export Penjualan</button>
+            <button type="button" onclick="refetchMissingImages()" style="background: #8b5cf6; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;" title="Re-fetch gambar yang NOT_FOUND">🔄 Re-fetch Gambar</button>
+            <button type="button" onclick="resetAndRefetchAll()" style="background: #6366f1; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;" title="Reset semua gambar external dan fetch ulang dengan smart matching">🔮 Reset & Re-fetch All</button>
         </div>
     </header>
 
@@ -449,8 +451,9 @@ function toggleSelectAll() {
         const itemsToRender = isSearchingVault ? filteredVault : filteredVault.slice(0, vaultDisplayLimit);
 
 itemsToRender.forEach(item => {
-            let imgSrc = item.image_url || 'https://placehold.co/55x77/111827/FFF?text=No+Img';
+            let imgSrc = (item.image_url && item.image_url !== 'NOT_FOUND') ? item.image_url : 'https://placehold.co/55x77/111827/FFF?text=No+Img';
             if (imgSrc.startsWith('/uploads/')) imgSrc = API_URL + imgSrc;
+            const showRefetchBtn = (!item.image_url || item.image_url === 'NOT_FOUND');
 
             let badges = '';
             if(item.category === 'Slab Set') { badges += `<span class="tag" style="background: #be185d; color: #fbcfe8;">Sequential Set</span>`; } 
@@ -507,6 +510,7 @@ itemsToRender.forEach(item => {
                             ${sellBtnHtml}
                             <button type="button" class="btn-action" style="background:#2563eb;" onclick="event.stopPropagation(); mulaiEdit('${item.id}')">Edit</button>
                             <button type="button" class="btn-action" style="background:var(--danger);" onclick="event.stopPropagation(); hapusItem('${item.id}')">Del</button>
+                            ${showRefetchBtn ? `<button type="button" class="btn-action" style="background:#8b5cf6; grid-column: 1 / -1; font-size: 0.7rem;" onclick="event.stopPropagation(); refetchSingleImage('${item.id}')">🔄 Fetch Gambar</button>` : ''}
                         </div>
                     </div>
                 </div>
@@ -548,7 +552,7 @@ itemsToRender.forEach(item => {
                 const finalItemShow = matchQuery && matchSet;
                 if(finalItemShow) contentMatches = true;
 
-                let iImgSrc = i.image_url || 'https://via.placeholder.com/40x56/111827/ffffff?text=No+Img';
+                let iImgSrc = (i.image_url && i.image_url !== 'NOT_FOUND') ? i.image_url : 'https://via.placeholder.com/40x56/111827/ffffff?text=No+Img';
                 if (iImgSrc.startsWith('/uploads/')) iImgSrc = API_URL + iImgSrc;
 
                 miniCardsHtml += `
@@ -596,7 +600,11 @@ itemsToRender.forEach(item => {
 
     async function loadInventory() {
         try {
-            const res = await fetch(`${API_URL}/api/inventory`); globalData = await res.json();
+            const res = await fetch(`${API_URL}/api/inventory`);
+            if (!res.ok) { showToast('Server belum siap, coba refresh halaman.', true); return; }
+            const contentType = res.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) { showToast('Server mengembalikan respons yang tidak valid. Coba refresh.', true); return; }
+            globalData = await res.json();
             const setSelect = document.getElementById('filterSetSelect'); const previousSelection = setSelect.value;
             const uniqueSets = [...new Set(globalData.map(item => item.set_name).filter(Boolean))].sort();
             setSelect.innerHTML = '<option value="">✨ Semua Set Expansion</option>';
@@ -605,7 +613,7 @@ itemsToRender.forEach(item => {
                 if(setName === previousSelection) opt.selected = true; setSelect.appendChild(opt);
             });
             applyFiltersAndRender();
-        } catch (error) { console.error("Load Inventory Error:", error); }
+        } catch (error) { console.error("Load Inventory Error:", error); showToast('Gagal terhubung ke server. Pastikan server menyala.', true); }
     }
 
     function openSingleSellModal(id, namaItem, maxQty) {
@@ -724,7 +732,7 @@ function openBulkSellModal() {
             name: item.name, category: item.category, set_name: item.set_name, set_code: item.set_code || '', card_number: item.card_number || '', language: item.language,
             quantity: item.quantity, purchase_price: item.purchase_price, market_price: item.market_price, card_condition: item.card_condition,
             is_holo: item.is_holo === 1 ? 'YES' : 'NO', is_first_edition: item.is_first_edition === 1 ? 'YES' : 'NO', grader: item.grader || '', grade: item.grade || '',
-            cert_number: item.cert_number || '', notes: item.notes || '', image_url: item.image_url || ''
+            cert_number: item.cert_number || '', notes: item.notes || '', image_url: (item.image_url && item.image_url !== 'NOT_FOUND') ? item.image_url : ''
         }));
         try {
             const worksheet = XLSX.utils.json_to_sheet(exportData); const workbook = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(workbook, worksheet, "Holovault");
@@ -836,7 +844,7 @@ function parseNewCSVFormat(jsonData) {
                 quantity: parseInt(item['Quantity'] || item['quantity']) || 1,
                 purchase_price: cleanPP,
                 market_price: cleanMP,
-                image_url: item['img_url'] || item['image_url'] || null,
+                image_url: (() => { const url = item['img_url'] || item['image_url'] || null; return (url && url !== 'NOT_FOUND') ? url : null; })(),
                 is_holo: (String(item['Variance'] || '').toLowerCase().includes('holo') || parseInt(item['is_holo']) === 1 || String(item['is_holo']) === 'YES') ? 1 : 0,
                 is_first_edition: (String(item['Variance'] || '').toLowerCase().includes('1st') || parseInt(item['is_first_edition']) === 1 || String(item['is_first_edition']) === 'YES') ? 1 : 0,
                 card_condition: cond,
@@ -921,7 +929,8 @@ function parseNewCSVFormat(jsonData) {
             if (cards.length === 0) return hasilDiv.innerHTML = '<p style="color:var(--danger); font-size:0.9rem; font-weight:bold;">Card Not Found.</p>';
             
             cards.forEach(card => {
-                const img = document.createElement('img'); img.src = card.images.small; img.className = 'card-preview';
+                const validImageUrl = (card.images.small && card.images.small !== 'NOT_FOUND') ? card.images.small : 'assets/card-back.png';
+                const img = document.createElement('img'); img.src = validImageUrl; img.className = 'card-preview';
                 img.onclick = () => {
                     document.querySelectorAll('.card-preview').forEach(el => el.classList.remove('selected')); img.classList.add('selected');
                     document.getElementById('nama').value = card.name; 
@@ -984,6 +993,59 @@ function parseNewCSVFormat(jsonData) {
     });
 
     handleCategoryChange(); loadInventory();
+
+    // =====================================================================
+    // FUNGSI RE-FETCH GAMBAR
+    // =====================================================================
+    async function refetchMissingImages() {
+        openModal('Re-fetch Gambar', 
+            'Ini akan me-reset semua kartu bertanda <b style="color:var(--danger)">NOT_FOUND</b> dan mencoba fetch ulang gambar dengan <b>Smart Matching</b> yang sudah diperbaiki.<br><br>Proses berjalan di background, kamu bisa tetap pakai aplikasi.',
+            '', async () => {
+                try {
+                    const res = await fetch(`${API_URL}/api/refetch-images`, { method: 'POST' });
+                    const data = await res.json();
+                    showToast(data.message);
+                    document.getElementById('universalModal').classList.add('hidden');
+                } catch (err) { showToast('Error: ' + err.message, true); }
+            });
+    }
+
+    async function resetAndRefetchAll() {
+        openModal('⚠️ Reset & Re-fetch SEMUA Gambar',
+            'Ini akan <b style="color:var(--danger)">menghapus SEMUA gambar dari internet</b> (gambar upload lokal tetap aman) dan mengambil ulang dengan <b>Smart Matching V2</b>.<br><br>Gunakan ini jika banyak gambar yang SALAH (bukan kartu yang benar).<br><br><i>Proses bisa memakan waktu beberapa menit tergantung jumlah kartu.</i>',
+            '', async () => {
+                try {
+                    // Step 1: Reset semua gambar external
+                    const resetRes = await fetch(`${API_URL}/api/reset-all-images`, { method: 'POST' });
+                    const resetData = await resetRes.json();
+                    showToast(resetData.message);
+
+                    // Step 2: Mulai re-fetch
+                    const fetchRes = await fetch(`${API_URL}/api/refetch-images`, { method: 'POST' });
+                    const fetchData = await fetchRes.json();
+                    showToast(fetchData.message);
+                    
+                    document.getElementById('universalModal').classList.add('hidden');
+                    // Reload UI setelah 3 detik agar user lihat progress
+                    setTimeout(() => loadInventory(), 3000);
+                } catch (err) { showToast('Error: ' + err.message, true); }
+            });
+    }
+
+    async function refetchSingleImage(id) {
+        showToast('Mencari gambar...');
+        try {
+            const res = await fetch(`${API_URL}/api/refetch-image/${id}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.image_url && data.image_url !== 'NOT_FOUND') {
+                showToast('✅ Gambar ditemukan!');
+            } else {
+                showToast('Gambar tidak ditemukan di database API.', true);
+            }
+            loadInventory();
+        } catch (err) { showToast('Error: ' + err.message, true); }
+    }
+
 </script>
 </body>
 </html>
