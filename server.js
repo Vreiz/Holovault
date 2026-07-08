@@ -365,7 +365,46 @@ function findBestMatch(searchResults, targetName, targetSetName, targetNumber) {
 }
 
 // =====================================================================
-// BACKGROUND AUTO-FETCH FUNCTION (V2 - SMART MATCHING)
+// CRAWLER POKELLECTOR ENGLISH - Fallback jika pokemontcg.io tidak punya
+// =====================================================================
+async function crawlPokellectorEN(cardName, setName) {
+    try {
+        const query = cardName + (setName && setName !== '-' ? ' ' + setName : '');
+        const url = `https://www.pokellector.com/search?criteria=${encodeURIComponent(query)}`;
+        const response = await axios.get(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                'Accept': 'text/html'
+            },
+            timeout: 10000
+        });
+        const $ = cheerio.load(response.data);
+        let results = [];
+        $('.cardresult').each((i, el) => {
+            const imgUrl = $(el).find('img.card').attr('data-src') || $(el).find('img.card').attr('src');
+            // Filter out placeholder images
+            if (!imgUrl || imgUrl.includes('card-placeholder')) return;
+            const name = $(el).find('.detail .name').text().trim();
+            let rawSet = $(el).find('.detail .set').text().trim();
+            let sName = '', cardNum = '';
+            if (rawSet.includes('#')) {
+                let parts = rawSet.split('#');
+                sName = parts[0].trim();
+                cardNum = parts[1].trim();
+            } else {
+                sName = rawSet;
+            }
+            results.push({ name, images: { small: imgUrl }, set: { name: sName }, number: cardNum });
+        });
+        return results;
+    } catch (e) {
+        console.log(`[POKELLECTOR-EN] Crawl failed: ${e.message}`);
+        return [];
+    }
+}
+
+// =====================================================================
+// BACKGROUND AUTO-FETCH FUNCTION (V2 - SMART MATCHING + MULTI-SOURCE)
 // =====================================================================
 async function runBackgroundImageFetch() {
     try {
@@ -383,23 +422,31 @@ async function runBackgroundImageFetch() {
                     const res = await axios.get(`http://localhost:3000/api/search-jp?query=${encodeURIComponent(query)}`);
                     searchResults = res.data || [];
                 } else {
-                    // EN: Langsung panggil API pokemontcg.io dengan exact name search
-                    let queries = [];
-                    // Gunakan exact name match untuk background fetch (bukan wildcard)
-                    queries.push(`name:"${card.name}"`);
-                    if (card.set_name && card.set_name !== '-') {
-                        queries.push(`set.name:"${card.set_name}"`);
-                    }
-                    // Jika ada card_number, tambahkan sebagai filter tambahan
+                    // Bersihkan nama dari suffix variant: "Pikachu (Friend Ball)" -> "Pikachu"
+                    const cleanName = card.name.replace(/\s*\(.*?\)\s*/g, '').trim();
                     const cleanNum = card.card_number ? card.card_number.split('/')[0].replace(/^0+/, '') : '';
-                    if (cleanNum) {
-                        queries.push(`number:${cleanNum}`);
-                    }
+                    
+                    // EN: Coba exact name dulu
+                    let queries = [`name:"${card.name}"`];
+                    if (card.set_name && card.set_name !== '-') queries.push(`set.name:"${card.set_name}"`);
+                    if (cleanNum) queries.push(`number:${cleanNum}`);
 
-                    const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
-                    const response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
-                    const data = await response.json();
+                    let apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
+                    let response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+                    let data = await response.json();
                     searchResults = data.data || [];
+
+                    // Jika nama asli gagal dan ada parenthetical, coba dengan nama bersih
+                    if (searchResults.length === 0 && cleanName !== card.name) {
+                        console.log(`[BG-FETCH] Retry dengan nama bersih: "${cleanName}"`);
+                        queries = [`name:"${cleanName}"`];
+                        if (card.set_name && card.set_name !== '-') queries.push(`set.name:"${card.set_name}"`);
+                        if (cleanNum) queries.push(`number:${cleanNum}`);
+                        apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
+                        response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+                        data = await response.json();
+                        searchResults = data.data || [];
+                    }
                 }
 
                 // Gunakan Smart Matcher untuk memilih kartu yang paling cocok
@@ -426,12 +473,33 @@ async function runBackgroundImageFetch() {
                         await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, card.id]);
                         console.log(`[BG-FETCH] ✅ (fallback) ${card.name} -> ${bestMatch.images.small}`);
                     } else {
-                        await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
-                        console.log(`[BG-FETCH] ❌ ${card.name} -> NOT_FOUND`);
+                        // FALLBACK 2: Pokellector English
+                        const pokResults = await crawlPokellectorEN(card.name, card.set_name);
+                        bestMatch = findBestMatch(pokResults, card.name, card.set_name, card.card_number);
+                        if (bestMatch) {
+                            await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, card.id]);
+                            console.log(`[BG-FETCH] ✅ (pokellector) ${card.name} -> ${bestMatch.images.small}`);
+                        } else {
+                            await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
+                            console.log(`[BG-FETCH] ❌ ${card.name} -> NOT_FOUND`);
+                        }
                     }
                 } else {
-                    await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
-                    console.log(`[BG-FETCH] ❌ ${card.name} -> NOT_FOUND (no set)`);
+                    // Bahkan tanpa set, coba Pokellector sebagai last resort
+                    if (card.language !== 'Japanese') {
+                        const pokResults = await crawlPokellectorEN(card.name, '');
+                        const bestMatch = findBestMatch(pokResults, card.name, '', card.card_number);
+                        if (bestMatch) {
+                            await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, card.id]);
+                            console.log(`[BG-FETCH] ✅ (pokellector-noset) ${card.name} -> ${bestMatch.images.small}`);
+                        } else {
+                            await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
+                            console.log(`[BG-FETCH] ❌ ${card.name} -> NOT_FOUND (no set)`);
+                        }
+                    } else {
+                        await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
+                        console.log(`[BG-FETCH] ❌ ${card.name} -> NOT_FOUND (no set)`);
+                    }
                 }
             } catch (err) {
                 console.error(`[BG-FETCH] ERROR ${card.name}:`, err.message);
@@ -637,19 +705,39 @@ app.post('/api/refetch-image/:id', async (req, res) => {
             const jpRes = await axios.get(`http://localhost:3000/api/search-jp?query=${encodeURIComponent(query)}`);
             searchResults = jpRes.data || [];
         } else {
-            let queries = [];
-            queries.push(`name:"${card.name}"`);
-            if (card.set_name && card.set_name !== '-') queries.push(`set.name:"${card.set_name}"`);
+            const cleanName = card.name.replace(/\s*\(.*?\)\s*/g, '').trim();
             const cleanNum = card.card_number ? card.card_number.split('/')[0].replace(/^0+/, '') : '';
+            
+            let queries = [`name:"${card.name}"`];
+            if (card.set_name && card.set_name !== '-') queries.push(`set.name:"${card.set_name}"`);
             if (cleanNum) queries.push(`number:${cleanNum}`);
 
-            const apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
-            const response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
-            const data = await response.json();
+            let apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
+            let response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+            let data = await response.json();
             searchResults = data.data || [];
+
+            // Retry dengan nama bersih jika gagal
+            if (searchResults.length === 0 && cleanName !== card.name) {
+                queries = [`name:"${cleanName}"`];
+                if (card.set_name && card.set_name !== '-') queries.push(`set.name:"${card.set_name}"`);
+                if (cleanNum) queries.push(`number:${cleanNum}`);
+                apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
+                response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+                data = await response.json();
+                searchResults = data.data || [];
+            }
         }
 
-        const bestMatch = findBestMatch(searchResults, card.name, card.set_name, card.card_number);
+        let bestMatch = findBestMatch(searchResults, card.name, card.set_name, card.card_number);
+        
+        // Fallback ke Pokellector EN jika pokemontcg.io tidak punya
+        if (!bestMatch && card.language !== 'Japanese') {
+            console.log(`[REFETCH] pokemontcg.io gagal untuk ${card.name}, coba Pokellector EN...`);
+            const pokResults = await crawlPokellectorEN(card.name, card.set_name);
+            bestMatch = findBestMatch(pokResults, card.name, card.set_name, card.card_number);
+        }
+
         if (bestMatch) {
             await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, id]);
             res.status(200).json({ message: 'Gambar ditemukan!', image_url: bestMatch.images.small });
