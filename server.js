@@ -1,4 +1,6 @@
 const express = require('express');
+const axios = require('axios');
+const cheerio = require('cheerio');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
 const multer = require('multer');
@@ -34,16 +36,39 @@ const pool = mysql.createPool({
     port: 4000,
     user: 'bHEitaKtTPBTcrk.root',
     password: 'qPOxc0nuVez63w32',
-    database: 'test', // Ingat, gunakan 'test', jangan 'sys' ya!
+    database: 'test', 
     ssl: {
         minVersion: 'TLSv1.2',
         rejectUnauthorized: true
     },
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    
+    // 🔥 PERBAIKAN: Anti-Tertidur (Mencegah ECONNRESET)
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 0
 });
-
+// =====================================================================
+// API 0: AMBIL SEMUA DATA (RUTE YANG TIDAK SENGAJA TERHAPUS)
+// =====================================================================
+app.get('/api/inventory', async (req, res) => {
+    try {
+        const [rows] = await pool.query('SELECT * FROM inventory');
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error("Gagal ambil data:", error);
+        // 🔥 Sistem akan membocorkan alasan asli TiDB langsung ke layar!
+        res.status(500).json({ 
+            error: 'Gagal mengambil data dari server',
+            alasan_asli: error.message,
+            kode_error: error.code
+        });
+    }
+});
+// =====================================================================
+// API 1: PENCARIAN KARTU GLOBAL (ENGLISH) - Menggunakan pokemontcg.io
+// =====================================================================
 app.get('/api/search-card', async (req, res) => {
     try {
         const { name, set } = req.query;
@@ -70,13 +95,92 @@ app.get('/api/search-card', async (req, res) => {
     } catch (error) { 
         res.status(500).json({ error: 'Gagal API Pusat' }); 
     }
-}); 
+});
 
-app.get('/api/inventory', async (req, res) => {
+
+// =====================================================================
+// API 2: CRAWLER KARTU JEPANG (JP) - Menggunakan Axios & Cheerio
+// =====================================================================
+// =====================================================================
+// API 2: CRAWLER KARTU JEPANG (JP) - ANTI REDIRECT
+// =====================================================================
+app.get('/api/search-jp', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM inventory ORDER BY created_at DESC');
-        res.status(200).json(rows);
-    } catch (error) { res.status(500).json({ error: 'Gagal database' }); }
+        const { query } = req.query;
+        if (!query) return res.status(400).json({ error: 'Query kosong' });
+
+        const baseUrl = `https://jp.pokellector.com/search?criteria=${encodeURIComponent(query)}`;
+        let hasilKartu = [];
+
+        const fetchPage = async (pageUrl) => {
+            const response = await axios.get(pageUrl, {
+                headers: { 
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                    'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8',
+                    'Cookie': 'PokemonDatabaseLanguage=jp; locale=ja; region=jp;'
+                }
+            });
+            const $ = cheerio.load(response.data);
+            $('.cardresult').each((index, element) => {
+                const gambarUrl = $(element).find('img.card').attr('data-src') || $(element).find('img.card').attr('src');
+                if (!gambarUrl) return;
+
+                let namaKartu = $(element).find('.detail .name').text().trim() || query;
+                let rawSet = $(element).find('.detail .set').text().trim() || '';
+                let setName = '';
+                let cardNumber = '';
+                
+                if (rawSet.includes('#')) {
+                    let parts = rawSet.split('#');
+                    setName = parts[0].trim();
+                    cardNumber = parts[1].trim();
+                } else {
+                    setName = rawSet;
+                }
+
+                hasilKartu.push({
+                    name: namaKartu,
+                    images: { small: gambarUrl },
+                    set: { name: setName },
+                    number: cardNumber
+                });
+            });
+            return $;
+        };
+
+        const $firstPage = await fetchPage(baseUrl);
+
+        // Find max pages from pagination
+        let maxPage = 1;
+        $firstPage('.pagination a').each((i, el) => {
+            let num = parseInt($(el).text().trim());
+            if (!isNaN(num) && num > maxPage) maxPage = num;
+        });
+
+        // Limit to 5 pages to avoid timeouts
+        if (maxPage > 5) maxPage = 5;
+
+        const pagePromises = [];
+        for (let i = 2; i <= maxPage; i++) {
+            pagePromises.push(fetchPage(`${baseUrl}&page=${i}`));
+        }
+        await Promise.all(pagePromises);
+        
+        
+        if (hasilKartu.length === 0) {
+            const singleImage = $firstPage('#pokeball-container img, .card-image img').attr('src');
+            if (singleImage) {
+                hasilKartu.push({ name: query, images: { small: singleImage }, set: { name: '' }, number: '' });
+            }
+        }
+
+        res.status(200).json(hasilKartu);
+    } catch (error) {
+        // Log merah di terminal untuk mengecek apakah masih kena blokir 403
+        console.error("Crawler Error Status:", error.response ? error.response.status : error.message);
+        res.status(500).json({ error: error.response?.status === 403 ? 'Terblokir Satpam Cloudflare (403)' : 'Crawler gagal menembus target' });
+    }
 });
 
 // API 3: SIMPAN BARU (MENDUKUNG UPLOAD FILE)

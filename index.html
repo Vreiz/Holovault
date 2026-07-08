@@ -167,8 +167,12 @@
             
             <div style="background: var(--bg-main); padding: 1rem; border-radius: 8px; margin-bottom: 1.2rem; border: 1px solid var(--border);">
                 <div class="search-row">
-                    <input type="text" id="searchInput" placeholder="Nama kartu...">
-                    <input type="text" id="searchSet" placeholder="Set..." style="max-width: 100px;">
+                    <input type="text" id="searchInput" placeholder="Nama kartu..." style="flex: 1;">
+                    <input type="text" id="searchSet" placeholder="Set..." style="max-width: 90px;">
+                    <select id="searchRegion" style="max-width: 120px; padding: 0.6rem; background: #1e293b; color: white; border: 1px solid var(--border); border-radius: 6px; font-weight: bold; cursor: pointer;">
+                        <option value="global">🇺🇸 English</option>
+                        <option value="jp">🇯🇵 Japan</option>
+                    </select>
                     <button type="button" onclick="cariKartu()" id="btnSearch" style="width:auto; padding:0 1rem; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cari</button>
                 </div>
                 <div id="hasilPencarian"></div>
@@ -445,7 +449,7 @@ function toggleSelectAll() {
         const itemsToRender = isSearchingVault ? filteredVault : filteredVault.slice(0, vaultDisplayLimit);
 
 itemsToRender.forEach(item => {
-            let imgSrc = item.image_url || 'https://via.placeholder.com/55x77/111827/ffffff?text=No+Img';
+            let imgSrc = item.image_url || 'https://placehold.co/55x77/111827/FFF?text=No+Img';
             if (imgSrc.startsWith('/uploads/')) imgSrc = API_URL + imgSrc;
 
             let badges = '';
@@ -901,11 +905,18 @@ function parseNewCSVFormat(jsonData) {
 
     async function cariKartu() {
         const qN = document.getElementById('searchInput').value; const qS = document.getElementById('searchSet').value;
+        const region = document.getElementById('searchRegion').value;
         const btn = document.getElementById('btnSearch'); const hasilDiv = document.getElementById('hasilPencarian');
         if (!qN.trim() && !qS.trim()) return showToast("Isi parameter cari!", true);
         btn.innerText = '...'; hasilDiv.innerHTML = '<i style="color:#ffffff;">Searching...</i>';
         try {
-            const res = await fetch(`${API_URL}/api/search-card?name=${encodeURIComponent(qN)}&set=${encodeURIComponent(qS)}`);
+            let res;
+            if (region === 'jp') {
+                const query = qN.trim() + (qS.trim() ? " " + qS.trim() : "");
+                res = await fetch(`${API_URL}/api/search-jp?query=${encodeURIComponent(query)}`);
+            } else {
+                res = await fetch(`${API_URL}/api/search-card?name=${encodeURIComponent(qN)}&set=${encodeURIComponent(qS)}`);
+            }
             const cards = await res.json(); hasilDiv.innerHTML = '';
             if (cards.length === 0) return hasilDiv.innerHTML = '<p style="color:var(--danger); font-size:0.9rem; font-weight:bold;">Card Not Found.</p>';
             
@@ -913,10 +924,16 @@ function parseNewCSVFormat(jsonData) {
                 const img = document.createElement('img'); img.src = card.images.small; img.className = 'card-preview';
                 img.onclick = () => {
                     document.querySelectorAll('.card-preview').forEach(el => el.classList.remove('selected')); img.classList.add('selected');
-                    document.getElementById('nama').value = card.name; document.getElementById('set').value = card.set.name;
-                    document.getElementById('imageUrl').value = card.images.small; document.getElementById('cardNumber').value = card.number || '';
-                    const customSetMapping = { 'sv2': 'PAL', 'sv3': 'OBF', 'sv3pt5': 'MEW', 'sv4pt5': 'PAF', 'swsh12pt5': 'CRZ', 'swsh4pt5': 'SHF', 'swsh7pt5': 'CEL', 'pgo': 'PGO' };
-                    document.getElementById('setCode').value = (customSetMapping[card.set.id] || card.set.ptcgoCode || card.set.id || '').toUpperCase();
+                    document.getElementById('nama').value = card.name; 
+                    document.getElementById('imageUrl').value = card.images.small; 
+                    document.getElementById('cardNumber').value = card.number || '';
+                    document.getElementById('set').value = card.set ? card.set.name : '';
+                    if (region === 'jp') {
+                        document.getElementById('setCode').value = 'JP';
+                    } else {
+                        const customSetMapping = { 'sv2': 'PAL', 'sv3': 'OBF', 'sv3pt5': 'MEW', 'sv4pt5': 'PAF', 'swsh12pt5': 'CRZ', 'swsh4pt5': 'SHF', 'swsh7pt5': 'CEL', 'pgo': 'PGO' };
+                        document.getElementById('setCode').value = card.set ? (customSetMapping[card.set.id] || card.set.ptcgoCode || card.set.id || '').toUpperCase() : '';
+                    }
                 }; hasilDiv.appendChild(img);
             });
         } catch (error) { hasilDiv.innerHTML = '<p style="color:var(--danger); font-size:0.9rem; font-weight:bold;">Offline. Server down?</p>'; } finally { btn.innerText = 'Cari'; }
