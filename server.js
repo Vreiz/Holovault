@@ -44,21 +44,60 @@ const pool = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
-    
-    // 🔥 PERBAIKAN: Anti-Tertidur (Mencegah ECONNRESET)
     enableKeepAlive: true,
     keepAliveInitialDelay: 0
 });
+
+pool.on('error', (err) => {
+    console.error('🔥 [TiDB Pool Notice] Koneksi terputus/reset:', err.code || err.message);
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('🔥 [ANTI-CRASH] Uncaught Exception:', err.message || err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('🔥 [ANTI-CRASH] Unhandled Rejection:', reason);
+});
+
+// Otomatis sesuaikan ukuran VARCHAR kolom pada tabel inventory agar tidak terjadi error "Data too long for column" saat import/replace
+async function ensureSchemaLengths() {
+    try {
+        await pool.query(`ALTER TABLE inventory MODIFY COLUMN grade VARCHAR(255) NULL`);
+        await pool.query(`ALTER TABLE inventory MODIFY COLUMN grader VARCHAR(255) NULL`);
+        await pool.query(`ALTER TABLE inventory MODIFY COLUMN card_number VARCHAR(255) NULL`);
+        await pool.query(`ALTER TABLE inventory MODIFY COLUMN cert_number VARCHAR(255) NULL`);
+        await pool.query(`ALTER TABLE inventory MODIFY COLUMN card_condition VARCHAR(255) NULL`);
+        await pool.query(`ALTER TABLE inventory MODIFY COLUMN set_code VARCHAR(255) NULL`);
+        await pool.query(`ALTER TABLE inventory MODIFY COLUMN category VARCHAR(255) NULL`);
+        await pool.query(`ALTER TABLE inventory MODIFY COLUMN language VARCHAR(255) NULL`);
+        await pool.query(`ALTER TABLE inventory MODIFY COLUMN name VARCHAR(255) NOT NULL`);
+        await pool.query(`ALTER TABLE inventory MODIFY COLUMN set_name VARCHAR(255) NULL`);
+        console.log("✅ Skema database diperbarui (kolom VARCHAR diperluas menjadi 255 karakter).");
+    } catch (e) {
+        console.log("Catatan auto-check skema:", e.message);
+    }
+}
+ensureSchemaLengths();
 // =====================================================================
 // API 0: AMBIL SEMUA DATA (RUTE YANG TIDAK SENGAJA TERHAPUS)
 // =====================================================================
 app.get('/api/inventory', async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM inventory');
+        let rows;
+        try {
+            [rows] = await pool.query('SELECT * FROM inventory');
+        } catch (retryErr) {
+            if (retryErr.code === 'ECONNRESET' || retryErr.code === 'PROTOCOL_CONNECTION_LOST') {
+                console.log("🔄 Re-querying TiDB setelah ECONNRESET...");
+                [rows] = await pool.query('SELECT * FROM inventory');
+            } else {
+                throw retryErr;
+            }
+        }
         res.status(200).json(rows);
     } catch (error) {
         console.error("Gagal ambil data:", error);
-        // 🔥 Sistem akan membocorkan alasan asli TiDB langsung ke layar!
         res.status(500).json({ 
             error: 'Gagal mengambil data dari server',
             alasan_asli: error.message,
@@ -567,25 +606,27 @@ async function runBackgroundImageFetch() {
                 }
             } catch (err) {
                 console.error(`[BG-FETCH] ERROR ${card.name}:`, err.message);
-                await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
+                try {
+                    await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
+                } catch (dbErr) { /* ignore db error if closed */ }
             }
             await new Promise(r => setTimeout(r, 1500));
         }
         console.log(`[BG-FETCH] Selesai memproses ${rows.length} kartu.`);
     } catch (e) {
-        console.error("[BG-FETCH] Fatal error:", e);
+        console.error("[BG-FETCH] Catatan:", e.message);
     }
 }
 
 // --- PERBAIKAN: BULK IMPORT DENGAN FITUR ROLLBACK (TRANSAKSI) ---
 app.post('/api/inventory/bulk-import', async (req, res) => {
-    // 1. Kita minta jalur koneksi khusus (bukan pool biasa) untuk transaksi ini
-    const conn = await pool.getConnection(); 
-    
+    let conn = null;
     try {
+        // 1. Kita minta jalur koneksi khusus (bukan pool biasa) untuk transaksi ini
+        conn = await pool.getConnection();
         const items = req.body;
         if (!Array.isArray(items) || items.length === 0) {
-            conn.release();
+            if (conn) conn.release();
             return res.status(400).json({ error: 'Data kosong' });
         }
 
@@ -601,9 +642,10 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
             
             const cleanNumber = (val) => {
                 if (val === null || val === undefined || val === '') return 0;
-                const strVal = String(val).replace(/[^0-9]/g, ''); 
-                const parsed = parseInt(strVal, 10);
-                return isNaN(parsed) ? 0 : parsed;
+                if (typeof val === 'number') return Math.round(val);
+                const strVal = String(val).replace(/,/g, '').replace(/[^0-9.-]/g, ''); 
+                const parsed = parseFloat(strVal);
+                return isNaN(parsed) ? 0 : Math.round(parsed);
             };
 
             const safePP = cleanNumber(i.purchase_price);
@@ -611,28 +653,36 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
 
             const isHolo = parseInt(i.is_holo) || 0;
             const is1st = parseInt(i.is_first_edition) || 0;
-            const name = i.name || 'Unnamed Card';
-            const setName = i.set_name || '-';
-            const lang = i.language || 'English';
-            const cond = i.card_condition || 'NM';
+            const sStr = (v, max = 250) => (v !== null && v !== undefined && v !== '') ? String(v).slice(0, max) : null;
+
+            const name = sStr(i.name, 250) || 'Unnamed Card';
+            const setName = sStr(i.set_name, 250) || '-';
+            const lang = sStr(i.language, 100) || 'English';
+            const cond = sStr(i.card_condition, 100) || 'NM';
+            const grader = sStr(i.grader, 100);
+            const grade = sStr(i.grade, 100);
+            const certNum = sStr(i.cert_number, 100);
+            const cardNum = sStr(i.card_number, 100);
+            const setCode = sStr(i.set_code, 100);
+            const cat = sStr(i.category, 100) || 'Single';
 
             // PENTING: Gunakan 'conn.query', BUKAN 'pool.query' agar tetap di dalam jalur Transaksi
             // Relaxed check: Ignore set_code and card_number when merging to prevent duplicates
             const [existing] = await conn.query(
                 `SELECT id FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
-                [name, setName, lang, cond, isHolo, is1st, i.grader || null, i.grade || null, i.cert_number || null]
+                [name, setName, lang, cond, isHolo, is1st, grader, grade, certNum]
             );
 
             if (existing.length > 0) {
                 await conn.query(
                     `UPDATE inventory SET quantity = quantity + ?, purchase_price = ?, market_price = ?, image_url = COALESCE(?, image_url), card_number = COALESCE(card_number, ?), set_code = COALESCE(set_code, ?) WHERE id = ?`,
-                    [safeQty, safePP, safeMP, i.image_url || null, i.card_number || null, i.set_code || null, existing[0].id]
+                    [safeQty, safePP, safeMP, i.image_url || null, cardNum, setCode, existing[0].id]
                 );
                 updatedCount++;
             } else {
                 await conn.query(
                     `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault')`,
-                    [crypto.randomUUID(), name, i.category || 'Single', setName, i.set_code || null, i.card_number || null, lang, safeQty, safePP, safeMP, i.image_url || null, i.notes || null, cond, isHolo, is1st, i.grader || null, i.grade || null, i.cert_number || null]
+                    [crypto.randomUUID(), name, cat, setName, setCode, cardNum, lang, safeQty, safePP, safeMP, i.image_url || null, i.notes || null, cond, isHolo, is1st, grader, grade, certNum]
                 );
                 insertedCount++;
             }
@@ -642,26 +692,27 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
         await conn.commit(); 
         res.status(201).json({ message: `Selesai! ${insertedCount} Kartu Baru. ${updatedCount} Kartu digabung.` });
         
-        // Trigger background fetch secara asinkron (jangan di-await)
-        runBackgroundImageFetch().catch(console.error);
+        // Trigger background fetch secara asinkron setelah koneksi dilepas
+        setTimeout(() => runBackgroundImageFetch().catch(e => console.log("BG-FETCH note:", e.message)), 1000);
 
     } catch (error) { 
         // 4. JIKA ADA SATU SAJA YANG ERROR: Batalkan Semuanya (Rollback) ke kondisi semula
-        await conn.rollback(); 
+        if (conn) await conn.rollback(); 
         console.error("🔥 ERROR MYSQL BULK IMPORT - AUTO ROLLBACK DILAKUKAN:", error);
         res.status(500).json({ error: error.message || 'Gagal import, seluruh data dibatalkan (Rollback)' }); 
     } finally {
         // 5. Selalu lepas koneksi agar tidak membuat server macet
-        conn.release(); 
+        if (conn) conn.release(); 
     }
 });
 // --- API BARU: BULK REPLACE (Hapus semua Vault, lalu masukkan baru) ---
 app.post('/api/inventory/bulk-replace', async (req, res) => {
-    const conn = await pool.getConnection(); 
+    let conn = null;
     try {
+        conn = await pool.getConnection();
         const items = req.body;
         if (!Array.isArray(items) || items.length === 0) {
-            conn.release();
+            if (conn) conn.release();
             return res.status(400).json({ error: 'Data kosong' });
         }
 
@@ -674,12 +725,30 @@ app.post('/api/inventory/bulk-replace', async (req, res) => {
         // 2. INSERT SEMUA DATA DARI CSV SEBAGAI DATA BARU
         for (const i of items) {
             const safeQty = parseInt(i.quantity) || 1;
-            const safePP = parseFloat(i.purchase_price) || 0;
-            const safeMP = parseFloat(i.market_price) || 0;
+            const safePP = typeof i.purchase_price === 'number' ? Math.round(i.purchase_price) : Math.round(parseFloat(String(i.purchase_price || 0).replace(/,/g, '').replace(/[^0-9.-]/g, '')) || 0);
+            const safeMP = typeof i.market_price === 'number' ? Math.round(i.market_price) : Math.round(parseFloat(String(i.market_price || 0).replace(/,/g, '').replace(/[^0-9.-]/g, '')) || 0);
+            const sStr = (v, max = 250) => (v !== null && v !== undefined && v !== '') ? String(v).slice(0, max) : null;
 
             await conn.query(
                 `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, image_url, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault')`,
-                [crypto.randomUUID(), i.name || 'Unnamed', i.category || 'Single', i.set_name || '-', i.set_code || null, i.card_number || null, i.language || 'English', safeQty, safePP, safeMP, i.image_url || null, i.notes || null, i.card_condition || 'NM', i.is_holo || 0, i.is_first_edition || 0, i.grader || null, i.grade || null, i.cert_number || null]
+                [
+                    crypto.randomUUID(), 
+                    sStr(i.name, 250) || 'Unnamed', 
+                    sStr(i.category, 100) || 'Single', 
+                    sStr(i.set_name, 250) || '-', 
+                    sStr(i.set_code, 100), 
+                    sStr(i.card_number, 100), 
+                    sStr(i.language, 100) || 'English', 
+                    safeQty, safePP, safeMP, 
+                    i.image_url || null, 
+                    i.notes || null, 
+                    sStr(i.card_condition, 100) || 'NM', 
+                    i.is_holo || 0, 
+                    i.is_first_edition || 0, 
+                    sStr(i.grader, 100), 
+                    sStr(i.grade, 100), 
+                    sStr(i.cert_number, 100)
+                ]
             );
             insertedCount++;
         }
@@ -687,15 +756,15 @@ app.post('/api/inventory/bulk-replace', async (req, res) => {
         await conn.commit(); 
         res.status(201).json({ message: `Selesai! Seluruh Vault di-replace dengan ${insertedCount} kartu baru.` });
         
-        // Trigger background fetch secara asinkron (jangan di-await)
-        runBackgroundImageFetch().catch(console.error);
+        // Trigger background fetch secara asinkron setelah koneksi dilepas
+        setTimeout(() => runBackgroundImageFetch().catch(e => console.log("BG-FETCH note:", e.message)), 1000);
         
     } catch (error) { 
-        await conn.rollback(); 
+        if (conn) await conn.rollback(); 
         console.error("ERROR MYSQL BULK REPLACE:", error);
         res.status(500).json({ error: error.message || 'Gagal replace data' }); 
     } finally {
-        conn.release(); 
+        if (conn) conn.release(); 
     }
 });
 // IZINKAN QTY MANUAL TURUN HINGGA 0 (Kode ganda sudah dihapus)
@@ -786,6 +855,18 @@ app.post('/api/reset-all-images', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Gagal reset' });
     }
+});
+
+// Global API 404 Handler agar rute API yang tidak ditemukan/salah selalu merespon JSON (bukan HTML)
+app.use('/api', (req, res) => {
+    res.status(404).json({ error: `Endpoint API tidak ditemukan: ${req.method} ${req.originalUrl}` });
+});
+
+// Global Express Error Handler agar unhandled errors/payload errors merespon JSON dengan jelas (bukan HTML <!DOCTYPE ...>)
+app.use((err, req, res, next) => {
+    console.error("Express Global Error:", err);
+    const status = err.status || err.statusCode || 500;
+    res.status(status).json({ error: err.message || "Terjadi kesalahan internal pada server Node.js" });
 });
 
 app.listen(3000, () => console.log('Holovault Backend V10.0 SMART-FETCH MENYALA di http://localhost:3000'));

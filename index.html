@@ -39,44 +39,107 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1rem;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(15, 23, 42, 0.9) 100%);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.8rem 1.4rem;
+            border-radius: 14px;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
         }
 
         header h1 {
             margin: 0;
-            font-size: 1.6rem;
-            font-weight: 700;
+            font-size: 1.4rem;
+            font-weight: 800;
             letter-spacing: -0.02em;
+            background: linear-gradient(to right, #ffffff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-btn {
+            border: none;
+            padding: 0.45rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
             color: #ffffff;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .header-btn:hover {
+            filter: brightness(1.18);
+            transform: translateY(-1px);
+        }
+
+        .btn-group-pill {
+            display: flex;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 3px;
+            gap: 4px;
+            align-items: center;
         }
 
         .dashboard-layout {
             display: grid;
-            grid-template-columns: 440px 1fr;
-            gap: 2rem;
+            grid-template-columns: 350px 1fr;
+            gap: 1.5rem;
             align-items: start;
         }
 
         .flat-panel {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 14px;
             padding: 1.2rem;
+            position: sticky;
+            top: 1.2rem;
+            max-height: calc(100vh - 2.4rem);
+            overflow-y: auto;
+            overflow-x: hidden;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+            scrollbar-width: thin;
+        }
+
+        .flat-panel::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .flat-panel::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
         }
 
         .panel-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin: 0 0 1rem 0;
+            font-size: 1rem;
+            font-weight: 800;
+            margin: 0;
             color: #ffffff;
+        }
+
+        .section-divider {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0.8rem 0 0.4rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            padding-bottom: 3px;
+            grid-column: 1 / -1;
         }
 
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.8rem;
-            margin-bottom: 0.8rem;
+            gap: 0.6rem;
+            margin-bottom: 0.5rem;
         }
 
         .form-group.full {
@@ -85,10 +148,10 @@
 
         .form-group label {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 0.3rem;
+            color: #e2e8f0;
+            margin-bottom: 0.2rem;
         }
 
         input[type="text"],
@@ -96,14 +159,15 @@
         select,
         textarea {
             width: 100%;
-            padding: 0.6rem;
+            padding: 0.5rem 0.6rem;
             background: var(--bg-main);
             border: 1px solid var(--border);
             border-radius: 6px;
             color: #ffffff;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             box-sizing: border-box;
             font-weight: 500;
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
 
         input:focus,
@@ -330,19 +394,25 @@
 
         .inventory-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1.2rem;
+            grid-template-columns: repeat(auto-fill, minmax(225px, 1fr));
+            gap: 1rem;
         }
 
         .showcase-card {
             background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             position: relative;
-            transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+            transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+        }
+
+        .showcase-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(99, 102, 241, 0.6);
+            box-shadow: 0 12px 25px -8px rgba(0, 0, 0, 0.75);
         }
 
         .card-header {
@@ -684,34 +754,34 @@
 
     <div class="container">
         <header>
-            <h1>HOLOVAULT</h1>
-            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                <div style="font-size: 1.7rem; line-height: 1;">💎</div>
+                <div>
+                    <h1>HOLOVAULT</h1>
+                    <div style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; letter-spacing: 0.05em;">SMART PORTFOLIO SYSTEM v10.0</div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
 
                 <input type="file" id="excelAppendInput" accept=".xlsx, .xls, .csv" style="display: none;"
                     onchange="handleExcelUpload(event, 'append')">
                 <input type="file" id="excelReplaceInput" accept=".xlsx, .xls, .csv" style="display: none;"
                     onchange="handleExcelUpload(event, 'replace')">
 
-                <button type="button" onclick="document.getElementById('excelAppendInput').click()"
-                    style="background: #3b82f6; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;">➕
-                    Tambah CSV</button>
-                <button type="button" onclick="document.getElementById('excelReplaceInput').click()"
-                    style="background: #ef4444; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;">🔄
-                    Replace CSV</button>
+                <div class="btn-group-pill">
+                    <button type="button" onclick="document.getElementById('excelAppendInput').click()" class="header-btn" style="background:#3b82f6;" title="Tambah data CSV ke database">➕ Import CSV</button>
+                    <button type="button" onclick="document.getElementById('excelReplaceInput').click()" class="header-btn" style="background:#ef4444;" title="Ganti/Replace database dengan CSV">🔄 Replace</button>
+                </div>
 
-                <button type="button" onclick="exportToExcel()"
-                    style="background: #059669; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;">📤
-                    Export DB</button>
-                <button type="button" onclick="exportSoldToCSV()"
-                    style="background: #10b981; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;">📥
-                    Export Penjualan</button>
-                <button type="button" onclick="refetchMissingImages()"
-                    style="background: #8b5cf6; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;"
-                    title="Re-fetch gambar yang NOT_FOUND">🔄 Re-fetch Gambar</button>
-                <button type="button" onclick="resetAndRefetchAll()"
-                    style="background: #6366f1; border: none; padding: 0.6rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight:bold; color:#ffffff; cursor:pointer;"
-                    title="Reset semua gambar external dan fetch ulang dengan smart matching">🔮 Reset & Re-fetch
-                    All</button>
+                <div class="btn-group-pill">
+                    <button type="button" onclick="exportToExcel()" class="header-btn" style="background:#059669;" title="Export seluruh database ke CSV">📤 DB CSV</button>
+                    <button type="button" onclick="exportSoldToCSV()" class="header-btn" style="background:#0d9488;" title="Export riwayat transaksi penjualan">📥 Sold CSV</button>
+                </div>
+
+                <div class="btn-group-pill">
+                    <button type="button" onclick="refetchMissingImages()" class="header-btn" style="background:#8b5cf6;" title="Re-fetch gambar yang bertanda NOT_FOUND">⚡ Smart Fetch</button>
+                    <button type="button" onclick="resetAndRefetchAll()" class="header-btn" style="background:#6366f1;" title="Reset semua gambar dan ambil ulang dari awal">🔮 Reset All</button>
+                </div>
             </div>
         </header>
 
@@ -733,41 +803,32 @@
 
         <div class="dashboard-layout">
             <div class="flat-panel">
-                <div class="panel-title" id="formTitle">Vault Entry</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; border-bottom: 1px solid var(--border); padding-bottom: 0.6rem;">
+                    <span class="panel-title" id="formTitle">📝 Vault Entry Form</span>
+                    <button type="button" onclick="const box = document.getElementById('searchCatalogBox'); box.classList.toggle('hidden');" style="background: rgba(99, 102, 241, 0.2); border: 1px solid rgba(99, 102, 241, 0.4); color: #c4b5fd; padding: 4px 8px; border-radius: 6px; font-size: 0.72rem; font-weight: bold; cursor: pointer;" title="Buka/Tutup pencarian katalog API">🔍 Cari Katalog</button>
+                </div>
 
-                <div
-                    style="background: var(--bg-main); padding: 1rem; border-radius: 8px; margin-bottom: 1.2rem; border: 1px solid var(--border);">
-                    <div class="search-row">
+                <div id="searchCatalogBox" class="hidden"
+                    style="background: rgba(15, 23, 42, 0.6); padding: 0.8rem; border-radius: 8px; margin-bottom: 1rem; border: 1px dashed var(--border);">
+                    <div style="font-size: 0.75rem; color: #a5b4fc; font-weight: bold; margin-bottom: 0.5rem;">Pencarian Kartu dari Katalog API / Database Global</div>
+                    <div class="search-row" style="margin-bottom:0.5rem;">
                         <input type="text" id="searchInput" placeholder="Nama kartu..." style="flex: 1;">
-                        <input type="text" id="searchSet" placeholder="Set..." style="max-width: 90px;">
+                        <input type="text" id="searchSet" placeholder="Set..." style="max-width: 75px;">
                         <select id="searchRegion"
-                            style="max-width: 120px; padding: 0.6rem; background: #1e293b; color: white; border: 1px solid var(--border); border-radius: 6px; font-weight: bold; cursor: pointer;">
-                            <option value="global">🇺🇸 English</option>
-                            <option value="jp">🇯🇵 Japan</option>
+                            style="max-width: 90px; padding: 0.45rem; background: #1e293b; color: white; border: 1px solid var(--border); border-radius: 6px; font-weight: bold; cursor: pointer;">
+                            <option value="global">🇺🇸 EN</option>
+                            <option value="jp">🇯🇵 JP</option>
                         </select>
                         <button type="button" onclick="cariKartu()" id="btnSearch"
-                            style="width:auto; padding:0 1rem; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cari</button>
+                            style="width:auto; padding:0 0.8rem; background:var(--primary); color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Cari</button>
                     </div>
                     <div id="hasilPencarian"></div>
                 </div>
 
                 <form id="formKartu">
-
-                    <div class="form-group full"
-                        style="margin-bottom: 1rem; background: rgba(0,0,0,0.25); padding: 0.8rem; border-radius: 8px; border: 1px dashed var(--border);">
-                        <label style="margin-bottom: 0.5rem;">Gambar Kartu</label>
-                        <div style="display: flex; gap: 0.5rem; align-items: center;">
-                            <input type="text" id="imageUrl" name="external_image_url"
-                                placeholder="Paste link gambar..." style="flex:1;">
-                            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:bold;">ATAU</span>
-                            <input type="file" id="imageFile" name="image_file" accept="image/*"
-                                style="width:200px; padding:0.4rem; background:#1f2937; border-radius:6px; color:white; cursor:pointer;">
-                        </div>
-                    </div>
-
+                    <div class="section-divider">1. Informasi Item</div>
                     <div class="form-grid">
-                        <div class="form-group full"><label>Nama Item</label><input type="text" id="nama" name="name"
-                                required></div>
+                        <div class="form-group full"><label>Nama Item / Kartu</label><input type="text" id="nama" name="name" placeholder="Misal: Charizard VMAX" required></div>
                         <div class="form-group">
                             <label>Kategori</label>
                             <select name="category" id="categorySelect" onchange="handleCategoryChange()" required>
@@ -785,39 +846,37 @@
                                 <option value="Chinese">Chinese</option>
                             </select>
                         </div>
-                        <div class="form-group full"><label>Set Edisi</label><input type="text" id="set" name="set_name"
-                                required></div>
-                        <div class="form-group"><label>Kode Set</label><input type="text" id="setCode" name="set_code">
-                        </div>
-                        <div class="form-group"><label>No Kartu</label><input type="text" id="cardNumber"
-                                name="card_number"></div>
+                        <div class="form-group full"><label>Set Edisi / Expansion</label><input type="text" id="set" name="set_name" placeholder="Misal: Obsidian Flames" required></div>
+                        <div class="form-group"><label>Kode Set</label><input type="text" id="setCode" name="set_code" placeholder="Misal: OBF"></div>
+                        <div class="form-group"><label>No Kartu</label><input type="text" id="cardNumber" name="card_number" placeholder="Misal: 223/197"></div>
+                    </div>
 
-                        <div class="form-group"><label>Harga Modal (Rp)</label><input type="text" id="purchasePrice"
-                                placeholder="0" oninput="formatRupiah(this)"></div>
-                        <div class="form-group"><label>Harga Pasar (Rp)</label><input type="text" id="marketPrice"
-                                placeholder="0" oninput="formatRupiah(this)"></div>
-
-                        <div class="checkbox-row" id="specialAttributes">
-                            <label class="checkbox-label"><input type="checkbox" id="isHolo" name="is_holo" value="1">
-                                Foil</label>
-                            <label class="checkbox-label"><input type="checkbox" id="isFirstEd" name="is_first_edition"
-                                    value="1"> 1st Ed</label>
-                        </div>
-                        <div class="form-group full" id="conditionGroup">
+                    <div class="section-divider">2. Valuasi & Stok</div>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Harga Modal (Rp)</label><input type="text" id="purchasePrice" placeholder="0" oninput="formatRupiah(this)"></div>
+                        <div class="form-group"><label>Harga Pasar (Rp)</label><input type="text" id="marketPrice" placeholder="0" oninput="formatRupiah(this)"></div>
+                        <div class="form-group" id="conditionGroup">
                             <label>Kondisi</label>
                             <select name="card_condition" id="conditionSelect">
-                                <option value="NM" selected>Near Mint</option>
-                                <option value="M">Mint</option>
-                                <option value="LP">LP</option>
-                                <option value="MP">MP</option>
-                                <option value="HP">HP</option>
-                                <option value="DMG">DMG</option>
+                                <option value="NM" selected>Near Mint (NM)</option>
+                                <option value="M">Mint (M)</option>
+                                <option value="LP">Lightly Played (LP)</option>
+                                <option value="MP">Moderately Played (MP)</option>
+                                <option value="HP">Heavily Played (HP)</option>
+                                <option value="DMG">Damaged (DMG)</option>
                             </select>
                         </div>
+                        <div class="form-group"><label>Kuantitas (Qty)</label><input type="number" id="qtyInput" name="quantity" value="1" min="1" required></div>
+                    </div>
+
+                    <div class="checkbox-row" id="specialAttributes" style="margin-top:0.3rem;">
+                        <label class="checkbox-label"><input type="checkbox" id="isHolo" name="is_holo" value="1"> Foil / Holo</label>
+                        <label class="checkbox-label"><input type="checkbox" id="isFirstEd" name="is_first_edition" value="1"> 1st Edition</label>
                     </div>
 
                     <div id="gradedFields" class="hidden"
-                        style="background: rgba(0,0,0,0.25); padding: 1rem; border-radius: 8px; border: 1px dashed var(--border); margin-bottom: 1rem;">
+                        style="background: rgba(0,0,0,0.25); padding: 0.8rem; border-radius: 8px; border: 1px dashed var(--border); margin: 0.6rem 0;">
+                        <div class="section-divider" style="margin-top:0;">Detail Sertifikasi Slab</div>
                         <div class="form-grid" style="margin-bottom:0;">
                             <div class="form-group"><label>Grader</label><select name="grader" id="graderSelect">
                                     <option value="">--</option>
@@ -826,52 +885,73 @@
                                     <option value="CGC">CGC</option>
                                     <option value="ARS">ARS</option>
                                 </select></div>
-                            <div class="form-group"><label>Skor Total</label><input type="text" id="gradeInput"
-                                    name="grade"></div>
-                            <div class="form-group full" style="margin-bottom:0;"><label>No Sertifikasi</label><input
-                                    type="text" id="certInput" name="cert_number"></div>
+                            <div class="form-group"><label>Skor Grade</label><input type="text" id="gradeInput" name="grade" placeholder="9.0 / 10"></div>
+                            <div class="form-group full" style="margin-bottom:0;"><label>No Sertifikasi</label><input type="text" id="certInput" name="cert_number" placeholder="Nomor sertifikat..."></div>
                         </div>
                     </div>
 
-                    <div class="form-grid">
-                        <div class="form-group full"><label>Catatan / Detail Kartu</label><textarea id="notesInput"
-                                name="notes" placeholder="Ketik catatan tambahan disini..."></textarea></div>
-                        <div class="form-group full"><label>Kuantitas (Set)</label><input type="number" id="qtyInput"
-                                name="quantity" value="1" min="1" required></div>
+                    <div class="section-divider">3. Gambar & Catatan</div>
+                    <div class="form-group full" style="margin-bottom: 0.6rem;">
+                        <label>Gambar Kartu (URL atau Upload File)</label>
+                        <div style="display: flex; gap: 0.4rem; align-items: center;">
+                            <input type="text" id="imageUrl" name="external_image_url" placeholder="Paste link gambar URL..." style="flex:1;">
+                            <input type="file" id="imageFile" name="image_file" accept="image/*" style="width:160px; padding:0.35rem; background:#1f2937; border-radius:6px; color:white; font-size:0.75rem; cursor:pointer;">
+                        </div>
                     </div>
+                    <div class="form-group full" style="margin-bottom: 0.8rem;"><label>Catatan / Detail Tambahan</label><input type="text" id="notesInput" name="notes" placeholder="Ketik catatan opsional disini..."></div>
 
                     <button type="submit" class="btn-submit" id="btnSubmit">SIMPAN KE VAULT</button>
-                    <button type="button" class="btn-cancel hidden" id="btnCancel" onclick="batalEdit()">BATAL
-                        EDIT</button>
+                    <button type="button" class="btn-cancel hidden" id="btnCancel" onclick="batalEdit()">BATAL EDIT</button>
                 </form>
             </div>
 
             <div>
-                <div class="tab-header">
+                <div class="tab-header" style="margin-bottom: 0.8rem;">
                     <div class="tabs">
-                        <button class="tab-btn active" id="tabVault" onclick="switchTab('vault')">💎 Vault
-                            Portfolio</button>
-                        <button class="tab-btn" id="tabSold" onclick="switchTab('sold')">💰 Transaksi (Sold)</button>
+                        <button class="tab-btn active" id="tabVault" onclick="switchTab('vault')">💎 Vault Portfolio</button>
+                        <button class="tab-btn" id="tabSold" onclick="switchTab('sold')">💰 Riwayat Sold</button>
                     </div>
-                    <button class="btn-bulk-mode" id="btnToggleBulk" onclick="toggleBulkMode()">📦 Mode
-                        Borongan</button>
+                    <button class="btn-bulk-mode" id="btnToggleBulk" onclick="toggleBulkMode()">📦 Mode Borongan</button>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 200px 220px; gap: 1rem; margin-bottom: 1.2rem;">
+                <div id="vaultStatsBanner" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 0.8rem; margin-bottom: 1rem;">
+                    <div style="background: linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.85) 100%); border: 1px solid rgba(255,255,255,0.08); padding: 0.8rem 1rem; border-radius: 10px; border-left: 4px solid #3b82f6;">
+                        <div style="font-size:0.72rem; color:var(--text-muted); font-weight:800; margin-bottom:3px; letter-spacing:0.04em;">TOTAL ITEM VAULT</div>
+                        <div id="statTotalQty" style="font-size:1.25rem; font-weight:900; color:#ffffff;">0 Item</div>
+                        <div id="statTotalUnique" style="font-size:0.75rem; color:#94a3b8; font-weight:600; margin-top:1px;">0 Judul Kartu</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.85) 100%); border: 1px solid rgba(255,255,255,0.08); padding: 0.8rem 1rem; border-radius: 10px; border-left: 4px solid #8b5cf6;">
+                        <div style="font-size:0.72rem; color:var(--text-muted); font-weight:800; margin-bottom:3px; letter-spacing:0.04em;">TOTAL COST (MODAL)</div>
+                        <div id="statTotalCost" style="font-size:1.25rem; font-weight:900; color:#ffffff;">Rp 0</div>
+                        <div style="font-size:0.75rem; color:#c4b5fd; font-weight:600; margin-top:1px;">Investasi Awal</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.85) 100%); border: 1px solid rgba(255,255,255,0.08); padding: 0.8rem 1rem; border-radius: 10px; border-left: 4px solid #10b981;">
+                        <div style="font-size:0.72rem; color:var(--text-muted); font-weight:800; margin-bottom:3px; letter-spacing:0.04em;">NILAI PASAR (MARKET)</div>
+                        <div id="statTotalMarket" style="font-size:1.25rem; font-weight:900; color:var(--green);">Rp 0</div>
+                        <div style="font-size:0.75rem; color:#6ee7b7; font-weight:600; margin-top:1px;">Estimasi Harga Pasar</div>
+                    </div>
+                    <div style="background: linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.85) 100%); border: 1px solid rgba(255,255,255,0.08); padding: 0.8rem 1rem; border-radius: 10px; border-left: 4px solid #f59e0b;">
+                        <div style="font-size:0.72rem; color:var(--text-muted); font-weight:800; margin-bottom:3px; letter-spacing:0.04em;">POTENSI P/L (NET)</div>
+                        <div id="statTotalPL" style="font-size:1.25rem; font-weight:900; color:#fbbf24;">Rp 0</div>
+                        <div id="statTotalPLPct" style="font-size:0.75rem; color:#fde68a; font-weight:600; margin-top:1px;">0.0% vs Modal</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr auto auto; gap: 0.8rem; margin-bottom: 1.2rem; background: rgba(30, 41, 59, 0.45); padding: 0.6rem 0.8rem; border-radius: 10px; border: 1px solid var(--border); align-items: center;">
                     <input type="text" id="inventorySearchInput"
-                        placeholder="🔍 Cari nama, nomor kartu, atau kode set..." oninput="applyFiltersAndRender()"
-                        style="padding:0.8rem; font-size:1rem; border-radius:8px; margin:0;">
+                        placeholder="🔍 Cari nama kartu, nomor, atau kode set di Vault..." oninput="applyFiltersAndRender()"
+                        style="padding:0.6rem 0.8rem; font-size:0.9rem; border-radius:6px; margin:0; border:1px solid rgba(255,255,255,0.08); background:rgba(15,23,42,0.75);">
 
                     <select id="sortSelect" onchange="applyFiltersAndRender()"
-                        style="padding:0.8rem; font-size:1rem; border-radius:8px; background: var(--bg-card); color: white; border: 1px solid var(--border); cursor: pointer; font-weight:bold;">
+                        style="padding:0.6rem 0.8rem; font-size:0.85rem; border-radius:6px; background: rgba(15,23,42,0.8); color: white; border: 1px solid var(--border); cursor: pointer; font-weight:bold; width: 170px;">
                         <option value="terbaru">🕒 Paling Baru</option>
                         <option value="market_tertinggi">📈 Market Tertinggi</option>
                         <option value="market_terendah">📉 Market Terendah</option>
                     </select>
 
                     <select id="filterSetSelect" onchange="applyFiltersAndRender()"
-                        style="padding:0.8rem; font-size:1rem; border-radius:8px; background: var(--bg-card); color: white; border: 1px solid var(--border); cursor: pointer; font-weight:bold;">
-                        <option value="">✨ Semua Set</option>
+                        style="padding:0.6rem 0.8rem; font-size:0.85rem; border-radius:6px; background: rgba(15,23,42,0.8); color: white; border: 1px solid var(--border); cursor: pointer; font-weight:bold; width: 190px;">
+                        <option value="">✨ Semua Set Expansion</option>
                     </select>
                 </div>
 
@@ -926,7 +1006,7 @@
         }
 
         let globalData = []; let editStateId = null; let isBulkMode = false;
-        let vaultDisplayLimit = 20; let selectedBulkIds = new Set(); let bulkQtyMap = {};
+        let vaultDisplayLimit = parseInt(sessionStorage.getItem('hv_vault_limit'), 10) || 20; let selectedBulkIds = new Set(); let bulkQtyMap = {};
 
         function formatRupiah(input) { let value = input.value.replace(/\D/g, ''); if (value !== '') { input.value = new Intl.NumberFormat('id-ID').format(value); } else { input.value = ''; } }
         function parseRupiah(value) { if (!value) return 0; return parseFloat(value.toString().replace(/\./g, '')); }
@@ -941,12 +1021,24 @@
             setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 4000); }, 3500);
         }
 
+        async function safeJson(res) {
+            const text = await res.text();
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                if (text && text.trim().startsWith('<')) {
+                    throw new Error(`Respon server berupa HTML (HTTP ${res.status}). Pastikan ukuran data/file tidak melebihi batas atau restart server Node.js.`);
+                }
+                throw new Error(`Gagal membaca JSON dari server (HTTP ${res.status}): ${text.slice(0, 100) || res.statusText || e.message}`);
+            }
+        }
+
         function openModal(title, bodyText, inputsHtml, confirmCallback) {
             document.getElementById('modalTitle').innerText = title; document.getElementById('modalBody').innerHTML = bodyText; document.getElementById('modalInputs').innerHTML = inputsHtml;
             const confirmBtn = document.getElementById('modalConfirmBtn'); const newBtn = confirmBtn.cloneNode(true); confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
             newBtn.onclick = async () => {
                 const originalText = newBtn.innerText; newBtn.innerText = 'Memproses...'; newBtn.style.opacity = '0.5'; newBtn.style.pointerEvents = 'none';
-                try { await confirmCallback(); } catch (e) { console.error("System Error:", e); showToast("Kesalahan Database: " + e.message, true); }
+                try { await confirmCallback(); } catch (e) { console.error("System Error:", e); showToast(e.message.startsWith('Respon server') || e.message.startsWith('Gagal') || e.message.startsWith('HTTP') ? e.message : ("Kesalahan Database: " + e.message), true); }
                 finally { newBtn.innerText = originalText; newBtn.style.opacity = '1'; newBtn.style.pointerEvents = 'auto'; }
             };
             document.getElementById('customModal').classList.remove('hidden');
@@ -980,16 +1072,25 @@
             document.getElementById('tabVault').classList.toggle('active', tab === 'vault'); document.getElementById('tabSold').classList.toggle('active', tab === 'sold');
             document.getElementById('vaultGrid').classList.toggle('hidden', tab !== 'vault'); document.getElementById('soldGrid').classList.toggle('hidden', tab !== 'sold');
             document.getElementById('btnToggleBulk').classList.toggle('hidden', tab !== 'vault'); document.getElementById('soldFilterSection').classList.toggle('hidden', tab !== 'sold');
-            vaultDisplayLimit = 20; applyFiltersAndRender();
+            if (tab === 'vault') {
+                vaultDisplayLimit = parseInt(sessionStorage.getItem('hv_vault_limit'), 10) || 20;
+            } else {
+                vaultDisplayLimit = 20;
+            }
+            applyFiltersAndRender();
         }
 
         function handleBulkQtyChange(id, val) { bulkQtyMap[id] = parseInt(val) || 1; }
 
         async function quickAdjustQty(id, action) {
             if (isBulkMode) return;
+            const currentScroll = window.scrollY;
             try {
                 const res = await fetch(`${API_URL}/api/inventory/${id}/qty`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) });
-                if (res.ok) loadInventory(); else { const err = await res.json().catch(() => ({})); throw new Error(err.error || "Gagal mengubah qty"); }
+                if (res.ok) {
+                    await loadInventory();
+                    window.scrollTo({ top: currentScroll, behavior: 'instant' });
+                } else { const err = await safeJson(res).catch(() => ({})); throw new Error(err.error || "Gagal mengubah qty"); }
             } catch (e) { showToast(e.message, true); }
         }
 
@@ -1046,9 +1147,24 @@
             updateBulkCount();
         }
 
-        function showMoreVault() { vaultDisplayLimit += 20; applyFiltersAndRender(); }
+        function showMoreVault() { 
+            vaultDisplayLimit += 20; 
+            sessionStorage.setItem('hv_vault_limit', vaultDisplayLimit);
+            applyFiltersAndRender(); 
+        }
 
-        function showAllVault() { vaultDisplayLimit = globalData.length; applyFiltersAndRender(); }
+        function showAllVault() { 
+            vaultDisplayLimit = globalData.length || 999999; 
+            sessionStorage.setItem('hv_vault_limit', vaultDisplayLimit);
+            applyFiltersAndRender(); 
+        }
+
+        function resetVaultLimit() {
+            vaultDisplayLimit = 20;
+            sessionStorage.setItem('hv_vault_limit', 20);
+            applyFiltersAndRender();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
         function applyFiltersAndRender() {
             const query = document.getElementById('inventorySearchInput').value.toLowerCase();
@@ -1064,6 +1180,37 @@
                 const txt = (item.name + ' ' + item.set_name + ' ' + (item.card_number || '') + ' ' + (item.set_code || '')).toLowerCase();
                 return txt.includes(query) && (!selectedSet || item.set_name.toLowerCase() === selectedSet);
             });
+
+            // --- UPDATE STATISTIK DYNAMIS VAULT ---
+            let totalQty = 0, totalCost = 0, totalMarket = 0;
+            filteredVault.forEach(item => {
+                const q = parseInt(item.quantity) || 0;
+                totalQty += q;
+                totalCost += (parseFloat(item.purchase_price) || 0) * q;
+                totalMarket += (parseFloat(item.market_price) || 0) * q;
+            });
+            const totalPL = totalMarket - totalCost;
+            const plPct = totalCost > 0 ? ((totalPL / totalCost) * 100).toFixed(1) : '0.0';
+
+            const elQty = document.getElementById('statTotalQty');
+            const elUnique = document.getElementById('statTotalUnique');
+            const elCost = document.getElementById('statTotalCost');
+            const elMarket = document.getElementById('statTotalMarket');
+            const elPL = document.getElementById('statTotalPL');
+            const elPLPct = document.getElementById('statTotalPLPct');
+            if (elQty) elQty.innerText = `${new Intl.NumberFormat('id-ID').format(totalQty)} Item`;
+            if (elUnique) elUnique.innerText = `${filteredVault.length} Judul Kartu`;
+            if (elCost) elCost.innerText = formatIDR(totalCost);
+            if (elMarket) elMarket.innerText = formatIDR(totalMarket);
+            if (elPL) {
+                elPL.innerText = `${totalPL >= 0 ? '+' : ''}${formatIDR(totalPL)}`;
+                elPL.style.color = totalPL >= 0 ? 'var(--green)' : 'var(--danger)';
+            }
+            if (elPLPct) {
+                elPLPct.innerText = `${totalPL >= 0 ? '+' : ''}${plPct}% vs Modal`;
+                elPLPct.style.color = totalPL >= 0 ? '#6ee7b7' : '#fca5a5';
+            }
+            // -------------------------------------
 
             // --- LOGIKA SORTING HARGA MARKET ---
             const sortVal = document.getElementById('sortSelect') ? document.getElementById('sortSelect').value : 'terbaru';
@@ -1150,6 +1297,11 @@
                 <button onclick="showMoreVault()" class="btn-show-more">Tampilkan Lebih Banyak (${vaultDisplayLimit} / ${filteredVault.length}) ↓</button>
                 <button onclick="showAllVault()" class="btn-show-all">Tampilkan Semua 🚀</button>
             </div>`;
+            } else if (!isSearchingVault && vaultDisplayLimit > 20 && filteredVault.length > 20) {
+                vaultHtml += `
+            <div style="grid-column: 1 / -1; display: flex; justify-content: center; gap: 1rem; padding: 1.5rem 0;">
+                <button onclick="resetVaultLimit()" class="btn-show-more" style="background:#475569; color:#f8fafc; border:1px solid var(--border);">↑ Lipat Kembali ke Preview 20 Kartu</button>
+            </div>`;
             }
             if (filteredVault.length === 0) vaultHtml = `<div style="grid-column: 1/-1; text-align:center; padding: 3rem; color: var(--text-muted); font-size:1rem; font-weight:bold;">Tidak ada kartu yang ditemukan.</div>`;
             vaultGrid.innerHTML = vaultHtml;
@@ -1231,7 +1383,7 @@
                 if (!res.ok) { showToast('Server belum siap, coba refresh halaman.', true); return; }
                 const contentType = res.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) { showToast('Server mengembalikan respons yang tidak valid. Coba refresh.', true); return; }
-                globalData = await res.json();
+                globalData = await safeJson(res);
                 const setSelect = document.getElementById('filterSetSelect'); const previousSelection = setSelect.value;
                 const uniqueSets = [...new Set(globalData.map(item => item.set_name).filter(Boolean))].sort();
                 setSelect.innerHTML = '<option value="">✨ Semua Set Expansion</option>';
@@ -1240,6 +1392,18 @@
                     if (setName === previousSelection) opt.selected = true; setSelect.appendChild(opt);
                 });
                 applyFiltersAndRender();
+                if (window._isFirstScrollRestore !== false) {
+                    window._isFirstScrollRestore = false;
+                    const savedScroll = sessionStorage.getItem('hv_scroll_pos');
+                    if (savedScroll !== null) {
+                        sessionStorage.removeItem('hv_scroll_pos');
+                        requestAnimationFrame(() => {
+                            window.scrollTo({ top: parseInt(savedScroll, 10), behavior: 'instant' });
+                            setTimeout(() => window.scrollTo({ top: parseInt(savedScroll, 10), behavior: 'instant' }), 40);
+                            setTimeout(() => window.scrollTo({ top: parseInt(savedScroll, 10), behavior: 'instant' }), 120);
+                        });
+                    }
+                }
             } catch (error) { console.error("Load Inventory Error:", error); showToast('Gagal terhubung ke server. Pastikan server menyala.', true); }
         }
 
@@ -1264,7 +1428,7 @@
 
                 const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sell_qty: sellQty, sold_price: harga }) });
                 if (res.ok) { closeModal(); showToast("Berhasil dijual!"); loadInventory(); switchTab('sold'); }
-                else { const err = await res.json().catch(() => ({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
+                else { const err = await safeJson(res).catch(() => ({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
             });
         }
 
@@ -1296,7 +1460,7 @@
                     loadInventory();
                     switchTab('sold');
                 } else {
-                    const err = await res.json().catch(() => ({}));
+                    const err = await safeJson(res).catch(() => ({}));
                     throw new Error(err.error || "Gagal terkoneksi ke Server MySQL.");
                 }
             });
@@ -1315,7 +1479,7 @@
                     toggleBulkMode(); // Langsung matikan mode borongan agar rapi
                     loadInventory();
                 } else {
-                    const err = await res.json().catch(() => ({}));
+                    const err = await safeJson(res).catch(() => ({}));
                     throw new Error(err.error || "Gagal terkoneksi ke Server MySQL.");
                 }
             });
@@ -1325,7 +1489,7 @@
             openModal('Batalkan Penjualan', 'Tarik kartu ini kembali ke Vault dan gabungkan kuantitasnya ke tumpukan semula?', '', async () => {
                 const res = await fetch(`${API_URL}/api/inventory/${id}/undo-sell`, { method: 'PUT' });
                 if (res.ok) { closeModal(); showToast("Berhasil kembali ke Vault."); loadInventory(); }
-                else { const err = await res.json().catch(() => ({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
+                else { const err = await safeJson(res).catch(() => ({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
             });
         }
 
@@ -1334,7 +1498,7 @@
             openModal('Hapus Permanen', 'Yakin ingin menghapus kartu ini dari database?', '', async () => {
                 const res = await fetch(`${API_URL}/api/inventory/${id}`, { method: 'DELETE' });
                 if (res.ok) { closeModal(); showToast("Item terhapus permanen."); loadInventory(); }
-                else { const err = await res.json().catch(() => ({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
+                else { const err = await safeJson(res).catch(() => ({})); throw new Error(err.error || "Gagal terkoneksi ke Server MySQL."); }
             });
         }
 
@@ -1372,7 +1536,7 @@
 
                 // Tarik seluruh data dan saring hanya status 'Sold'
                 const response = await fetch(`${API_URL}/api/inventory`);
-                const allData = await response.json();
+                const allData = await safeJson(response);
                 const soldItems = allData.filter(item => item.status === 'Sold');
 
                 if (soldItems.length === 0) {
@@ -1418,30 +1582,51 @@
         }
         function parseNewCSVFormat(jsonData) {
             return jsonData.map(item => {
-                // Deteksi Otomatis Kolom Dinamis (Misal: Market Price (As of 2026-07-04))
-                const mpKey = Object.keys(item).find(key => key.toLowerCase().includes('market price'));
-                const rawMP = mpKey ? item[mpKey] : (item['market_price'] || 0);
-                const cleanMP = Math.round(parseFloat(String(rawMP).replace(/,/g, '')) || 0);
+                // Helper untuk mencari nilai kolom secara fleksibel (case-insensitive & partial match jika perlu)
+                const findColumnValue = (targetNames) => {
+                    const keys = Object.keys(item);
+                    // 1. Coba exact match terlebih dahulu
+                    for (const target of targetNames) {
+                        for (const key of keys) {
+                            if (key.trim().toLowerCase() === target.toLowerCase()) {
+                                const val = item[key];
+                                if (val !== undefined && val !== null && val !== '') return val;
+                            }
+                        }
+                    }
+                    // 2. Jika tidak ada exact match, coba partial match
+                    for (const target of targetNames) {
+                        for (const key of keys) {
+                            if (key.trim().toLowerCase().includes(target.toLowerCase())) {
+                                const val = item[key];
+                                if (val !== undefined && val !== null && val !== '') return val;
+                            }
+                        }
+                    }
+                    return null;
+                };
 
-                // Cari kolom "Open Price" untuk market price di web
-                const opKey = Object.keys(item).find(key => key.toLowerCase().includes('open price'));
-                const rawOP = opKey ? item[opKey] : 0;
-                const cleanOP = Math.round(parseFloat(String(rawOP).replace(/,/g, '')) || 0);
+                // PENTING (Sesuai request user):
+                // Kolom "ROUND" -> menjadi cost price (purchase_price) di database.
+                const rawCost = findColumnValue(['round', 'purchase_price', 'average cost paid', 'cost price', 'average price']);
+                const cleanPP = Math.round(parseFloat(String(rawCost || 0).replace(/,/g, '').replace(/[^0-9.-]/g, '')) || 0);
 
-                const rawPP = item['Average Cost Paid'] || item['purchase_price'] || 0;
-                const cleanPP = Math.round(parseFloat(String(rawPP).replace(/,/g, '')) || 0);
+                // Kolom "OPEN PRICE" -> menjadi market price (market_price) di database.
+                const rawMarket = findColumnValue(['open price', 'market_price', 'market price']);
+                const cleanMP = Math.round(parseFloat(String(rawMarket || 0).replace(/,/g, '').replace(/[^0-9.-]/g, '')) || 0);
 
-                // MAPPING: Excel "Market Price" → Web "Cost" (purchase_price)
-                //          Excel "Open Price"   → Web "Market" (market_price)
-                //          Fallback: kalau tidak ada Open Price, pakai kolom lama
-                const finalCost = cleanMP || cleanPP;  // Market Price dari Excel → Cost di web
-                const finalMarket = cleanOP || (item['market_price'] ? cleanMP : 0); // Open Price dari Excel → Market di web
-
-                // Kategori (Singles/Sealed/Slab)
+                // Kategori (Singles/Sealed/Slab/Slab Set)
                 let cat = item['category'] || 'Single';
-                const portfolioName = String(item['Portfolio Name'] || item['Category'] || '');
-                if (portfolioName.toLowerCase().includes('sealed')) cat = 'Sealed';
-                if (String(item['Grade'] || '').toUpperCase() !== 'UNGRADED' && item['Grade']) cat = 'Slab';
+                const portfolioName = String(item['Portfolio Name'] || item['portfolio_name'] || item['Category'] || item['category'] || '').trim().toLowerCase();
+                if (portfolioName.includes('slab set') || portfolioName.includes('slab_set')) cat = 'Slab Set';
+                else if (portfolioName === 'slabs' || portfolioName.includes('slab')) cat = 'Slab';
+                else if (portfolioName.includes('sealed')) cat = 'Sealed';
+                else if (portfolioName.includes('single')) cat = 'Single';
+
+                const rawGradeVal = String(item['Grade'] || item['grade'] || '').trim();
+                if (rawGradeVal && rawGradeVal.toUpperCase() !== 'UNGRADED' && cat !== 'Slab Set') {
+                    cat = 'Slab';
+                }
 
                 // Kondisi (NM/LP/MP)
                 let rawCond = String(item['Card Condition'] || item['card_condition'] || '').toUpperCase();
@@ -1450,41 +1635,47 @@
                 else if (rawCond.includes('MODERATELY') || rawCond === 'MP') cond = 'MP';
                 else if (rawCond.includes('HEAVILY') || rawCond === 'HP') cond = 'HP';
                 else if (rawCond.includes('DAMAGED') || rawCond === 'DMG') cond = 'DMG';
-                else if (rawCond.includes('MINT') || rawCond === 'M') cond = 'M';
-                if (rawCond.includes('NEAR MINT') || rawCond === 'NM') cond = 'NM';
+                else if (rawCond.includes('MINT') || rawCond === 'M' || rawCond.includes('NEAR MINT') || rawCond === 'NM') cond = 'NM';
 
-                // Grader & Grade (Pisahkan "PSA 10" jadi "PSA" dan "10")
+                // Grader & Grade (Pisahkan "PSA 9.0 MINT" atau "PSA 10.0 GEM - MT" jadi "PSA" dan angkanya)
                 let grader = item['grader'] || null;
                 let gradeVal = item['grade'] || null;
-                if (cat === 'Slab' && item['Grade']) {
-                    let gStr = String(item['Grade']);
-                    let parts = gStr.split(' ');
+                if (cat === 'Slab' && rawGradeVal && rawGradeVal.toUpperCase() !== 'UNGRADED') {
+                    let parts = rawGradeVal.split(' ');
                     if (parts.length >= 2) {
                         grader = parts[0];
                         gradeVal = parts.slice(1).join(' ');
                     } else {
-                        grader = gStr;
+                        grader = rawGradeVal;
+                        gradeVal = rawGradeVal;
                     }
                 }
 
                 // Deteksi Bahasa Otomatis (Jika ada tulisan "JP")
                 let lang = item['language'] || 'English';
-                if (String(item['Product Name']).includes('(JP)') || String(item['Set']).includes('(JP)')) {
+                const rawName = String(item['Product Name'] || item['name'] || 'Unknown Card');
+                const rawSet = String(item['Set'] || item['set_name'] || '-');
+                if (rawName.includes('(JP)') || rawSet.includes('(JP)') || rawName.includes('(Japanese)') || rawSet.includes('(Japanese)')) {
                     lang = 'Japanese';
                 }
 
+                // Deteksi Holo & First Edition dari kolom Variant/Variance
+                const rawVariant = String(item['Variant'] || item['Variance'] || item['variant'] || '').toLowerCase();
+                const isHolo = (rawVariant.includes('holo') || parseInt(item['is_holo']) === 1 || String(item['is_holo']).toUpperCase() === 'YES' || String(item['is_holo']).toUpperCase() === 'TRUE') ? 1 : 0;
+                const is1st = (rawVariant.includes('1st') || parseInt(item['is_first_edition']) === 1 || String(item['is_first_edition']).toUpperCase() === 'YES' || String(item['is_first_edition']).toUpperCase() === 'TRUE') ? 1 : 0;
+
                 return {
-                    name: String(item['Product Name'] || item['name'] || 'Unknown').replace(' (JP)', ''),
-                    set_name: item['Set'] || item['set_name'] || '-',
+                    name: rawName.replace(' (JP)', '').trim(),
+                    set_name: rawSet,
                     category: cat,
                     language: lang,
-                    card_number: item['Card Number'] || item['card_number'] || null,
-                    quantity: parseInt(item['Quantity'] || item['quantity']) || 1,
-                    purchase_price: finalCost,
-                    market_price: finalMarket,
+                    card_number: item['Card Number'] !== undefined && item['Card Number'] !== null ? String(item['Card Number']).trim() : (item['card_number'] || null),
+                    quantity: Math.max(1, parseInt(item['Quantity'] || item['quantity']) || 1),
+                    purchase_price: cleanPP,
+                    market_price: cleanMP,
                     image_url: (() => { const url = item['img_url'] || item['image_url'] || null; return (url && url !== 'NOT_FOUND') ? url : null; })(),
-                    is_holo: (String(item['Variance'] || '').toLowerCase().includes('holo') || parseInt(item['is_holo']) === 1 || String(item['is_holo']) === 'YES') ? 1 : 0,
-                    is_first_edition: (String(item['Variance'] || '').toLowerCase().includes('1st') || parseInt(item['is_first_edition']) === 1 || String(item['is_first_edition']) === 'YES') ? 1 : 0,
+                    is_holo: isHolo,
+                    is_first_edition: is1st,
                     card_condition: cond,
                     grader: grader,
                     grade: gradeVal,
@@ -1514,12 +1705,12 @@
                         const apiUrl = mode === 'replace' ? `${API_URL}/api/inventory/bulk-replace` : `${API_URL}/api/inventory/bulk-import`;
                         const res = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(processedData) });
                         if (res.ok) {
-                            const successData = await res.json();
+                            const successData = await safeJson(res);
                             closeModal(); // Pastikan modal peringatan tertutup
                             showToast(successData.message);
                             loadInventory();
                         } else {
-                            const errData = await res.json();
+                            const errData = await safeJson(res).catch(err => ({ error: err.message }));
                             closeModal();
                             showToast('Gagal API: ' + (errData.error || 'Server menolak data.'), true);
                         }
@@ -1563,7 +1754,7 @@
                 } else {
                     res = await fetch(`${API_URL}/api/search-card?name=${encodeURIComponent(qN)}&set=${encodeURIComponent(qS)}`);
                 }
-                const cards = await res.json(); hasilDiv.innerHTML = '';
+                const cards = await safeJson(res); hasilDiv.innerHTML = '';
                 if (cards.length === 0) return hasilDiv.innerHTML = '<p style="color:var(--danger); font-size:0.9rem; font-weight:bold;">Card Not Found.</p>';
 
                 cards.forEach(card => {
@@ -1608,12 +1799,17 @@
             });
             document.getElementById('isHolo').checked = item.is_holo === 1; document.getElementById('isFirstEd').checked = item.is_first_edition === 1;
             handleCategoryChange(); document.getElementById('btnSubmit').innerText = 'UPDATE ENTRY'; document.getElementById('btnCancel').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window._lastEditScroll = window.scrollY;
+            const panel = document.querySelector('.flat-panel');
+            if (panel) panel.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function batalEdit() {
             editStateId = null; document.getElementById('formKartu').reset(); document.getElementById('formTitle').innerText = 'Vault Entry';
             document.getElementById('btnSubmit').innerText = 'SIMPAN KE VAULT'; document.getElementById('btnCancel').classList.add('hidden'); handleCategoryChange();
+            if (window._lastEditScroll !== undefined) {
+                window.scrollTo({ top: window._lastEditScroll, behavior: 'smooth' });
+            }
         }
 
         document.getElementById('formKartu').addEventListener('submit', async (e) => {
@@ -1623,11 +1819,28 @@
             formData.set('purchase_price', parseRupiah(document.getElementById('purchasePrice').value));
             formData.set('market_price', parseRupiah(document.getElementById('marketPrice').value));
 
+            const currentScroll = window.scrollY;
             const url = editStateId ? `${API_URL}/api/inventory/${editStateId}` : `${API_URL}/api/inventory`;
             try {
                 const res = await fetch(url, { method: editStateId ? 'PUT' : 'POST', body: formData });
-                if (res.ok) { batalEdit(); loadInventory(); showToast(editStateId ? "Teredit!" : "Tersimpan!"); } else { throw new Error("Gagal menyimpan ke database."); }
+                if (res.ok) { 
+                    const wasEditing = !!editStateId;
+                    batalEdit(); 
+                    await loadInventory(); 
+                    showToast(wasEditing ? "Teredit!" : "Tersimpan!");
+                    if (wasEditing && window._lastEditScroll !== undefined) {
+                        window.scrollTo({ top: window._lastEditScroll, behavior: 'smooth' });
+                    } else if (!wasEditing) {
+                        window.scrollTo({ top: currentScroll, behavior: 'instant' });
+                    }
+                } else { throw new Error("Gagal menyimpan ke database."); }
             } catch (error) { showToast('Error DB: ' + error.message, true); }
+        });
+
+        // Simpan posisi scroll & display limit sebelum halaman di-refresh atau ditutup
+        window.addEventListener('beforeunload', () => {
+            sessionStorage.setItem('hv_scroll_pos', window.scrollY);
+            sessionStorage.setItem('hv_vault_limit', vaultDisplayLimit);
         });
 
         handleCategoryChange(); loadInventory();
@@ -1641,9 +1854,9 @@
                 '', async () => {
                     try {
                         const res = await fetch(`${API_URL}/api/refetch-images`, { method: 'POST' });
-                        const data = await res.json();
+                        const data = await safeJson(res);
                         showToast(data.message);
-                        document.getElementById('universalModal').classList.add('hidden');
+                        closeModal();
                     } catch (err) { showToast('Error: ' + err.message, true); }
                 });
         }
@@ -1655,15 +1868,15 @@
                     try {
                         // Step 1: Reset semua gambar external
                         const resetRes = await fetch(`${API_URL}/api/reset-all-images`, { method: 'POST' });
-                        const resetData = await resetRes.json();
+                        const resetData = await safeJson(resetRes);
                         showToast(resetData.message);
 
                         // Step 2: Mulai re-fetch
                         const fetchRes = await fetch(`${API_URL}/api/refetch-images`, { method: 'POST' });
-                        const fetchData = await fetchRes.json();
+                        const fetchData = await safeJson(fetchRes);
                         showToast(fetchData.message);
 
-                        document.getElementById('universalModal').classList.add('hidden');
+                        closeModal();
                         // Reload UI setelah 3 detik agar user lihat progress
                         setTimeout(() => loadInventory(), 3000);
                     } catch (err) { showToast('Error: ' + err.message, true); }
@@ -1672,15 +1885,13 @@
 
         async function refetchSingleImage(id) {
             showToast('Mencari gambar...');
+            const currentScroll = window.scrollY;
             try {
                 const res = await fetch(`${API_URL}/api/refetch-image/${id}`, { method: 'POST' });
-                const data = await res.json();
-                if (data.image_url && data.image_url !== 'NOT_FOUND') {
-                    showToast('✅ Gambar ditemukan!');
-                } else {
-                    showToast('Gambar tidak ditemukan di database API.', true);
-                }
-                loadInventory();
+                const data = await safeJson(res);
+                showToast(data.message);
+                await loadInventory();
+                window.scrollTo({ top: currentScroll, behavior: 'instant' });
             } catch (err) { showToast('Error: ' + err.message, true); }
         }
 
