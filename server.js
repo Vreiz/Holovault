@@ -104,11 +104,9 @@ app.get('/api/search-card', async (req, res) => {
 // =====================================================================
 // API 2: CRAWLER KARTU JEPANG (JP) - ANTI REDIRECT
 // =====================================================================
-app.get('/api/search-jp', async (req, res) => {
+async function crawlPokellectorJP(query) {
     try {
-        const { query } = req.query;
-        if (!query) return res.status(400).json({ error: 'Query kosong' });
-
+        if (!query) return [];
         const baseUrl = `https://jp.pokellector.com/search?criteria=${encodeURIComponent(query)}`;
         let hasilKartu = [];
 
@@ -119,7 +117,8 @@ app.get('/api/search-jp', async (req, res) => {
                     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
                     'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8',
                     'Cookie': 'PokemonDatabaseLanguage=jp; locale=ja; region=jp;'
-                }
+                },
+                timeout: 10000
             });
             const $ = cheerio.load(response.data);
             $('.cardresult').each((index, element) => {
@@ -151,14 +150,11 @@ app.get('/api/search-jp', async (req, res) => {
 
         const $firstPage = await fetchPage(baseUrl);
 
-        // Find max pages from pagination
         let maxPage = 1;
         $firstPage('.pagination a').each((i, el) => {
             let num = parseInt($(el).text().trim());
             if (!isNaN(num) && num > maxPage) maxPage = num;
         });
-
-        // Limit to 5 pages to avoid timeouts
         if (maxPage > 5) maxPage = 5;
 
         const pagePromises = [];
@@ -167,19 +163,28 @@ app.get('/api/search-jp', async (req, res) => {
         }
         await Promise.all(pagePromises);
         
-        
         if (hasilKartu.length === 0) {
             const singleImage = $firstPage('#pokeball-container img, .card-image img').attr('src');
             if (singleImage) {
                 hasilKartu.push({ name: query, images: { small: singleImage }, set: { name: '' }, number: '' });
             }
         }
+        return hasilKartu;
+    } catch (error) {
+        console.error("Crawler JP Error:", error.response ? error.response.status : error.message);
+        return [];
+    }
+}
 
+app.get('/api/search-jp', async (req, res) => {
+    try {
+        const { query } = req.query;
+        if (!query) return res.status(400).json({ error: 'Query kosong' });
+
+        const hasilKartu = await crawlPokellectorJP(query);
         res.status(200).json(hasilKartu);
     } catch (error) {
-        // Log merah di terminal untuk mengecek apakah masih kena blokir 403
-        console.error("Crawler Error Status:", error.response ? error.response.status : error.message);
-        res.status(500).json({ error: error.response?.status === 403 ? 'Terblokir Satpam Cloudflare (403)' : 'Crawler gagal menembus target' });
+        res.status(500).json({ error: 'Crawler gagal menembus target' });
     }
 });
 
@@ -334,7 +339,7 @@ function findBestMatch(searchResults, targetName, targetSetName, targetNumber) {
     const tNum = (targetNumber || '').split('/')[0].replace(/^0+/, '').toLowerCase();
 
     let bestCard = null;
-    let bestScore = -1;
+    let bestScore = 0; // 🔥 HARUS > 0 AGAR TIDAK ASAL PILIH KARTU YANG SCORE NYA 0!
 
     for (const card of searchResults) {
         if (!card.images || !card.images.small) continue;
@@ -342,15 +347,21 @@ function findBestMatch(searchResults, targetName, targetSetName, targetNumber) {
 
         const cName = (card.name || '').trim().toLowerCase();
         const cSet = (card.set && card.set.name ? card.set.name : '').trim().toLowerCase();
-        const cNum = (card.number || '').replace(/^0+/, '').toLowerCase();
+        const cNum = (card.number || '').split('/')[0].replace(/^0+/, '').toLowerCase();
 
         // +50 poin: Nama kartu PERSIS sama
         if (cName === tName) score += 50;
-        // +10 poin: Nama mengandung target (partial match)
+        // +10 poin: Nama mengandung target (partial match) atau target mengandung nama
         else if (cName.includes(tName) || tName.includes(cName)) score += 10;
 
         // +30 poin: Set name cocok
-        if (tSet && cSet && (cSet === tSet || cSet.includes(tSet) || tSet.includes(cSet))) score += 30;
+        if (tSet && cSet && (cSet === tSet || cSet.includes(tSet) || tSet.includes(cSet))) {
+            score += 30;
+        } else if (tSet && cSet && tSet !== '-' && cSet !== '-') {
+            // Jika set name disediakan oleh user, dan ternyata set name dari API BEDA,
+            // kita beri penalti agar tidak mendahului kartu dengan set yang benar.
+            score -= 20;
+        }
 
         // +40 poin: Nomor kartu PERSIS cocok (ini yang paling penting untuk membedakan variant)
         if (tNum && cNum && cNum === tNum) score += 40;
@@ -404,92 +415,161 @@ async function crawlPokellectorEN(cardName, setName) {
 }
 
 // =====================================================================
+// HELPER: PENCARI GAMBAR MULTI-SOURCE (EN, JP, POKELLECTOR EN/JP)
+// =====================================================================
+async function fetchImageForCard(card) {
+    const cleanName = (card.name || '').replace(/\s*\(.*?\)\s*/g, '').trim();
+    const cleanNum = card.card_number ? card.card_number.split('/')[0].replace(/^0+/, '') : '';
+    // Base name tanpa suffix V/VMAX/VSTAR/ex/GX/EX dll (untuk Pokellector JP yang sering gagal dengan suffix)
+    const baseName = (card.name || '').replace(/\s+(V|VMAX|VSTAR|ex|EX|GX|MEGA|V-UNION)\s*$/i, '').trim();
+
+    let bestMatch = null;
+
+    if (card.language === 'Japanese') {
+        // Step 1 JP: Pokellector JP (dengan Set Name)
+        let query = card.name + (card.set_name && card.set_name !== '-' ? " " + card.set_name : "");
+        try {
+            const res = await crawlPokellectorJP(query);
+            bestMatch = findBestMatch(res || [], card.name, card.set_name, card.card_number);
+        } catch(e) {}
+
+        // Step 2 JP: Jika belum ketemu, Pokellector JP (nama kartu saja tanpa Set Name)
+        if (!bestMatch) {
+            try {
+                const res = await crawlPokellectorJP(card.name);
+                bestMatch = findBestMatch(res || [], card.name, card.set_name, card.card_number);
+            } catch(e) {}
+        }
+
+        // Step 2.5 JP: Jika masih belum ketemu DAN nama punya suffix (V/VMAX/ex dll),
+        // coba Pokellector JP dengan base name saja (misal: "Zacian" bukan "Zacian V")
+        // Pokellector JP sering mengembalikan 0 result untuk "Zacian V" tapi 20+ untuk "Zacian"
+        if (!bestMatch && baseName !== card.name) {
+            console.log(`[FETCH-IMAGE] JP search gagal untuk "${card.name}", coba base name "${baseName}"...`);
+            try {
+                const res = await crawlPokellectorJP(baseName);
+                bestMatch = findBestMatch(res || [], card.name, card.set_name, card.card_number);
+            } catch(e) {}
+        }
+
+        // Step 3 JP: Jika masih belum ketemu, coba Pokellector EN (karena Pokellector EN juga punya set Jepang seperti Shiny Star V!)
+        if (!bestMatch) {
+            let pokResults = await crawlPokellectorEN(card.name, card.set_name);
+            bestMatch = findBestMatch(pokResults, card.name, card.set_name, card.card_number);
+            if (!bestMatch && card.set_name && card.set_name !== '-') {
+                pokResults = await crawlPokellectorEN(card.name, '');
+                bestMatch = findBestMatch(pokResults, card.name, card.set_name, card.card_number);
+            }
+        }
+
+        // Step 4 JP: Fallback terakhir ke api.pokemontcg.io (agar tetap mendapatkan artwork asli Pokémon meskipun set/bahasa berbeda!)
+        if (!bestMatch) {
+            console.log(`[FETCH-IMAGE] Pokellector gagal untuk ${card.name} (JP), coba api.pokemontcg.io...`);
+            try {
+                let apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(`name:"${card.name}"`)}&pageSize=20`;
+                let response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+                let data = await response.json();
+                bestMatch = findBestMatch(data.data || [], card.name, card.set_name, card.card_number);
+            } catch(e) {}
+        }
+
+        // Step 4.5 JP: Jika API gagal juga dengan nama lengkap, coba base name di pokemontcg.io
+        if (!bestMatch && baseName !== card.name) {
+            try {
+                let apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(`name:"${baseName}"`)}&pageSize=20`;
+                let response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+                let data = await response.json();
+                bestMatch = findBestMatch(data.data || [], card.name, card.set_name, card.card_number);
+            } catch(e) {}
+        }
+    } else {
+        // EN / Universal: Step 1 exact query ke pokemontcg.io
+        try {
+            let queries = [`name:"${card.name}"`];
+            if (card.set_name && card.set_name !== '-') queries.push(`set.name:"${card.set_name}"`);
+            if (cleanNum) queries.push(`number:${cleanNum}`);
+
+            let apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
+            let response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+            let data = await response.json();
+            bestMatch = findBestMatch(data.data || [], card.name, card.set_name, card.card_number);
+
+            // Step 2 EN: Jika nama asli gagal dan ada parenthetical, coba dengan cleanName
+            if (!bestMatch && cleanName !== card.name) {
+                queries = [`name:"${cleanName}"`];
+                if (card.set_name && card.set_name !== '-') queries.push(`set.name:"${card.set_name}"`);
+                if (cleanNum) queries.push(`number:${cleanNum}`);
+                apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
+                response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+                data = await response.json();
+                bestMatch = findBestMatch(data.data || [], card.name, card.set_name, card.card_number);
+            }
+
+            // Step 3 EN: Jika masih gagal, coba tanpa set name (broadest search di pokemontcg.io)
+            if (!bestMatch && card.set_name && card.set_name !== '-') {
+                const fbUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(`name:"${card.name}"`)}&pageSize=20`;
+                const fbResponse = await fetch(fbUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
+                const fbData = await fbResponse.json();
+                bestMatch = findBestMatch(fbData.data || [], card.name, card.set_name, card.card_number);
+            }
+        } catch(e) {}
+
+        // Step 4 EN: Fallback ke Pokellector EN
+        if (!bestMatch) {
+            console.log(`[FETCH-IMAGE] pokemontcg.io gagal untuk ${card.name}, coba Pokellector EN...`);
+            let pokResults = await crawlPokellectorEN(card.name, card.set_name);
+            bestMatch = findBestMatch(pokResults, card.name, card.set_name, card.card_number);
+            if (!bestMatch && card.set_name && card.set_name !== '-') {
+                pokResults = await crawlPokellectorEN(card.name, '');
+                bestMatch = findBestMatch(pokResults, card.name, card.set_name, card.card_number);
+            }
+        }
+
+        // Step 5 EN: Fallback ke Pokellector JP (PENTING untuk kasus kartu set Jepang seperti Inferno X yang salah diinput dengan bahasa English di database!)
+        if (!bestMatch) {
+            console.log(`[FETCH-IMAGE] Pokellector EN gagal untuk ${card.name}, coba Pokellector JP...`);
+            try {
+                const res = await crawlPokellectorJP(card.name);
+                bestMatch = findBestMatch(res || [], card.name, card.set_name, card.card_number);
+            } catch(e) {}
+        }
+
+        // Step 5.5 EN: Jika Pokellector JP juga gagal, coba base name di JP (tanpa suffix V/VMAX/ex dll)
+        if (!bestMatch && baseName !== card.name) {
+            console.log(`[FETCH-IMAGE] Coba Pokellector JP dengan base name "${baseName}"...`);
+            try {
+                const res = await crawlPokellectorJP(baseName);
+                bestMatch = findBestMatch(res || [], card.name, card.set_name, card.card_number);
+            } catch(e) {}
+        }
+    }
+
+    return bestMatch ? bestMatch.images.small : null;
+}
+
+// =====================================================================
 // BACKGROUND AUTO-FETCH FUNCTION (V2 - SMART MATCHING + MULTI-SOURCE)
 // =====================================================================
 async function runBackgroundImageFetch() {
     try {
-        // Ambil kartu yang belum punya gambar, TERMASUK card_number untuk smart matching
-        const [rows] = await pool.query("SELECT id, name, set_name, card_number, language FROM inventory WHERE image_url IS NULL OR image_url = ''");
+        const [rows] = await pool.query("SELECT id, name, set_name, card_number, language FROM inventory WHERE image_url IS NULL OR image_url = '' OR image_url = 'NOT_FOUND'");
         console.log(`[BG-FETCH] Memproses ${rows.length} kartu tanpa gambar...`);
 
         for (const card of rows) {
             try {
-                let searchResults = [];
-
-                if (card.language === 'Japanese') {
-                    // JP: Pakai crawler pokellector JP
-                    const query = card.name + (card.set_name && card.set_name !== '-' ? " " + card.set_name : "");
-                    const res = await axios.get(`http://localhost:3000/api/search-jp?query=${encodeURIComponent(query)}`);
-                    searchResults = res.data || [];
+                const imageUrl = await fetchImageForCard(card);
+                if (imageUrl) {
+                    await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [imageUrl, card.id]);
+                    console.log(`[BG-FETCH] ✅ ${card.name} (${card.set_name}) -> ${imageUrl}`);
                 } else {
-                    // Bersihkan nama dari suffix variant: "Pikachu (Friend Ball)" -> "Pikachu"
-                    const cleanName = card.name.replace(/\s*\(.*?\)\s*/g, '').trim();
-                    const cleanNum = card.card_number ? card.card_number.split('/')[0].replace(/^0+/, '') : '';
-                    
-                    // EN: Coba exact name dulu
-                    let queries = [`name:"${card.name}"`];
-                    if (card.set_name && card.set_name !== '-') queries.push(`set.name:"${card.set_name}"`);
-                    if (cleanNum) queries.push(`number:${cleanNum}`);
-
-                    let apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
-                    let response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
-                    let data = await response.json();
-                    searchResults = data.data || [];
-
-                    // Jika nama asli gagal dan ada parenthetical, coba dengan nama bersih
-                    if (searchResults.length === 0 && cleanName !== card.name) {
-                        console.log(`[BG-FETCH] Retry dengan nama bersih: "${cleanName}"`);
-                        queries = [`name:"${cleanName}"`];
-                        if (card.set_name && card.set_name !== '-') queries.push(`set.name:"${card.set_name}"`);
-                        if (cleanNum) queries.push(`number:${cleanNum}`);
-                        apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
-                        response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
-                        data = await response.json();
-                        searchResults = data.data || [];
-                    }
-
-                    // EN: Jika API gagal total, coba tanpa set name (broadest search)
-                    if (searchResults.length === 0 && card.set_name && card.set_name !== '-') {
-                        console.log(`[BG-FETCH] Retry tanpa set: "${card.name}"`);
-                        const fbUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(`name:"${card.name}"`)}&pageSize=20`;
-                        const fbResponse = await fetch(fbUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
-                        const fbData = await fbResponse.json();
-                        searchResults = fbData.data || [];
-                    }
-                }
-
-                // Gunakan Smart Matcher untuk memilih kartu yang paling cocok
-                let bestMatch = findBestMatch(searchResults, card.name, card.set_name, card.card_number);
-
-                if (bestMatch) {
-                    await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, card.id]);
-                    console.log(`[BG-FETCH] ✅ ${card.name} -> ${bestMatch.images.small}`);
-                } else {
-                    // FALLBACK UNIVERSAL: Pokellector EN (juga punya gambar set Jepang!)
-                    console.log(`[BG-FETCH] Primary gagal untuk ${card.name}, coba Pokellector EN...`);
-                    let pokResults = await crawlPokellectorEN(card.name, card.set_name);
-                    bestMatch = findBestMatch(pokResults, card.name, card.set_name, card.card_number);
-
-                    if (!bestMatch && card.set_name && card.set_name !== '-') {
-                        // Pokellector EN tanpa set (broadest)
-                        pokResults = await crawlPokellectorEN(card.name, '');
-                        bestMatch = findBestMatch(pokResults, card.name, card.set_name, card.card_number);
-                    }
-
-                    if (bestMatch) {
-                        await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, card.id]);
-                        console.log(`[BG-FETCH] ✅ (pokellector) ${card.name} -> ${bestMatch.images.small}`);
-                    } else {
-                        await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
-                        console.log(`[BG-FETCH] ❌ ${card.name} -> NOT_FOUND`);
-                    }
+                    await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
+                    console.log(`[BG-FETCH] ❌ ${card.name} (${card.set_name}) -> NOT_FOUND`);
                 }
             } catch (err) {
                 console.error(`[BG-FETCH] ERROR ${card.name}:`, err.message);
                 await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [card.id]);
             }
-            // Delay 2 detik per kartu untuk mencegah Rate Limit API
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, 1500));
         }
         console.log(`[BG-FETCH] Selesai memproses ${rows.length} kartu.`);
     } catch (e) {
@@ -681,49 +761,11 @@ app.post('/api/refetch-image/:id', async (req, res) => {
         if (rows.length === 0) return res.status(404).json({ error: 'Kartu tidak ditemukan' });
         
         const card = rows[0];
-        let searchResults = [];
+        const imageUrl = await fetchImageForCard(card);
 
-        if (card.language === 'Japanese') {
-            const query = card.name + (card.set_name && card.set_name !== '-' ? " " + card.set_name : "");
-            const jpRes = await axios.get(`http://localhost:3000/api/search-jp?query=${encodeURIComponent(query)}`);
-            searchResults = jpRes.data || [];
-        } else {
-            const cleanName = card.name.replace(/\s*\(.*?\)\s*/g, '').trim();
-            const cleanNum = card.card_number ? card.card_number.split('/')[0].replace(/^0+/, '') : '';
-            
-            let queries = [`name:"${card.name}"`];
-            if (card.set_name && card.set_name !== '-') queries.push(`set.name:"${card.set_name}"`);
-            if (cleanNum) queries.push(`number:${cleanNum}`);
-
-            let apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
-            let response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
-            let data = await response.json();
-            searchResults = data.data || [];
-
-            // Retry dengan nama bersih jika gagal
-            if (searchResults.length === 0 && cleanName !== card.name) {
-                queries = [`name:"${cleanName}"`];
-                if (card.set_name && card.set_name !== '-') queries.push(`set.name:"${card.set_name}"`);
-                if (cleanNum) queries.push(`number:${cleanNum}`);
-                apiUrl = `https://api.pokemontcg.io/v2/cards?q=${encodeURIComponent(queries.join(' '))}&pageSize=20`;
-                response = await fetch(apiUrl, { headers: { 'User-Agent': 'Holovault/1.0' } });
-                data = await response.json();
-                searchResults = data.data || [];
-            }
-        }
-
-        let bestMatch = findBestMatch(searchResults, card.name, card.set_name, card.card_number);
-        
-        // Fallback ke Pokellector EN jika pokemontcg.io tidak punya
-        if (!bestMatch && card.language !== 'Japanese') {
-            console.log(`[REFETCH] pokemontcg.io gagal untuk ${card.name}, coba Pokellector EN...`);
-            const pokResults = await crawlPokellectorEN(card.name, card.set_name);
-            bestMatch = findBestMatch(pokResults, card.name, card.set_name, card.card_number);
-        }
-
-        if (bestMatch) {
-            await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [bestMatch.images.small, id]);
-            res.status(200).json({ message: 'Gambar ditemukan!', image_url: bestMatch.images.small });
+        if (imageUrl) {
+            await pool.query("UPDATE inventory SET image_url = ? WHERE id = ?", [imageUrl, id]);
+            res.status(200).json({ message: 'Gambar ditemukan!', image_url: imageUrl });
         } else {
             await pool.query("UPDATE inventory SET image_url = 'NOT_FOUND' WHERE id = ?", [id]);
             res.status(200).json({ message: 'Gambar tidak ditemukan', image_url: 'NOT_FOUND' });
