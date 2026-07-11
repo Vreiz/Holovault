@@ -667,10 +667,10 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
             const cat = sStr(i.category, 100) || 'Single';
 
             // PENTING: Gunakan 'conn.query', BUKAN 'pool.query' agar tetap di dalam jalur Transaksi
-            // Relaxed check: Ignore set_code and card_number when merging to prevent duplicates
+            // Strict check: Include card_number and set_code when merging to prevent merging different card numbers/variants
             const [existing] = await conn.query(
-                `SELECT id FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
-                [name, setName, lang, cond, isHolo, is1st, grader, grade, certNum]
+                `SELECT id FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND card_number <=> ? AND set_code <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
+                [name, setName, lang, cond, isHolo, is1st, cardNum, setCode, grader, grade, certNum]
             );
 
             if (existing.length > 0) {
