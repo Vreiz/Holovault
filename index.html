@@ -1,5 +1,6 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,654 +25,1260 @@
             --sold: #f59e0b;
             --glass-bg: rgba(30, 41, 59, 0.7);
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg-main); color: var(--text-main); font-size: 14px; padding-bottom: 80px; }
-        
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--glass-bg); backdrop-filter: blur(10px); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; position: sticky; top: 10px; z-index: 50; }
-        .logo { font-size: 1.5rem; font-weight: 900; letter-spacing: 1px; color: var(--text-main); }
-        .header-actions { display: flex; gap: 10px; }
 
-        button { cursor: pointer; padding: 8px 16px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-danger:hover { opacity: 0.9; }
-        .btn-ghost { background: transparent; color: var(--text-main); border: 1px solid var(--border); }
-        .btn-ghost:hover { background: var(--bg-card); }
-        
-        input, select, textarea { width: 100%; padding: 10px; background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-main); border-radius: 6px; outline: none; transition: border 0.2s; }
-        input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-size: 14px;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            position: sticky;
+            top: 10px;
+            z-index: 50;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: var(--text-main);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            opacity: 0.9;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            background: var(--bg-card);
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 6px;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--primary);
+        }
 
         /* Stats Bar */
-        .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
         .stat-card {
             background: linear-gradient(135deg, var(--bg-card) 0%, rgba(30, 41, 59, 0.5) 100%);
-            padding: 18px 20px; border-radius: 12px; border: 1px solid var(--border);
-            border-left: 4px solid var(--primary); position: relative; overflow: hidden;
+            padding: 18px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+            position: relative;
+            overflow: hidden;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
-        .stat-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.02), transparent); pointer-events: none; }
-        .stat-title { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-        .stat-value { font-size: 1.55rem; font-weight: 800; letter-spacing: -0.02em; }
-        
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), transparent);
+            pointer-events: none;
+        }
+
+        .stat-title {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.55rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
         /* Tabs */
-        .tabs { display: flex; gap: 10px; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
-        .tab { padding: 10px 20px; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: color 0.2s; }
-        .tab:hover { color: var(--text-main); }
-        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-        .tab-right-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; padding-bottom: 10px; }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: color 0.2s;
+        }
+
+        .tab:hover {
+            color: var(--text-main);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-right-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding-bottom: 10px;
+        }
 
         /* ===== FILTER BAR (Custom Hover Dropdowns) ===== */
         .filter-bar {
-            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;
-            background: var(--bg-card); padding: 12px 15px;
-            border-radius: 10px; border: 1px solid var(--border);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+            background: var(--bg-card);
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
             align-items: center;
         }
+
         .filter-search {
-            flex: 2; min-width: 220px; padding: 9px 14px;
-            background: var(--bg-panel); border: 1px solid var(--border);
-            color: var(--text-main); border-radius: 8px; outline: none;
-            font-size: 0.9rem; transition: border 0.2s, box-shadow 0.2s;
+            flex: 2;
+            min-width: 220px;
+            padding: 9px 14px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.9rem;
+            transition: border 0.2s, box-shadow 0.2s;
         }
-        .filter-search:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+
+        .filter-search:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
 
         /* Custom dropdown wrapper */
         .fdd-wrap {
             position: relative;
             display: inline-block;
         }
+
         .fdd-trigger {
-            display: flex; align-items: center; gap: 6px;
-            padding: 8px 14px; background: var(--bg-panel);
-            border: 1px solid var(--border); border-radius: 8px;
-            color: var(--text-main); font-size: 0.88rem; font-weight: 600;
-            cursor: pointer; white-space: nowrap; user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            user-select: none;
             transition: border-color 0.2s, background 0.2s;
-            min-width: 130px; justify-content: space-between;
+            min-width: 130px;
+            justify-content: space-between;
         }
-        .fdd-trigger .fdd-arrow { font-size: 0.65rem; opacity: 0.6; transition: transform 0.2s; }
+
+        .fdd-trigger .fdd-arrow {
+            font-size: 0.65rem;
+            opacity: 0.6;
+            transition: transform 0.2s;
+        }
+
         .fdd-wrap:hover .fdd-trigger,
-        .fdd-wrap:focus-within .fdd-trigger { border-color: var(--primary); background: rgba(59,130,246,0.08); }
+        .fdd-wrap:focus-within .fdd-trigger {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.08);
+        }
+
         .fdd-wrap:hover .fdd-arrow,
-        .fdd-wrap:focus-within .fdd-arrow { transform: rotate(180deg); }
+        .fdd-wrap:focus-within .fdd-arrow {
+            transform: rotate(180deg);
+        }
 
         /* Dropdown panel */
         .fdd-menu {
-            position: absolute; top: 100%; left: 0;
-            min-width: 100%; background: #1a2840;
-            border: 1px solid var(--primary); border-radius: 10px;
-            padding-top: 8px; padding-bottom: 6px; padding-left: 6px; padding-right: 6px;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 100%;
+            background: #1a2840;
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding-top: 8px;
+            padding-bottom: 6px;
+            padding-left: 6px;
+            padding-right: 6px;
             z-index: 200;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-            opacity: 0; pointer-events: none;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            pointer-events: none;
             transform: translateY(-4px);
             /* Delay closing so mouse can travel from trigger to menu */
             transition: opacity 0.15s ease 0.12s, transform 0.15s ease 0.12s;
         }
+
         .fdd-wrap:hover .fdd-menu,
         .fdd-wrap:focus-within .fdd-menu {
-            opacity: 1; pointer-events: auto; transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
             /* Open instantly (no delay) */
             transition: opacity 0.15s ease 0s, transform 0.15s ease 0s;
         }
 
         .fdd-item {
-            padding: 8px 12px; border-radius: 6px; cursor: pointer;
-            font-size: 0.88rem; color: var(--text-muted);
-            display: flex; align-items: center; gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
             transition: background 0.15s, color 0.15s;
             white-space: nowrap;
         }
-        .fdd-item:hover { background: rgba(59,130,246,0.15); color: var(--text-main); }
-        .fdd-item.active { background: rgba(59,130,246,0.2); color: var(--primary); font-weight: 600; }
-        .fdd-item.active::before { content: '✓'; margin-right: 2px; }
+
+        .fdd-item:hover {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--text-main);
+        }
+
+        .fdd-item.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .fdd-item.active::before {
+            content: '✓';
+            margin-right: 2px;
+        }
 
         /* Toggle pill buttons (Holo / 1st Ed) */
         .filter-pill {
-            padding: 8px 14px; border-radius: 8px;
-            border: 1px solid var(--border); font-size: 0.88rem; font-weight: 600;
-            cursor: pointer; background: var(--bg-panel); color: var(--text-muted);
-            transition: all 0.2s; white-space: nowrap;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--bg-panel);
+            color: var(--text-muted);
+            transition: all 0.2s;
+            white-space: nowrap;
         }
-        .filter-pill:hover { border-color: var(--primary); color: var(--text-main); }
-        .filter-pill.active { background: rgba(59,130,246,0.18); border-color: var(--primary); color: var(--primary); }
+
+        .filter-pill:hover {
+            border-color: var(--primary);
+            color: var(--text-main);
+        }
+
+        .filter-pill.active {
+            background: rgba(59, 130, 246, 0.18);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
 
         /* Active Filter Chips */
-        #activeFilterChips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+        #activeFilterChips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
         .chip {
-            background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.4);
-            padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;
-            display: flex; align-items: center; gap: 6px; color: var(--primary);
+            background: rgba(59, 130, 246, 0.12);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--primary);
             animation: chipIn 0.2s ease;
         }
-        @keyframes chipIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
-        .chip-close { cursor: pointer; color: var(--text-muted); font-weight: bold; transition: color 0.15s; }
-        .chip-close:hover { color: var(--danger); }
-        
+
+        @keyframes chipIn {
+            from {
+                opacity: 0;
+                transform: scale(0.85);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .chip-close {
+            cursor: pointer;
+            color: var(--text-muted);
+            font-weight: bold;
+            transition: color 0.15s;
+        }
+
+        .chip-close:hover {
+            color: var(--danger);
+        }
+
         /* Vault Grid */
-        .vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .vault-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
         .showcase-card {
             background: linear-gradient(160deg, var(--bg-card) 0%, #162032 100%);
-            border-radius: 12px; border: 1px solid var(--border);
-            padding: 16px; position: relative; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-            display: flex; flex-direction: column; gap: 10px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 16px;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
-        .showcase-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.35); border-color: var(--border-light); }
-        .card-name { font-weight: 700; font-size: 1.05rem; line-height: 1.3; }
-        .card-set { color: var(--text-muted); font-size: 0.82rem; }
-        .card-price-row { display: flex; justify-content: space-between; font-size: 0.9rem; }
-        .card-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: auto; }
+
+        .showcase-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+            border-color: var(--border-light);
+        }
+
+        .card-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            line-height: 1.3;
+        }
+
+        .card-set {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        .card-price-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: auto;
+        }
+
         .tag {
-            background: rgba(255,255,255,0.05); border: 1px solid var(--border-light);
-            padding: 2px 7px; border-radius: 4px; font-size: 0.72rem; font-weight: 700;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-light);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 700;
             letter-spacing: 0.04em;
         }
-        .card-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; margin-top: 10px; }
-        
+
+        .card-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
         /* Qty Adjuster */
-        .qty-adjuster { display: flex; align-items: center; gap: 10px; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; width: fit-content; }
-        .qty-btn { background: transparent; color: var(--text-main); font-weight: bold; border: none; padding: 2px 6px; cursor: pointer; transition: color 0.15s; font-size: 1.1rem; }
-        .qty-btn:hover { color: var(--primary); }
-        .qty-val { font-weight: bold; min-width: 24px; text-align: center; }
-        
+        .qty-adjuster {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 2px 8px;
+            width: fit-content;
+        }
+
+        .qty-btn {
+            background: transparent;
+            color: var(--text-main);
+            font-weight: bold;
+            border: none;
+            padding: 2px 6px;
+            cursor: pointer;
+            transition: color 0.15s;
+            font-size: 1.1rem;
+        }
+
+        .qty-btn:hover {
+            color: var(--primary);
+        }
+
+        .qty-val {
+            font-weight: bold;
+            min-width: 24px;
+            text-align: center;
+        }
+
         /* Bulk Mode */
-        .showcase-card.is-bulkable { cursor: pointer; }
-        .showcase-card.selected-for-bulk { border-color: var(--primary); background: rgba(59, 130, 246, 0.1); }
-        .bulk-overlay-ui { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; backdrop-filter: blur(2px); }
-        .check-circle { background: var(--primary); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
-        .bulk-qty-override { width: 80px; text-align: center; font-size: 1.1rem; font-weight: bold; }
-        
-        .floating-action-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--bg-card); padding: 10px 20px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); display: flex; gap: 15px; align-items: center; border: 1px solid var(--primary); z-index: 100; transition: transform 0.3s; }
-        .floating-action-bar.hidden { transform: translate(-50%, 150px); }
-        .badge { background: var(--primary); padding: 5px 10px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; }
+        .showcase-card.is-bulkable {
+            cursor: pointer;
+        }
+
+        .showcase-card.selected-for-bulk {
+            border-color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .bulk-overlay-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            backdrop-filter: blur(2px);
+        }
+
+        .check-circle {
+            background: var(--primary);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .bulk-qty-override {
+            width: 80px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .floating-action-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            padding: 10px 20px;
+            border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            border: 1px solid var(--primary);
+            z-index: 100;
+            transition: transform 0.3s;
+        }
+
+        .floating-action-bar.hidden {
+            transform: translate(-50%, 150px);
+        }
+
+        .badge {
+            background: var(--primary);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
 
         /* Table View */
-        .table-view-container { overflow-x: auto; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-card); border-radius: 10px; overflow: hidden; }
-        th, td { padding: 12px 15px; border-bottom: 1px solid var(--border); }
-        th { background: var(--bg-panel); font-weight: 700; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        tr:hover { background: rgba(255,255,255,0.02); }
-        .table-view-container tr.selected-for-bulk { background: rgba(59, 130, 246, 0.1); }
+        .table-view-container {
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            background: var(--bg-card);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg-panel);
+            font-weight: 700;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .table-view-container tr.selected-for-bulk {
+            background: rgba(59, 130, 246, 0.1);
+        }
 
         /* Transaksi View */
-        .trx-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 15px; }
-        .trx-mini-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed var(--border); }
-        .trx-mini-item:last-child { border-bottom: none; }
-        .btn-undo-sale { background: var(--bg-panel); border: 1px solid var(--border); color: var(--text-main); border-radius: 4px; padding: 4px 8px; font-size: 0.8rem; cursor: pointer; }
-        .btn-undo-sale:hover { background: var(--danger); border-color: var(--danger); }
+        .trx-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .trx-mini-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .trx-mini-item:last-child {
+            border-bottom: none;
+        }
+
+        .btn-undo-sale {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .btn-undo-sale:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+        }
 
         /* Toast & Modal */
-        #toastContainer { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
-        .toast { background: var(--bg-card); color: white; padding: 12px 20px; border-radius: 8px; border-left: 4px solid var(--green); box-shadow: 0 5px 15px rgba(0,0,0,0.3); animation: slideIn 0.3s ease-out; transition: opacity 0.5s; font-weight: 500; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        #toastContainer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 9999;
+        }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(3px); }
-        .modal-box { background: var(--bg-card); width: 90%; max-width: 500px; padding: 25px; border-radius: 12px; border: 1px solid var(--border); }
-        .hidden { display: none !important; }
+        .toast {
+            background: var(--bg-card);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--green);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease-out;
+            transition: opacity 0.5s;
+            font-weight: 500;
+        }
 
-        .profit-plus { color: var(--green); }
-        .profit-minus { color: var(--danger); }
-        
-        .btn-show-more { background: var(--bg-panel); color: var(--primary); border: 1px solid var(--primary); width: 100%; padding: 15px; border-radius: 8px; font-size: 1rem; margin-top: 10px; transition: background 0.2s; }
-        .btn-show-more:hover { background: rgba(59, 130, 246, 0.1); }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(3px);
+        }
+
+        .modal-box {
+            background: var(--bg-card);
+            width: 90%;
+            max-width: 500px;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .profit-plus {
+            color: var(--green);
+        }
+
+        .profit-minus {
+            color: var(--danger);
+        }
+
+        .btn-show-more {
+            background: var(--bg-panel);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            width: 100%;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        .btn-show-more:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <header>
-        <div class="logo">HOLOVAULT v2</div>
-        <div class="header-actions">
-            <input type="file" id="excelAppendInput" accept=".csv, .xlsx" class="hidden" onchange="handleExcelUpload(event, 'append')">
-            <input type="file" id="excelReplaceInput" accept=".csv, .xlsx" class="hidden" onchange="handleExcelUpload(event, 'replace')">
-            <button class="btn-primary" onclick="document.getElementById('excelAppendInput').click()">➕ Import CSV</button>
-            <button class="btn-danger" onclick="document.getElementById('excelReplaceInput').click()">🔄 Replace CSV</button>
-            <button class="btn-ghost" onclick="exportToExcel()">📤 Export DB</button>
-            <button class="btn-ghost" onclick="exportSoldToCSV()">📥 Export Sold</button>
-        </div>
-    </header>
-
-    <div class="stats-bar">
-        <div class="stat-card"><div class="stat-title">Total Item (Qty)</div><div class="stat-value" id="statTotalQty">0</div></div>
-        <div class="stat-card"><div class="stat-title">Total Entry</div><div class="stat-value" id="statTotalUnique">0</div></div>
-        <div class="stat-card" style="border-left-color: #f59e0b;"><div class="stat-title">Total Modal</div><div class="stat-value" id="statTotalCost">Rp0</div></div>
-        <div class="stat-card" style="border-left-color: var(--green);"><div class="stat-title">Nilai Pasar</div><div class="stat-value" id="statTotalMarket">Rp0</div></div>
-    </div>
-
-    <div class="tabs">
-        <div class="tab active" id="tabVault" onclick="switchTab('vault')">💎 Vault Portfolio</div>
-        <div class="tab" id="tabSold" onclick="switchTab('sold')">💰 Riwayat Sold</div>
-        <div class="tab-right-actions">
-            <button class="btn-ghost" id="btnViewToggle" onclick="toggleView()">📋 Table View</button>
-            <button class="btn-ghost" id="btnToggleBulk" onclick="toggleBulkMode()">📦 Mode Borongan</button>
-        </div>
-    </div>
-
-    <!-- VAULT TAB -->
-    <div id="vaultSection">
-        <div class="filter-bar">
-            <input type="text" id="inventorySearchInput" class="filter-search" placeholder="🔍 Cari nama kartu, set, nomor..." oninput="applyFiltersAndRender()">
-
-            <!-- Sort -->
-            <div class="fdd-wrap" id="fddSort">
-                <div class="fdd-trigger" id="fddSortLabel">🕒 Paling Baru <span class="fdd-arrow">▼</span></div>
-                <div class="fdd-menu">
-                    <div class="fdd-item active" data-val="terbaru" onclick="setFilter('sort','terbaru',this,'fddSortLabel')">🕒 Paling Baru Ditambah</div>
-                    <div class="fdd-item" data-val="terlama" onclick="setFilter('sort','terlama',this,'fddSortLabel')">📅 Paling Lama</div>
-                    <div class="fdd-item" data-val="nama_az" onclick="setFilter('sort','nama_az',this,'fddSortLabel')">🔤 Nama A → Z</div>
-                    <div class="fdd-item" data-val="nama_za" onclick="setFilter('sort','nama_za',this,'fddSortLabel')">🔤 Nama Z → A</div>
-                    <div class="fdd-item" data-val="market_desc" onclick="setFilter('sort','market_desc',this,'fddSortLabel')">📈 Market Tertinggi</div>
-                    <div class="fdd-item" data-val="market_asc" onclick="setFilter('sort','market_asc',this,'fddSortLabel')">📉 Market Terendah</div>
-                    <div class="fdd-item" data-val="cost_desc" onclick="setFilter('sort','cost_desc',this,'fddSortLabel')">💸 Modal Tertinggi</div>
-                    <div class="fdd-item" data-val="cost_asc" onclick="setFilter('sort','cost_asc',this,'fddSortLabel')">💸 Modal Terendah</div>
-                    <div class="fdd-item" data-val="qty_desc" onclick="setFilter('sort','qty_desc',this,'fddSortLabel')">📦 Qty Terbanyak</div>
-                    <div class="fdd-item" data-val="qty_asc" onclick="setFilter('sort','qty_asc',this,'fddSortLabel')">📦 Qty Tersedikit</div>
-                    <div class="fdd-item" data-val="set_az" onclick="setFilter('sort','set_az',this,'fddSortLabel')">🗂️ Set A → Z</div>
-                    <div class="fdd-item" data-val="set_za" onclick="setFilter('sort','set_za',this,'fddSortLabel')">🗂️ Set Z → A</div>
-                </div>
+    <div class="container">
+        <header>
+            <div class="logo">HOLOVAULT v2</div>
+            <div class="header-actions">
+                <input type="file" id="excelAppendInput" accept=".csv, .xlsx" class="hidden"
+                    onchange="handleExcelUpload(event, 'append')">
+                <input type="file" id="excelReplaceInput" accept=".csv, .xlsx" class="hidden"
+                    onchange="handleExcelUpload(event, 'replace')">
+                <button class="btn-primary" onclick="document.getElementById('excelAppendInput').click()">➕ Import
+                    CSV</button>
+                <button class="btn-danger" onclick="document.getElementById('excelReplaceInput').click()">🔄 Replace
+                    CSV</button>
+                <button class="btn-ghost" onclick="exportToExcel()">📤 Export DB</button>
+                <button class="btn-ghost" onclick="exportSoldToCSV()">📥 Export Sold</button>
             </div>
+        </header>
 
-            <!-- Filter Set -->
-            <div class="fdd-wrap" id="fddSet">
-                <div class="fdd-trigger" id="fddSetLabel">✨ Semua Set <span class="fdd-arrow">▼</span></div>
-                <div class="fdd-menu" id="fddSetMenu" style="max-height:260px; overflow-y:auto;">
-                    <div class="fdd-item active" data-val="" onclick="setFilter('set','',this,'fddSetLabel')">✨ Semua Set</div>
-                </div>
-            </div>
-
-            <!-- Filter Kategori -->
-            <div class="fdd-wrap" id="fddCat">
-                <div class="fdd-trigger" id="fddCatLabel">📂 Kategori <span class="fdd-arrow">▼</span></div>
-                <div class="fdd-menu">
-                    <div class="fdd-item active" data-val="" onclick="setFilter('cat','',this,'fddCatLabel')">📂 Semua Kategori</div>
-                    <div class="fdd-item" data-val="Single" onclick="setFilter('cat','Single',this,'fddCatLabel')">🃏 Single</div>
-                    <div class="fdd-item" data-val="Sealed" onclick="setFilter('cat','Sealed',this,'fddCatLabel')">📦 Sealed</div>
-                    <div class="fdd-item" data-val="Slab" onclick="setFilter('cat','Slab',this,'fddCatLabel')">🏆 Slab</div>
-                    <div class="fdd-item" data-val="Slab Set" onclick="setFilter('cat','Slab Set',this,'fddCatLabel')">🏅 Slab Set</div>
-                </div>
-            </div>
-
-            <!-- Filter Bahasa -->
-            <div class="fdd-wrap" id="fddLang">
-                <div class="fdd-trigger" id="fddLangLabel">🌐 Bahasa <span class="fdd-arrow">▼</span></div>
-                <div class="fdd-menu">
-                    <div class="fdd-item active" data-val="" onclick="setFilter('lang','',this,'fddLangLabel')">🌐 Semua Bahasa</div>
-                    <div class="fdd-item" data-val="English" onclick="setFilter('lang','English',this,'fddLangLabel')">🇺🇸 English</div>
-                    <div class="fdd-item" data-val="Japanese" onclick="setFilter('lang','Japanese',this,'fddLangLabel')">🇯🇵 Japanese</div>
-                    <div class="fdd-item" data-val="Chinese" onclick="setFilter('lang','Chinese',this,'fddLangLabel')">🇨🇳 Chinese</div>
-                </div>
-            </div>
-
-            <!-- Filter Kondisi -->
-            <div class="fdd-wrap" id="fddCond">
-                <div class="fdd-trigger" id="fddCondLabel">💎 Kondisi <span class="fdd-arrow">▼</span></div>
-                <div class="fdd-menu">
-                    <div class="fdd-item active" data-val="" onclick="setFilter('cond','',this,'fddCondLabel')">💎 Semua Kondisi</div>
-                    <div class="fdd-item" data-val="NM" onclick="setFilter('cond','NM',this,'fddCondLabel')">✨ NM (Near Mint)</div>
-                    <div class="fdd-item" data-val="LP" onclick="setFilter('cond','LP',this,'fddCondLabel')">🟢 LP (Lightly Played)</div>
-                    <div class="fdd-item" data-val="MP" onclick="setFilter('cond','MP',this,'fddCondLabel')">🟡 MP (Moderately Played)</div>
-                    <div class="fdd-item" data-val="HP" onclick="setFilter('cond','HP',this,'fddCondLabel')">🟠 HP (Heavily Played)</div>
-                    <div class="fdd-item" data-val="DMG" onclick="setFilter('cond','DMG',this,'fddCondLabel')">🔴 DMG (Damaged)</div>
-                </div>
-            </div>
-
-            <button class="filter-pill" id="btnFilterHolo" onclick="toggleHoloFilter()">Holo: Any</button>
-            <button class="filter-pill" id="btnFilter1st" onclick="toggle1stFilter()">1st Ed: Any</button>
-        </div>
-
-        <div id="activeFilterChips"></div>
-
-        <div id="vaultGrid" class="vault-grid"></div>
-        <div id="vaultTable" class="table-view-container hidden">
-            <table id="vaultTableContent">
-                <thead><tr><th>No</th><th>Nama & Set</th><th>Tags</th><th>Qty</th><th>Cost</th><th>Market</th><th>Aksi</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-        
-        <button id="btnShowMore" class="btn-show-more hidden" onclick="showMoreVault()">Tampilkan Lebih Banyak</button>
-    </div>
-
-    <!-- SOLD TAB -->
-    <div id="soldSection" class="hidden">
-        <div class="filter-bar">
-            <input type="date" id="filterStartDate" class="filter-item" onchange="applyFiltersAndRender()">
-            <input type="date" id="filterEndDate" class="filter-item" onchange="applyFiltersAndRender()">
-            <input type="text" id="soldSearchInput" class="filter-search" placeholder="Cari nama kartu terjual..." oninput="applyFiltersAndRender()">
-        </div>
-        
         <div class="stats-bar">
-            <div class="stat-card"><div class="stat-title">Total Transaksi</div><div class="stat-value" id="statSoldTrx">0</div></div>
-            <div class="stat-card"><div class="stat-title">Total Omset</div><div class="stat-value" id="statSoldOmset">Rp0</div></div>
-            <div class="stat-card"><div class="stat-title">Net Profit</div><div class="stat-value" id="statSoldProfit">Rp0</div></div>
-            <div class="stat-card"><div class="stat-title">Margin %</div><div class="stat-value" id="statSoldMargin">0%</div></div>
-            <div class="stat-card"><div class="stat-title">Best Seller</div><div class="stat-value" style="font-size: 1rem; margin-top: 5px;" id="statSoldBest">-</div></div>
+            <div class="stat-card">
+                <div class="stat-title">Total Item (Qty)</div>
+                <div class="stat-value" id="statTotalQty">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Total Entry</div>
+                <div class="stat-value" id="statTotalUnique">0</div>
+            </div>
+            <div class="stat-card" style="border-left-color: #f59e0b;">
+                <div class="stat-title">Total Modal</div>
+                <div class="stat-value" id="statTotalCost">Rp0</div>
+            </div>
+            <div class="stat-card" style="border-left-color: var(--green);">
+                <div class="stat-title">Nilai Pasar</div>
+                <div class="stat-value" id="statTotalMarket">Rp0</div>
+            </div>
         </div>
 
-        <div id="soldGrid"></div>
-    </div>
-</div>
+        <div class="tabs">
+            <div class="tab active" id="tabVault" onclick="switchTab('vault')">💎 Vault Portfolio</div>
+            <div class="tab" id="tabSold" onclick="switchTab('sold')">💰 Riwayat Sold</div>
+            <div class="tab-right-actions">
+                <button class="btn-ghost" id="btnViewToggle" onclick="toggleView()">📋 Table View</button>
+                <button class="btn-ghost" id="btnToggleBulk" onclick="toggleBulkMode()">📦 Mode Borongan</button>
+            </div>
+        </div>
 
-<div id="bulkActionBar" class="floating-action-bar hidden">
-    <div class="badge" id="bulkCountText">0 Terpilih</div>
-    <button class="btn-ghost" style="color: white; border-color: white;" onclick="toggleSelectAll()">Semua</button>
-    <button class="btn-primary" style="background: var(--sold);" onclick="openBulkSellModal()">💰 Jual Borongan</button>
-    <button class="btn-danger" onclick="openBulkDeleteModal()">🗑️ Hapus</button>
-    <button class="btn-ghost" onclick="toggleBulkMode()">Batal</button>
-</div>
+        <!-- VAULT TAB -->
+        <div id="vaultSection">
+            <div class="filter-bar">
+                <input type="text" id="inventorySearchInput" class="filter-search"
+                    placeholder="🔍 Cari nama kartu, set, nomor..." oninput="applyFiltersAndRender()">
 
-<!-- Modal Global -->
-<div id="customModal" class="modal-overlay hidden">
-    <div class="modal-box">
-        <h2 id="modalTitle" style="margin-bottom: 10px;">Judul</h2>
-        <p id="modalBody" style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">Deskripsi</p>
-        <div id="modalInputs" style="margin-bottom: 20px;"></div>
-        <div style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button class="btn-ghost" onclick="closeModal()">Batal</button>
-            <button class="btn-primary" id="modalConfirmBtn">Konfirmasi</button>
+                <!-- Sort -->
+                <div class="fdd-wrap" id="fddSort">
+                    <div class="fdd-trigger" id="fddSortLabel">🕒 Paling Baru <span class="fdd-arrow">▼</span></div>
+                    <div class="fdd-menu">
+                        <div class="fdd-item active" data-val="terbaru"
+                            onclick="setFilter('sort','terbaru',this,'fddSortLabel')">🕒 Paling Baru Ditambah</div>
+                        <div class="fdd-item" data-val="terlama"
+                            onclick="setFilter('sort','terlama',this,'fddSortLabel')">📅 Paling Lama</div>
+                        <div class="fdd-item" data-val="nama_az"
+                            onclick="setFilter('sort','nama_az',this,'fddSortLabel')">🔤 Nama A → Z</div>
+                        <div class="fdd-item" data-val="nama_za"
+                            onclick="setFilter('sort','nama_za',this,'fddSortLabel')">🔤 Nama Z → A</div>
+                        <div class="fdd-item" data-val="market_desc"
+                            onclick="setFilter('sort','market_desc',this,'fddSortLabel')">📈 Market Tertinggi</div>
+                        <div class="fdd-item" data-val="market_asc"
+                            onclick="setFilter('sort','market_asc',this,'fddSortLabel')">📉 Market Terendah</div>
+                        <div class="fdd-item" data-val="cost_desc"
+                            onclick="setFilter('sort','cost_desc',this,'fddSortLabel')">💸 Modal Tertinggi</div>
+                        <div class="fdd-item" data-val="cost_asc"
+                            onclick="setFilter('sort','cost_asc',this,'fddSortLabel')">💸 Modal Terendah</div>
+                        <div class="fdd-item" data-val="qty_desc"
+                            onclick="setFilter('sort','qty_desc',this,'fddSortLabel')">📦 Qty Terbanyak</div>
+                        <div class="fdd-item" data-val="qty_asc"
+                            onclick="setFilter('sort','qty_asc',this,'fddSortLabel')">📦 Qty Tersedikit</div>
+                        <div class="fdd-item" data-val="set_az"
+                            onclick="setFilter('sort','set_az',this,'fddSortLabel')">🗂️ Set A → Z</div>
+                        <div class="fdd-item" data-val="set_za"
+                            onclick="setFilter('sort','set_za',this,'fddSortLabel')">🗂️ Set Z → A</div>
+                    </div>
+                </div>
+
+                <!-- Filter Set -->
+                <div class="fdd-wrap" id="fddSet">
+                    <div class="fdd-trigger" id="fddSetLabel">✨ Semua Set <span class="fdd-arrow">▼</span></div>
+                    <div class="fdd-menu" id="fddSetMenu" style="max-height:260px; overflow-y:auto;">
+                        <div class="fdd-item active" data-val="" onclick="setFilter('set','',this,'fddSetLabel')">✨
+                            Semua Set</div>
+                    </div>
+                </div>
+
+                <!-- Filter Kategori -->
+                <div class="fdd-wrap" id="fddCat">
+                    <div class="fdd-trigger" id="fddCatLabel">📂 Kategori <span class="fdd-arrow">▼</span></div>
+                    <div class="fdd-menu">
+                        <div class="fdd-item active" data-val="" onclick="setFilter('cat','',this,'fddCatLabel')">📂
+                            Semua Kategori</div>
+                        <div class="fdd-item" data-val="Single" onclick="setFilter('cat','Single',this,'fddCatLabel')">
+                            🃏 Single</div>
+                        <div class="fdd-item" data-val="Sealed" onclick="setFilter('cat','Sealed',this,'fddCatLabel')">
+                            📦 Sealed</div>
+                        <div class="fdd-item" data-val="Slab" onclick="setFilter('cat','Slab',this,'fddCatLabel')">🏆
+                            Slab</div>
+                        <div class="fdd-item" data-val="Slab Set"
+                            onclick="setFilter('cat','Slab Set',this,'fddCatLabel')">🏅 Slab Set</div>
+                    </div>
+                </div>
+
+                <!-- Filter Bahasa -->
+                <div class="fdd-wrap" id="fddLang">
+                    <div class="fdd-trigger" id="fddLangLabel">🌐 Bahasa <span class="fdd-arrow">▼</span></div>
+                    <div class="fdd-menu">
+                        <div class="fdd-item active" data-val="" onclick="setFilter('lang','',this,'fddLangLabel')">🌐
+                            Semua Bahasa</div>
+                        <div class="fdd-item" data-val="English"
+                            onclick="setFilter('lang','English',this,'fddLangLabel')">🇺🇸 English</div>
+                        <div class="fdd-item" data-val="Japanese"
+                            onclick="setFilter('lang','Japanese',this,'fddLangLabel')">🇯🇵 Japanese</div>
+                        <div class="fdd-item" data-val="Chinese"
+                            onclick="setFilter('lang','Chinese',this,'fddLangLabel')">🇨🇳 Chinese</div>
+                    </div>
+                </div>
+
+                <!-- Filter Kondisi -->
+                <div class="fdd-wrap" id="fddCond">
+                    <div class="fdd-trigger" id="fddCondLabel">💎 Kondisi <span class="fdd-arrow">▼</span></div>
+                    <div class="fdd-menu">
+                        <div class="fdd-item active" data-val="" onclick="setFilter('cond','',this,'fddCondLabel')">💎
+                            Semua Kondisi</div>
+                        <div class="fdd-item" data-val="NM" onclick="setFilter('cond','NM',this,'fddCondLabel')">✨ NM
+                            (Near Mint)</div>
+                        <div class="fdd-item" data-val="LP" onclick="setFilter('cond','LP',this,'fddCondLabel')">🟢 LP
+                            (Lightly Played)</div>
+                        <div class="fdd-item" data-val="MP" onclick="setFilter('cond','MP',this,'fddCondLabel')">🟡 MP
+                            (Moderately Played)</div>
+                        <div class="fdd-item" data-val="HP" onclick="setFilter('cond','HP',this,'fddCondLabel')">🟠 HP
+                            (Heavily Played)</div>
+                        <div class="fdd-item" data-val="DMG" onclick="setFilter('cond','DMG',this,'fddCondLabel')">🔴
+                            DMG (Damaged)</div>
+                    </div>
+                </div>
+
+                <button class="filter-pill" id="btnFilterHolo" onclick="toggleHoloFilter()">Holo: Any</button>
+                <button class="filter-pill" id="btnFilter1st" onclick="toggle1stFilter()">1st Ed: Any</button>
+            </div>
+
+            <div id="activeFilterChips"></div>
+
+            <div id="vaultGrid" class="vault-grid"></div>
+            <div id="vaultTable" class="table-view-container hidden">
+                <table id="vaultTableContent">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama & Set</th>
+                            <th>Tags</th>
+                            <th>Qty</th>
+                            <th>Cost</th>
+                            <th>Market</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <button id="btnShowMore" class="btn-show-more hidden" onclick="showMoreVault()">Tampilkan Lebih
+                Banyak</button>
+        </div>
+
+        <!-- SOLD TAB -->
+        <div id="soldSection" class="hidden">
+            <div class="filter-bar">
+                <input type="date" id="filterStartDate" class="filter-item" onchange="applyFiltersAndRender()">
+                <input type="date" id="filterEndDate" class="filter-item" onchange="applyFiltersAndRender()">
+                <input type="text" id="soldSearchInput" class="filter-search" placeholder="Cari nama kartu terjual..."
+                    oninput="applyFiltersAndRender()">
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-title">Total Transaksi</div>
+                    <div class="stat-value" id="statSoldTrx">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Total Omset</div>
+                    <div class="stat-value" id="statSoldOmset">Rp0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Net Profit</div>
+                    <div class="stat-value" id="statSoldProfit">Rp0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Margin %</div>
+                    <div class="stat-value" id="statSoldMargin">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Best Seller</div>
+                    <div class="stat-value" style="font-size: 1rem; margin-top: 5px;" id="statSoldBest">-</div>
+                </div>
+            </div>
+
+            <div id="soldGrid"></div>
         </div>
     </div>
-</div>
 
-<div id="toastContainer"></div>
+    <div id="bulkActionBar" class="floating-action-bar hidden">
+        <div class="badge" id="bulkCountText">0 Terpilih</div>
+        <button class="btn-ghost" style="color: white; border-color: white;" onclick="toggleSelectAll()">Semua</button>
+        <button class="btn-primary" style="background: var(--sold);" onclick="openBulkSellModal()">💰 Jual
+            Borongan</button>
+        <button class="btn-danger" onclick="openBulkDeleteModal()">🗑️ Hapus</button>
+        <button class="btn-ghost" onclick="toggleBulkMode()">Batal</button>
+    </div>
 
-<script>
-let API_URL = 'http://localhost:3000';
-if (window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && window.location.protocol !== 'file:') {
-    API_URL = window.location.protocol + '//' + window.location.hostname + ':3000';
-}
+    <!-- Modal Global -->
+    <div id="customModal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <h2 id="modalTitle" style="margin-bottom: 10px;">Judul</h2>
+            <p id="modalBody" style="color: var(--text-muted); margin-bottom: 15px; font-size: 0.9rem;">Deskripsi</p>
+            <div id="modalInputs" style="margin-bottom: 20px;"></div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn-ghost" onclick="closeModal()">Batal</button>
+                <button class="btn-primary" id="modalConfirmBtn">Konfirmasi</button>
+            </div>
+        </div>
+    </div>
 
-let globalData = [];
-let isBulkMode = false;
-let selectedBulkIds = new Set();
-let bulkQtyMap = {};
-let vaultDisplayLimit = 20;
-let currentView = 'grid';
+    <div id="toastContainer"></div>
 
-let filterState = {
-    holo: null,
-    firstEd: null,
-    sort: 'terbaru',
-    set: '',
-    cat: '',
-    lang: '',
-    cond: ''
-};
-
-// Custom hover-dropdown helper
-function setFilter(type, val, el, labelId) {
-    filterState[type] = val;
-    // Update active state on sibling items
-    const menu = el.closest('.fdd-menu');
-    if (menu) {
-        menu.querySelectorAll('.fdd-item').forEach(i => i.classList.remove('active'));
-        el.classList.add('active');
-    }
-    // Update label text
-    const label = document.getElementById(labelId);
-    if (label) {
-        const arrow = label.querySelector('.fdd-arrow');
-        label.textContent = el.textContent.replace(/^✓\s*/, '');
-        if (arrow) label.appendChild(arrow);
-        else label.insertAdjacentHTML('beforeend', '<span class="fdd-arrow">▼</span>');
-    }
-    applyFiltersAndRender();
-}
-
-function formatRupiah(input) { let value = input.value.replace(/\D/g, ''); if (value !== '') { input.value = new Intl.NumberFormat('id-ID').format(value); } else { input.value = ''; } }
-function parseRupiah(value) { if (!value) return 0; return parseFloat(value.toString().replace(/\./g, '')); }
-const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
-
-function showToast(msg, isError = false) {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--green)';
-    toast.innerText = msg; container.appendChild(toast);
-    setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 4000); }, 3500);
-}
-
-async function safeJson(res) {
-    const text = await res.text();
-    try { return JSON.parse(text); } catch (e) { throw new Error(`Respon server error (HTTP ${res.status})`); }
-}
-
-function openModal(title, bodyText, inputsHtml, confirmCallback) {
-    document.getElementById('modalTitle').innerText = title;
-    document.getElementById('modalBody').innerHTML = bodyText;
-    document.getElementById('modalInputs').innerHTML = inputsHtml;
-    const confirmBtn = document.getElementById('modalConfirmBtn');
-    const newBtn = confirmBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
-    newBtn.onclick = async () => {
-        const originalText = newBtn.innerText; newBtn.innerText = 'Memproses...'; newBtn.disabled = true;
-        try { await confirmCallback(); } catch (e) { showToast(e.message, true); }
-        finally { newBtn.innerText = originalText; newBtn.disabled = false; }
-    };
-    document.getElementById('customModal').classList.remove('hidden');
-}
-
-function closeModal() { document.getElementById('customModal').classList.add('hidden'); }
-
-function switchTab(tab) {
-    if (isBulkMode) toggleBulkMode();
-    document.getElementById('tabVault').classList.toggle('active', tab === 'vault');
-    document.getElementById('tabSold').classList.toggle('active', tab === 'sold');
-    document.getElementById('vaultSection').classList.toggle('hidden', tab !== 'vault');
-    document.getElementById('soldSection').classList.toggle('hidden', tab !== 'sold');
-    
-    document.getElementById('btnViewToggle').classList.toggle('hidden', tab !== 'vault');
-    document.getElementById('btnToggleBulk').classList.toggle('hidden', tab !== 'vault');
-    
-    if(tab === 'vault') vaultDisplayLimit = 20;
-    applyFiltersAndRender();
-}
-
-function toggleView() {
-    currentView = currentView === 'grid' ? 'table' : 'grid';
-    document.getElementById('btnViewToggle').innerText = currentView === 'grid' ? '📋 Table View' : '🔲 Grid View';
-    document.getElementById('vaultGrid').classList.toggle('hidden', currentView !== 'grid');
-    document.getElementById('vaultTable').classList.toggle('hidden', currentView !== 'table');
-    applyFiltersAndRender();
-}
-
-function toggleHoloFilter() {
-    filterState.holo = filterState.holo === null ? true : (filterState.holo === true ? false : null);
-    const btn = document.getElementById('btnFilterHolo');
-    btn.innerText = filterState.holo === null ? 'Holo: Any' : (filterState.holo ? 'Holo: Yes ✓' : 'Holo: No ✗');
-    btn.classList.toggle('active', filterState.holo !== null);
-    applyFiltersAndRender();
-}
-
-function toggle1stFilter() {
-    filterState.firstEd = filterState.firstEd === null ? true : (filterState.firstEd === true ? false : null);
-    const btn = document.getElementById('btnFilter1st');
-    btn.innerText = filterState.firstEd === null ? '1st Ed: Any' : (filterState.firstEd ? '1st Ed: Yes ✓' : '1st Ed: No ✗');
-    btn.classList.toggle('active', filterState.firstEd !== null);
-    applyFiltersAndRender();
-}
-
-function removeFilter(type) {
-    if (type === 'search') document.getElementById('inventorySearchInput').value = '';
-    if (type === 'set') {
-        filterState.set = '';
-        const menuItem = document.querySelector('#fddSetMenu .fdd-item[data-val=""]');
-        if (menuItem) setFilter('set', '', menuItem, 'fddSetLabel');
-    }
-    if (type === 'cat') {
-        filterState.cat = '';
-        const menuItem = document.querySelector('#fddCat .fdd-item[data-val=""]');
-        if (menuItem) setFilter('cat', '', menuItem, 'fddCatLabel');
-    }
-    if (type === 'lang') {
-        filterState.lang = '';
-        const menuItem = document.querySelector('#fddLang .fdd-item[data-val=""]');
-        if (menuItem) setFilter('lang', '', menuItem, 'fddLangLabel');
-    }
-    if (type === 'cond') {
-        filterState.cond = '';
-        const menuItem = document.querySelector('#fddCond .fdd-item[data-val=""]');
-        if (menuItem) setFilter('cond', '', menuItem, 'fddCondLabel');
-    }
-    if (type === 'holo') toggleHoloFilter();
-    if (type === 'firstEd') toggle1stFilter();
-    applyFiltersAndRender();
-}
-
-function showMoreVault() { vaultDisplayLimit += 20; applyFiltersAndRender(); }
-
-async function quickAdjustQty(id, action) {
-    if (isBulkMode) return;
-    try {
-        const res = await fetch(`${API_URL}/api/inventory/${id}/qty`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) });
-        if (res.ok) await loadInventory(); else throw new Error("Gagal");
-    } catch (e) { showToast(e.message, true); }
-}
-
-function handleBulkQtyChange(id, val) { bulkQtyMap[id] = parseInt(val) || 1; }
-
-function toggleCardBulk(id) {
-    if (!isBulkMode) return;
-    const cardEl = currentView === 'grid' ? document.getElementById(`card_${id}`) : document.getElementById(`row_${id}`);
-    if(!cardEl) return;
-    
-    if (selectedBulkIds.has(id)) {
-        selectedBulkIds.delete(id);
-        cardEl.classList.remove('selected-for-bulk');
-        if(currentView === 'grid') document.getElementById(`bulk_ui_${id}`).classList.add('hidden');
-        delete bulkQtyMap[id];
-    } else {
-        selectedBulkIds.add(id);
-        cardEl.classList.add('selected-for-bulk');
-        if(currentView === 'grid') {
-            document.getElementById(`bulk_ui_${id}`).classList.remove('hidden');
-            const qtyInput = document.getElementById(`bulk_qty_${id}`);
-            if(qtyInput) qtyInput.value = 1;
+    <script>
+        let API_URL = 'http://localhost:3000';
+        if (window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && window.location.protocol !== 'file:') {
+            API_URL = window.location.protocol + '//' + window.location.hostname + ':3000';
         }
-        bulkQtyMap[id] = 1;
-    }
-    updateBulkCount();
-}
 
-function toggleSelectAll() {
-    if (!isBulkMode) return;
-    const selector = currentView === 'grid' ? '#vaultGrid .showcase-card:not([style*="opacity: 0.3"])' : '#vaultTableContent tbody tr:not([style*="opacity: 0.3"])';
-    const visibleCards = Array.from(document.querySelectorAll(selector));
-    
-    const allSelected = visibleCards.every(el => selectedBulkIds.has(el.id.replace('card_', '').replace('row_', '')));
-    
-    visibleCards.forEach(el => {
-        const id = el.id.replace('card_', '').replace('row_', '');
-        if (allSelected) {
-            selectedBulkIds.delete(id);
-            el.classList.remove('selected-for-bulk');
-            if(currentView === 'grid') document.getElementById(`bulk_ui_${id}`).classList.add('hidden');
-            delete bulkQtyMap[id];
-        } else {
-            selectedBulkIds.add(id);
-            el.classList.add('selected-for-bulk');
-            if(currentView === 'grid') {
-                document.getElementById(`bulk_ui_${id}`).classList.remove('hidden');
-                const qtyInput = document.getElementById(`bulk_qty_${id}`);
-                if(qtyInput) qtyInput.value = 1;
+        let globalData = [];
+        let isBulkMode = false;
+        let selectedBulkIds = new Set();
+        let bulkQtyMap = {};
+        let vaultDisplayLimit = 20;
+        let currentView = 'grid';
+
+        let filterState = {
+            holo: null,
+            firstEd: null,
+            sort: 'terbaru',
+            set: '',
+            cat: '',
+            lang: '',
+            cond: ''
+        };
+
+        // Custom hover-dropdown helper
+        function setFilter(type, val, el, labelId) {
+            filterState[type] = val;
+            // Update active state on sibling items
+            const menu = el.closest('.fdd-menu');
+            if (menu) {
+                menu.querySelectorAll('.fdd-item').forEach(i => i.classList.remove('active'));
+                el.classList.add('active');
             }
-            bulkQtyMap[id] = 1;
+            // Update label text
+            const label = document.getElementById(labelId);
+            if (label) {
+                const arrow = label.querySelector('.fdd-arrow');
+                label.textContent = el.textContent.replace(/^✓\s*/, '');
+                if (arrow) label.appendChild(arrow);
+                else label.insertAdjacentHTML('beforeend', '<span class="fdd-arrow">▼</span>');
+            }
+            applyFiltersAndRender();
         }
-    });
-    updateBulkCount();
-}
 
-function toggleBulkMode() {
-    isBulkMode = !isBulkMode; 
-    document.getElementById('bulkActionBar').classList.toggle('hidden', !isBulkMode);
-    const btn = document.getElementById('btnToggleBulk'); 
-    btn.innerText = isBulkMode ? 'Tutup Mode Borongan' : '📦 Mode Borongan'; 
-    btn.style.color = isBulkMode ? 'var(--danger)' : '';
-    
-    if (!isBulkMode) {
-        selectedBulkIds.clear(); 
-        bulkQtyMap = {};
-    }
-    applyFiltersAndRender();
-    updateBulkCount();
-}
-function updateBulkCount() { document.getElementById('bulkCountText').innerText = `${selectedBulkIds.size} Terpilih`; }
+        function formatRupiah(input) { let value = input.value.replace(/\D/g, ''); if (value !== '') { input.value = new Intl.NumberFormat('id-ID').format(value); } else { input.value = ''; } }
+        function parseRupiah(value) { if (!value) return 0; return parseFloat(value.toString().replace(/\./g, '')); }
+        const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
 
-function hapusItem(id) {
-    if (isBulkMode) return;
-    openModal('Hapus Permanen', 'Yakin ingin menghapus kartu ini dari database?', '', async () => {
-        const res = await fetch(`${API_URL}/api/inventory/${id}`, { method: 'DELETE' });
-        if (res.ok) { closeModal(); showToast("Terhapus."); loadInventory(); }
-        else throw new Error("Gagal hapus");
-    });
-}
+        function showToast(msg, isError = false) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.borderLeftColor = isError ? 'var(--danger)' : 'var(--green)';
+            toast.innerText = msg; container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 4000); }, 3500);
+        }
 
-function openSingleSellModal(id, namaItem, maxQty) {
-    if (isBulkMode) return;
-    let inputsHtml = '';
-    if (maxQty > 1) {
-        inputsHtml += `<label style="font-size:0.85rem; font-weight:bold; color:var(--text-main);">Jumlah Terjual (Maks: ${maxQty})</label>
+        async function safeJson(res) {
+            const text = await res.text();
+            try { return JSON.parse(text); } catch (e) { throw new Error(`Respon server error (HTTP ${res.status})`); }
+        }
+
+        function openModal(title, bodyText, inputsHtml, confirmCallback) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerHTML = bodyText;
+            document.getElementById('modalInputs').innerHTML = inputsHtml;
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            const newBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+            newBtn.onclick = async () => {
+                const originalText = newBtn.innerText; newBtn.innerText = 'Memproses...'; newBtn.disabled = true;
+                try { await confirmCallback(); } catch (e) { showToast(e.message, true); }
+                finally { newBtn.innerText = originalText; newBtn.disabled = false; }
+            };
+            document.getElementById('customModal').classList.remove('hidden');
+        }
+
+        function closeModal() { document.getElementById('customModal').classList.add('hidden'); }
+
+        function switchTab(tab) {
+            if (isBulkMode) toggleBulkMode();
+            document.getElementById('tabVault').classList.toggle('active', tab === 'vault');
+            document.getElementById('tabSold').classList.toggle('active', tab === 'sold');
+            document.getElementById('vaultSection').classList.toggle('hidden', tab !== 'vault');
+            document.getElementById('soldSection').classList.toggle('hidden', tab !== 'sold');
+
+            document.getElementById('btnViewToggle').classList.toggle('hidden', tab !== 'vault');
+            document.getElementById('btnToggleBulk').classList.toggle('hidden', tab !== 'vault');
+
+            if (tab === 'vault') vaultDisplayLimit = 20;
+            applyFiltersAndRender();
+        }
+
+        function toggleView() {
+            currentView = currentView === 'grid' ? 'table' : 'grid';
+            document.getElementById('btnViewToggle').innerText = currentView === 'grid' ? '📋 Table View' : '🔲 Grid View';
+            document.getElementById('vaultGrid').classList.toggle('hidden', currentView !== 'grid');
+            document.getElementById('vaultTable').classList.toggle('hidden', currentView !== 'table');
+            applyFiltersAndRender();
+        }
+
+        function toggleHoloFilter() {
+            filterState.holo = filterState.holo === null ? true : (filterState.holo === true ? false : null);
+            const btn = document.getElementById('btnFilterHolo');
+            btn.innerText = filterState.holo === null ? 'Holo: Any' : (filterState.holo ? 'Holo: Yes ✓' : 'Holo: No ✗');
+            btn.classList.toggle('active', filterState.holo !== null);
+            applyFiltersAndRender();
+        }
+
+        function toggle1stFilter() {
+            filterState.firstEd = filterState.firstEd === null ? true : (filterState.firstEd === true ? false : null);
+            const btn = document.getElementById('btnFilter1st');
+            btn.innerText = filterState.firstEd === null ? '1st Ed: Any' : (filterState.firstEd ? '1st Ed: Yes ✓' : '1st Ed: No ✗');
+            btn.classList.toggle('active', filterState.firstEd !== null);
+            applyFiltersAndRender();
+        }
+
+        function removeFilter(type) {
+            if (type === 'search') document.getElementById('inventorySearchInput').value = '';
+            if (type === 'set') {
+                filterState.set = '';
+                const menuItem = document.querySelector('#fddSetMenu .fdd-item[data-val=""]');
+                if (menuItem) setFilter('set', '', menuItem, 'fddSetLabel');
+            }
+            if (type === 'cat') {
+                filterState.cat = '';
+                const menuItem = document.querySelector('#fddCat .fdd-item[data-val=""]');
+                if (menuItem) setFilter('cat', '', menuItem, 'fddCatLabel');
+            }
+            if (type === 'lang') {
+                filterState.lang = '';
+                const menuItem = document.querySelector('#fddLang .fdd-item[data-val=""]');
+                if (menuItem) setFilter('lang', '', menuItem, 'fddLangLabel');
+            }
+            if (type === 'cond') {
+                filterState.cond = '';
+                const menuItem = document.querySelector('#fddCond .fdd-item[data-val=""]');
+                if (menuItem) setFilter('cond', '', menuItem, 'fddCondLabel');
+            }
+            if (type === 'holo') toggleHoloFilter();
+            if (type === 'firstEd') toggle1stFilter();
+            applyFiltersAndRender();
+        }
+
+        function showMoreVault() { vaultDisplayLimit += 20; applyFiltersAndRender(); }
+
+        async function quickAdjustQty(id, action) {
+            if (isBulkMode) return;
+            try {
+                const res = await fetch(`${API_URL}/api/inventory/${id}/qty`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action }) });
+                if (res.ok) await loadInventory(); else throw new Error("Gagal");
+            } catch (e) { showToast(e.message, true); }
+        }
+
+        function handleBulkQtyChange(id, val) { bulkQtyMap[id] = parseInt(val) || 1; }
+
+        function toggleCardBulk(id) {
+            if (!isBulkMode) return;
+            const cardEl = currentView === 'grid' ? document.getElementById(`card_${id}`) : document.getElementById(`row_${id}`);
+            if (!cardEl) return;
+
+            if (selectedBulkIds.has(id)) {
+                selectedBulkIds.delete(id);
+                cardEl.classList.remove('selected-for-bulk');
+                if (currentView === 'grid') document.getElementById(`bulk_ui_${id}`).classList.add('hidden');
+                delete bulkQtyMap[id];
+            } else {
+                selectedBulkIds.add(id);
+                cardEl.classList.add('selected-for-bulk');
+                if (currentView === 'grid') {
+                    document.getElementById(`bulk_ui_${id}`).classList.remove('hidden');
+                    const qtyInput = document.getElementById(`bulk_qty_${id}`);
+                    if (qtyInput) qtyInput.value = 1;
+                }
+                bulkQtyMap[id] = 1;
+            }
+            updateBulkCount();
+        }
+
+        function toggleSelectAll() {
+            if (!isBulkMode) return;
+            const selector = currentView === 'grid' ? '#vaultGrid .showcase-card:not([style*="opacity: 0.3"])' : '#vaultTableContent tbody tr:not([style*="opacity: 0.3"])';
+            const visibleCards = Array.from(document.querySelectorAll(selector));
+
+            const allSelected = visibleCards.every(el => selectedBulkIds.has(el.id.replace('card_', '').replace('row_', '')));
+
+            visibleCards.forEach(el => {
+                const id = el.id.replace('card_', '').replace('row_', '');
+                if (allSelected) {
+                    selectedBulkIds.delete(id);
+                    el.classList.remove('selected-for-bulk');
+                    if (currentView === 'grid') document.getElementById(`bulk_ui_${id}`).classList.add('hidden');
+                    delete bulkQtyMap[id];
+                } else {
+                    selectedBulkIds.add(id);
+                    el.classList.add('selected-for-bulk');
+                    if (currentView === 'grid') {
+                        document.getElementById(`bulk_ui_${id}`).classList.remove('hidden');
+                        const qtyInput = document.getElementById(`bulk_qty_${id}`);
+                        if (qtyInput) qtyInput.value = 1;
+                    }
+                    bulkQtyMap[id] = 1;
+                }
+            });
+            updateBulkCount();
+        }
+
+        function toggleBulkMode() {
+            isBulkMode = !isBulkMode;
+            document.getElementById('bulkActionBar').classList.toggle('hidden', !isBulkMode);
+            const btn = document.getElementById('btnToggleBulk');
+            btn.innerText = isBulkMode ? 'Tutup Mode Borongan' : '📦 Mode Borongan';
+            btn.style.color = isBulkMode ? 'var(--danger)' : '';
+
+            if (!isBulkMode) {
+                selectedBulkIds.clear();
+                bulkQtyMap = {};
+            }
+            applyFiltersAndRender();
+            updateBulkCount();
+        }
+        function updateBulkCount() { document.getElementById('bulkCountText').innerText = `${selectedBulkIds.size} Terpilih`; }
+
+        function hapusItem(id) {
+            if (isBulkMode) return;
+            openModal('Hapus Permanen', 'Yakin ingin menghapus kartu ini dari database?', '', async () => {
+                const res = await fetch(`${API_URL}/api/inventory/${id}`, { method: 'DELETE' });
+                if (res.ok) { closeModal(); showToast("Terhapus."); loadInventory(); }
+                else throw new Error("Gagal hapus");
+            });
+        }
+
+        function openSingleSellModal(id, namaItem, maxQty) {
+            if (isBulkMode) return;
+            let inputsHtml = '';
+            if (maxQty > 1) {
+                inputsHtml += `<label style="font-size:0.85rem; font-weight:bold; color:var(--text-main);">Jumlah Terjual (Maks: ${maxQty})</label>
         <input type="number" id="modalSellQtyVal" value="1" min="1" max="${maxQty}" style="margin-bottom: 10px;">`;
-    } else { inputsHtml += `<input type="hidden" id="modalSellQtyVal" value="1">`; }
-    inputsHtml += `<label style="font-size:0.85rem; font-weight:bold; color:var(--text-main);">Total Harga Jual Keseluruhan (Rp)</label><input type="text" id="modalSellPrice" placeholder="Misal: 150.000" oninput="formatRupiah(this)">`;
+            } else { inputsHtml += `<input type="hidden" id="modalSellQtyVal" value="1">`; }
+            inputsHtml += `<label style="font-size:0.85rem; font-weight:bold; color:var(--text-main);">Total Harga Jual Keseluruhan (Rp)</label><input type="text" id="modalSellPrice" placeholder="Misal: 150.000" oninput="formatRupiah(this)">`;
 
-    openModal(`Jual ${namaItem}`, `Atur kuantitas dan harga jual untuk mencatat transaksi.`, inputsHtml, async () => {
-        const sellQty = parseInt(document.getElementById('modalSellQtyVal').value); 
-        const harga = parseRupiah(document.getElementById('modalSellPrice').value);
-        if (isNaN(sellQty) || sellQty < 1 || sellQty > maxQty) { showToast(`Kuantitas 1 - ${maxQty}!`, true); throw new Error(); }
-        if (isNaN(harga) || harga === 0) { showToast('Harga kosong!', true); throw new Error(); }
+            openModal(`Jual ${namaItem}`, `Atur kuantitas dan harga jual untuk mencatat transaksi.`, inputsHtml, async () => {
+                const sellQty = parseInt(document.getElementById('modalSellQtyVal').value);
+                const harga = parseRupiah(document.getElementById('modalSellPrice').value);
+                if (isNaN(sellQty) || sellQty < 1 || sellQty > maxQty) { showToast(`Kuantitas 1 - ${maxQty}!`, true); throw new Error(); }
+                if (isNaN(harga) || harga === 0) { showToast('Harga kosong!', true); throw new Error(); }
 
-        const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sell_qty: sellQty, sold_price: harga }) });
-        if (res.ok) { closeModal(); showToast("Berhasil dijual!"); loadInventory(); switchTab('sold'); }
-        else throw new Error("Gagal");
-    });
-}
+                const res = await fetch(`${API_URL}/api/inventory/${id}/sell`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sell_qty: sellQty, sold_price: harga }) });
+                if (res.ok) { closeModal(); showToast("Berhasil dijual!"); loadInventory(); switchTab('sold'); }
+                else throw new Error("Gagal");
+            });
+        }
 
-function openBulkSellModal() {
-    if (selectedBulkIds.size === 0) return showToast('Pilih minimal 1 item!', true);
-    const inputsHtml = `<label style="font-size:0.85rem; font-weight:bold; color:var(--text-main);">Total Harga Borongan (Rp)</label><input type="text" id="modalBulkPrice" placeholder="Misal: 250.000" oninput="formatRupiah(this)">`;
+        function openBulkSellModal() {
+            if (selectedBulkIds.size === 0) return showToast('Pilih minimal 1 item!', true);
+            const inputsHtml = `<label style="font-size:0.85rem; font-weight:bold; color:var(--text-main);">Total Harga Borongan (Rp)</label><input type="text" id="modalBulkPrice" placeholder="Misal: 250.000" oninput="formatRupiah(this)">`;
 
-    openModal(`Jual Borongan (${selectedBulkIds.size} Item)`, `Masukkan total omset.`, inputsHtml, async () => {
-        const harga = parseRupiah(document.getElementById('modalBulkPrice').value);
-        if (isNaN(harga) || harga === 0) { showToast('Harga kosong!', true); throw new Error(); }
+            openModal(`Jual Borongan (${selectedBulkIds.size} Item)`, `Masukkan total omset.`, inputsHtml, async () => {
+                const harga = parseRupiah(document.getElementById('modalBulkPrice').value);
+                if (isNaN(harga) || harga === 0) { showToast('Harga kosong!', true); throw new Error(); }
 
-        const items = Array.from(selectedBulkIds).map(id => {
-            let qty = bulkQtyMap[id] || globalData.find(x => x.id === id)?.quantity || 1;
-            return { id: id, sell_qty: qty };
-        });
+                const items = Array.from(selectedBulkIds).map(id => {
+                    let qty = bulkQtyMap[id] || globalData.find(x => x.id === id)?.quantity || 1;
+                    return { id: id, sell_qty: qty };
+                });
 
-        const res = await fetch(`${API_URL}/api/inventory/bulk-sell`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items, total_price: harga }) });
-        if (res.ok) { closeModal(); showToast("Sukses!"); toggleBulkMode(); loadInventory(); switchTab('sold'); }
-        else throw new Error("Gagal");
-    });
-}
+                const res = await fetch(`${API_URL}/api/inventory/bulk-sell`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items, total_price: harga }) });
+                if (res.ok) { closeModal(); showToast("Sukses!"); toggleBulkMode(); loadInventory(); switchTab('sold'); }
+                else throw new Error("Gagal");
+            });
+        }
 
-function openBulkDeleteModal() {
-    if (selectedBulkIds.size === 0) return showToast('Pilih minimal 1 item!', true);
-    openModal(`Hapus Borongan (${selectedBulkIds.size} Item)`, `Yakin ingin hapus permanen?`, '', async () => {
-        const ids = Array.from(selectedBulkIds);
-        const res = await fetch(`${API_URL}/api/inventory/bulk-delete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) });
-        if (res.ok) { closeModal(); showToast("Sukses!"); toggleBulkMode(); loadInventory(); }
-        else throw new Error("Gagal hapus");
-    });
-}
+        function openBulkDeleteModal() {
+            if (selectedBulkIds.size === 0) return showToast('Pilih minimal 1 item!', true);
+            openModal(`Hapus Borongan (${selectedBulkIds.size} Item)`, `Yakin ingin hapus permanen?`, '', async () => {
+                const ids = Array.from(selectedBulkIds);
+                const res = await fetch(`${API_URL}/api/inventory/bulk-delete`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) });
+                if (res.ok) { closeModal(); showToast("Sukses!"); toggleBulkMode(); loadInventory(); }
+                else throw new Error("Gagal hapus");
+            });
+        }
 
-function batalJual(id) {
-    openModal('Batalkan Penjualan', 'Kembalikan kartu ini ke Vault?', '', async () => {
-        const res = await fetch(`${API_URL}/api/inventory/${id}/undo-sell`, { method: 'PUT' });
-        if (res.ok) { closeModal(); showToast("Dikembalikan."); loadInventory(); }
-        else throw new Error("Gagal");
-    });
-}
+        function batalJual(id) {
+            openModal('Batalkan Penjualan', 'Kembalikan kartu ini ke Vault?', '', async () => {
+                const res = await fetch(`${API_URL}/api/inventory/${id}/undo-sell`, { method: 'PUT' });
+                if (res.ok) { closeModal(); showToast("Dikembalikan."); loadInventory(); }
+                else throw new Error("Gagal");
+            });
+        }
 
-function mulaiEdit(id) {
-    if (isBulkMode) return;
-    const item = globalData.find(x => x.id === id); if (!item) return;
-    
-    let inputsHtml = `
+        function mulaiEdit(id) {
+            if (isBulkMode) return;
+            const item = globalData.find(x => x.id === id); if (!item) return;
+
+            let inputsHtml = `
         <input type="text" id="editName" value="${item.name}" placeholder="Nama" style="margin-bottom:8px">
         <input type="text" id="editSet" value="${item.set_name}" placeholder="Set" style="margin-bottom:8px">
         <div style="display:flex; gap:10px; margin-bottom:8px">
@@ -679,133 +1286,133 @@ function mulaiEdit(id) {
             <input type="text" id="editNum" value="${item.card_number || ''}" placeholder="Card Number">
         </div>
         <div style="display:flex; gap:10px; margin-bottom:8px">
-            <input type="text" id="editCost" value="${formatIDR(item.purchase_price).replace(/Rp|\./g,'').trim()}" oninput="formatRupiah(this)" placeholder="Cost">
-            <input type="text" id="editMarket" value="${formatIDR(item.market_price).replace(/Rp|\./g,'').trim()}" oninput="formatRupiah(this)" placeholder="Market">
+            <input type="text" id="editCost" value="${formatIDR(item.purchase_price).replace(/Rp|\./g, '').trim()}" oninput="formatRupiah(this)" placeholder="Cost">
+            <input type="text" id="editMarket" value="${formatIDR(item.market_price).replace(/Rp|\./g, '').trim()}" oninput="formatRupiah(this)" placeholder="Market">
         </div>
     `;
 
-    openModal('Edit Kartu', '', inputsHtml, async () => {
-        const data = {
-            name: document.getElementById('editName').value,
-            set_name: document.getElementById('editSet').value,
-            quantity: parseInt(document.getElementById('editQty').value),
-            card_number: document.getElementById('editNum').value,
-            purchase_price: parseRupiah(document.getElementById('editCost').value),
-            market_price: parseRupiah(document.getElementById('editMarket').value),
-            category: item.category, language: item.language, card_condition: item.card_condition, is_holo: item.is_holo, is_first_edition: item.is_first_edition
-        };
-        const res = await fetch(`${API_URL}/api/inventory/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-        if (res.ok) { closeModal(); showToast("Terupdate"); loadInventory(); } else throw new Error("Gagal");
-    });
-}
+            openModal('Edit Kartu', '', inputsHtml, async () => {
+                const data = {
+                    name: document.getElementById('editName').value,
+                    set_name: document.getElementById('editSet').value,
+                    quantity: parseInt(document.getElementById('editQty').value),
+                    card_number: document.getElementById('editNum').value,
+                    purchase_price: parseRupiah(document.getElementById('editCost').value),
+                    market_price: parseRupiah(document.getElementById('editMarket').value),
+                    category: item.category, language: item.language, card_condition: item.card_condition, is_holo: item.is_holo, is_first_edition: item.is_first_edition
+                };
+                const res = await fetch(`${API_URL}/api/inventory/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (res.ok) { closeModal(); showToast("Terupdate"); loadInventory(); } else throw new Error("Gagal");
+            });
+        }
 
-function renderActiveFilters(q, set, cat, lang, cond) {
-    const cont = document.getElementById('activeFilterChips');
-    cont.innerHTML = '';
-    const addChip = (label, type) => {
-        cont.innerHTML += `<div class="chip"><span>${label}</span> <span class="chip-close" onclick="removeFilter('${type}')">✕</span></div>`;
-    };
-    if(q) addChip(`Search: ${q}`, 'search');
-    if(set) addChip(`Set: ${set}`, 'set');
-    if(cat) addChip(`Category: ${cat}`, 'cat');
-    if(lang) addChip(`Lang: ${lang}`, 'lang');
-    if(cond) addChip(`Cond: ${cond}`, 'cond');
-    if(filterState.holo !== null) addChip(`Holo: ${filterState.holo ? 'Yes' : 'No'}`, 'holo');
-    if(filterState.firstEd !== null) addChip(`1st Ed: ${filterState.firstEd ? 'Yes' : 'No'}`, 'firstEd');
-}
+        function renderActiveFilters(q, set, cat, lang, cond) {
+            const cont = document.getElementById('activeFilterChips');
+            cont.innerHTML = '';
+            const addChip = (label, type) => {
+                cont.innerHTML += `<div class="chip"><span>${label}</span> <span class="chip-close" onclick="removeFilter('${type}')">✕</span></div>`;
+            };
+            if (q) addChip(`Search: ${q}`, 'search');
+            if (set) addChip(`Set: ${set}`, 'set');
+            if (cat) addChip(`Category: ${cat}`, 'cat');
+            if (lang) addChip(`Lang: ${lang}`, 'lang');
+            if (cond) addChip(`Cond: ${cond}`, 'cond');
+            if (filterState.holo !== null) addChip(`Holo: ${filterState.holo ? 'Yes' : 'No'}`, 'holo');
+            if (filterState.firstEd !== null) addChip(`1st Ed: ${filterState.firstEd ? 'Yes' : 'No'}`, 'firstEd');
+        }
 
-function applyFiltersAndRender() {
-    const tab = document.getElementById('tabVault').classList.contains('active') ? 'vault' : 'sold';
-    
-    if (tab === 'vault') {
-        const query = document.getElementById('inventorySearchInput').value.toLowerCase();
-        const selSet  = filterState.set;
-        const selCat  = filterState.cat;
-        const selLang = filterState.lang;
-        const selCond = filterState.cond;
-        
-        renderActiveFilters(query, selSet, selCat, selLang, selCond);
+        function applyFiltersAndRender() {
+            const tab = document.getElementById('tabVault').classList.contains('active') ? 'vault' : 'sold';
 
-        let vaultItems = globalData.filter(item => item.status === 'Vault' || !item.status);
-        let filtered = vaultItems.filter(item => {
-            const txt = (item.name + ' ' + item.set_name + ' ' + (item.card_number || '')).toLowerCase();
-            let match = txt.includes(query);
-            if (selSet && item.set_name !== selSet) match = false;
-            if (selCat && item.category !== selCat) match = false;
-            if (selLang && item.language !== selLang) match = false;
-            if (selCond && item.card_condition !== selCond) match = false;
-            if (filterState.holo !== null && item.is_holo != filterState.holo) match = false;
-            if (filterState.firstEd !== null && item.is_first_edition != filterState.firstEd) match = false;
-            return match;
-        });
+            if (tab === 'vault') {
+                const query = document.getElementById('inventorySearchInput').value.toLowerCase();
+                const selSet = filterState.set;
+                const selCat = filterState.cat;
+                const selLang = filterState.lang;
+                const selCond = filterState.cond;
 
-        // Sorting
-        const sortVal = filterState.sort;
-        filtered.sort((a, b) => {
-        if(sortVal === 'terbaru') {
-                // Use created_at from DB (newest first). Fallback to id string comparison.
-                const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
-                const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
-                return tb - ta;
-            }
-            if(sortVal === 'terlama') {
-                const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
-                const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
-                return ta - tb;
-            }
-            if(sortVal === 'nama_az') return a.name.localeCompare(b.name);
-            if(sortVal === 'nama_za') return b.name.localeCompare(a.name);
-            if(sortVal === 'market_desc') return (b.market_price||0) - (a.market_price||0);
-            if(sortVal === 'market_asc') return (a.market_price||0) - (b.market_price||0);
-            if(sortVal === 'cost_desc') return (b.purchase_price||0) - (a.purchase_price||0);
-            if(sortVal === 'cost_asc') return (a.purchase_price||0) - (b.purchase_price||0);
-            if(sortVal === 'qty_desc') return b.quantity - a.quantity;
-            if(sortVal === 'qty_asc') return a.quantity - b.quantity;
-            if(sortVal === 'set_az') return (a.set_name||'').localeCompare(b.set_name||'');
-            if(sortVal === 'set_za') return (b.set_name||'').localeCompare(a.set_name||'');
-            return 0;
-        });
+                renderActiveFilters(query, selSet, selCat, selLang, selCond);
 
-        // Stats
-        let tQty=0, tCost=0, tMarket=0;
-        filtered.forEach(i => {
-            const q = i.quantity || 0;
-            tQty += q; tCost += (i.purchase_price||0)*q; tMarket += (i.market_price||0)*q;
-        });
-        
-        document.getElementById('statTotalQty').innerText = tQty;
-        document.getElementById('statTotalUnique').innerText = filtered.length;
-        document.getElementById('statTotalCost').innerText = formatIDR(tCost);
-        document.getElementById('statTotalMarket').innerText = formatIDR(tMarket);
+                let vaultItems = globalData.filter(item => item.status === 'Vault' || !item.status);
+                let filtered = vaultItems.filter(item => {
+                    const txt = (item.name + ' ' + item.set_name + ' ' + (item.card_number || '')).toLowerCase();
+                    let match = txt.includes(query);
+                    if (selSet && item.set_name !== selSet) match = false;
+                    if (selCat && item.category !== selCat) match = false;
+                    if (selLang && item.language !== selLang) match = false;
+                    if (selCond && item.card_condition !== selCond) match = false;
+                    if (filterState.holo !== null && item.is_holo != filterState.holo) match = false;
+                    if (filterState.firstEd !== null && item.is_first_edition != filterState.firstEd) match = false;
+                    return match;
+                });
 
-        // Render
-        const itemsToRender = filtered.slice(0, vaultDisplayLimit);
-        const grid = document.getElementById('vaultGrid');
-        const tbody = document.querySelector('#vaultTableContent tbody');
-        grid.innerHTML = ''; tbody.innerHTML = '';
+                // Sorting
+                const sortVal = filterState.sort;
+                filtered.sort((a, b) => {
+                    if (sortVal === 'terbaru') {
+                        // Use created_at from DB (newest first). Fallback to id string comparison.
+                        const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+                        const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+                        return tb - ta;
+                    }
+                    if (sortVal === 'terlama') {
+                        const ta = a.created_at ? new Date(a.created_at).getTime() : 0;
+                        const tb = b.created_at ? new Date(b.created_at).getTime() : 0;
+                        return ta - tb;
+                    }
+                    if (sortVal === 'nama_az') return a.name.localeCompare(b.name);
+                    if (sortVal === 'nama_za') return b.name.localeCompare(a.name);
+                    if (sortVal === 'market_desc') return (b.market_price || 0) - (a.market_price || 0);
+                    if (sortVal === 'market_asc') return (a.market_price || 0) - (b.market_price || 0);
+                    if (sortVal === 'cost_desc') return (b.purchase_price || 0) - (a.purchase_price || 0);
+                    if (sortVal === 'cost_asc') return (a.purchase_price || 0) - (b.purchase_price || 0);
+                    if (sortVal === 'qty_desc') return b.quantity - a.quantity;
+                    if (sortVal === 'qty_asc') return a.quantity - b.quantity;
+                    if (sortVal === 'set_az') return (a.set_name || '').localeCompare(b.set_name || '');
+                    if (sortVal === 'set_za') return (b.set_name || '').localeCompare(a.set_name || '');
+                    return 0;
+                });
 
-        if(filtered.length === 0) {
-            grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; color:var(--text-muted);">Tidak ada kartu.</div>';
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Tidak ada kartu.</td></tr>';
-        } else {
-            itemsToRender.forEach((item, idx) => {
-                const isSoldOut = item.quantity === 0;
-                const isSelected = selectedBulkIds.has(item.id);
-                
-                let badges = `<span class="tag">${item.category}</span><span class="tag">${item.language}</span>`;
-                if (item.card_condition) badges += `<span class="tag">${item.card_condition}</span>`;
-                if (item.is_holo) badges += `<span class="tag" style="color:#fbbf24">Holo</span>`;
-                if (item.is_first_edition) badges += `<span class="tag" style="color:#fbbf24">1st</span>`;
-                if (item.grader) badges += `<span class="tag">${item.grader} ${item.grade||''}</span>`;
+                // Stats
+                let tQty = 0, tCost = 0, tMarket = 0;
+                filtered.forEach(i => {
+                    const q = i.quantity || 0;
+                    tQty += q; tCost += (i.purchase_price || 0) * q; tMarket += (i.market_price || 0) * q;
+                });
 
-                if (currentView === 'grid') {
-                    grid.innerHTML += `
-                    <div class="showcase-card ${isBulkMode ? 'is-bulkable' : ''} ${isSelected ? 'selected-for-bulk' : ''}" id="card_${item.id}" onclick="${isBulkMode ? `toggleCardBulk('${item.id}')` : ''}" style="${isSoldOut?'opacity:0.5':''}">
+                document.getElementById('statTotalQty').innerText = tQty;
+                document.getElementById('statTotalUnique').innerText = filtered.length;
+                document.getElementById('statTotalCost').innerText = formatIDR(tCost);
+                document.getElementById('statTotalMarket').innerText = formatIDR(tMarket);
+
+                // Render
+                const itemsToRender = filtered.slice(0, vaultDisplayLimit);
+                const grid = document.getElementById('vaultGrid');
+                const tbody = document.querySelector('#vaultTableContent tbody');
+                grid.innerHTML = ''; tbody.innerHTML = '';
+
+                if (filtered.length === 0) {
+                    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:50px; color:var(--text-muted);">Tidak ada kartu.</div>';
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Tidak ada kartu.</td></tr>';
+                } else {
+                    itemsToRender.forEach((item, idx) => {
+                        const isSoldOut = item.quantity === 0;
+                        const isSelected = selectedBulkIds.has(item.id);
+
+                        let badges = `<span class="tag">${item.category}</span><span class="tag">${item.language}</span>`;
+                        if (item.card_condition) badges += `<span class="tag">${item.card_condition}</span>`;
+                        if (item.is_holo) badges += `<span class="tag" style="color:#fbbf24">Holo</span>`;
+                        if (item.is_first_edition) badges += `<span class="tag" style="color:#fbbf24">1st</span>`;
+                        if (item.grader) badges += `<span class="tag">${item.grader} ${item.grade || ''}</span>`;
+
+                        if (currentView === 'grid') {
+                            grid.innerHTML += `
+                    <div class="showcase-card ${isBulkMode ? 'is-bulkable' : ''} ${isSelected ? 'selected-for-bulk' : ''}" id="card_${item.id}" onclick="${isBulkMode ? `toggleCardBulk('${item.id}')` : ''}" style="${isSoldOut ? 'opacity:0.5' : ''}">
                         <div id="bulk_ui_${item.id}" class="bulk-overlay-ui ${isSelected ? '' : 'hidden'}">
                             <div class="check-circle">✓</div>
-                            <input type="number" id="bulk_qty_${item.id}" value="${bulkQtyMap[item.id]||1}" min="1" max="${item.quantity}" class="bulk-qty-override" oninput="handleBulkQtyChange('${item.id}', this.value)" onclick="event.stopPropagation()">
+                            <input type="number" id="bulk_qty_${item.id}" value="${bulkQtyMap[item.id] || 1}" min="1" max="${item.quantity}" class="bulk-qty-override" oninput="handleBulkQtyChange('${item.id}', this.value)" onclick="event.stopPropagation()">
                         </div>
-                        <div class="card-name">${item.name} <span style="color:var(--text-muted); font-size:0.8rem">#${item.card_number||'-'}</span></div>
+                        <div class="card-name">${item.name} <span style="color:var(--text-muted); font-size:0.8rem">#${item.card_number || '-'}</span></div>
                         <div class="card-set">${item.set_name}</div>
                         <div class="card-price-row"><span>Cost: <b>${formatIDR(item.purchase_price)}</b></span> <span style="color:var(--green)">Mkt: <b>${formatIDR(item.market_price)}</b></span></div>
                         
@@ -817,16 +1424,16 @@ function applyFiltersAndRender() {
                         
                         <div class="card-tags">${badges}</div>
                         <div class="card-actions">
-                            <button class="btn-primary" style="background:var(--sold)" onclick="event.stopPropagation(); openSingleSellModal('${item.id}','${item.name.replace(/'/g, "\\'")}',${item.quantity})" ${isSoldOut?'disabled':''}>Jual</button>
+                            <button class="btn-primary" style="background:var(--sold)" onclick="event.stopPropagation(); openSingleSellModal('${item.id}','${item.name.replace(/'/g, "\\'")}',${item.quantity})" ${isSoldOut ? 'disabled' : ''}>Jual</button>
                             <button class="btn-primary" onclick="event.stopPropagation(); mulaiEdit('${item.id}')">Edit</button>
                             <button class="btn-danger" onclick="event.stopPropagation(); hapusItem('${item.id}')">Del</button>
                         </div>
                     </div>`;
-                } else {
-                    tbody.innerHTML += `
-                    <tr class="${isBulkMode ? 'is-bulkable' : ''} ${isSelected ? 'selected-for-bulk' : ''}" id="row_${item.id}" onclick="${isBulkMode ? `toggleCardBulk('${item.id}')` : ''}" style="${isSoldOut?'opacity:0.5':''}">
-                        <td>${idx+1}</td>
-                        <td><b>${item.name}</b><br><span style="font-size:0.8rem;color:var(--text-muted)">${item.set_name} #${item.card_number||'-'}</span></td>
+                        } else {
+                            tbody.innerHTML += `
+                    <tr class="${isBulkMode ? 'is-bulkable' : ''} ${isSelected ? 'selected-for-bulk' : ''}" id="row_${item.id}" onclick="${isBulkMode ? `toggleCardBulk('${item.id}')` : ''}" style="${isSoldOut ? 'opacity:0.5' : ''}">
+                        <td>${idx + 1}</td>
+                        <td><b>${item.name}</b><br><span style="font-size:0.8rem;color:var(--text-muted)">${item.set_name} #${item.card_number || '-'}</span></td>
                         <td><div class="card-tags" style="margin:0">${badges}</div></td>
                         <td>
                             <div class="qty-adjuster" onclick="event.stopPropagation()">
@@ -838,322 +1445,343 @@ function applyFiltersAndRender() {
                         <td>${formatIDR(item.purchase_price)}</td>
                         <td>${formatIDR(item.market_price)}</td>
                         <td>
-                            <button class="btn-primary" style="background:var(--sold); padding:4px 8px; font-size:0.8rem;" onclick="event.stopPropagation(); openSingleSellModal('${item.id}','${item.name.replace(/'/g, "\\'")}',${item.quantity})" ${isSoldOut?'disabled':''}>Jual</button>
+                            <button class="btn-primary" style="background:var(--sold); padding:4px 8px; font-size:0.8rem;" onclick="event.stopPropagation(); openSingleSellModal('${item.id}','${item.name.replace(/'/g, "\\'")}',${item.quantity})" ${isSoldOut ? 'disabled' : ''}>Jual</button>
                             <button class="btn-danger" style="padding:4px 8px; font-size:0.8rem;" onclick="event.stopPropagation(); hapusItem('${item.id}')">Del</button>
                         </td>
                     </tr>`;
+                        }
+                    });
                 }
-            });
-        }
 
-        document.getElementById('btnShowMore').classList.toggle('hidden', filtered.length <= vaultDisplayLimit);
-        
-    } else {
-        const query = document.getElementById('soldSearchInput').value.toLowerCase();
-        const start = document.getElementById('filterStartDate').value;
-        const end = document.getElementById('filterEndDate').value;
+                document.getElementById('btnShowMore').classList.toggle('hidden', filtered.length <= vaultDisplayLimit);
 
-        let soldItems = globalData.filter(item => item.status === 'Sold');
-        
-        const grouped = {};
-        let runningOmset=0, runningModal=0, totalTrx=0;
-        const cardProfits = {};
+            } else {
+                const query = document.getElementById('soldSearchInput').value.toLowerCase();
+                const start = document.getElementById('filterStartDate').value;
+                const end = document.getElementById('filterEndDate').value;
 
-        soldItems.forEach(item => {
-            const tid = item.transaction_id || item.id;
-            if (!grouped[tid]) grouped[tid] = { items: [], total_sold: 0, total_modal: 0, sold_at: item.sold_at };
-            grouped[tid].items.push(item);
-            grouped[tid].total_sold += (item.sold_price||0) * item.quantity;
-            grouped[tid].total_modal += (item.purchase_price||0) * item.quantity;
-            
-            const cardProfit = ((item.sold_price||0) - (item.purchase_price||0)) * item.quantity;
-            if(!cardProfits[item.name]) cardProfits[item.name] = 0;
-            cardProfits[item.name] += cardProfit;
-        });
+                let soldItems = globalData.filter(item => item.status === 'Sold');
 
-        let soldHtml = '';
-        for (let tid in grouped) {
-            const trx = grouped[tid];
-            const dateStr = trx.sold_at ? trx.sold_at.substring(0, 10) : '';
-            if (start && dateStr < start) continue;
-            if (end && dateStr > end) continue;
+                const grouped = {};
+                let runningOmset = 0, runningModal = 0, totalTrx = 0;
+                const cardProfits = {};
 
-            let matchesQuery = false;
-            let miniHtml = '';
-            trx.items.forEach(i => {
-                const match = (i.name + ' ' + (i.set_name||'')).toLowerCase().includes(query);
-                if (match) matchesQuery = true;
-                const iprofit = ((i.sold_price||0) - (i.purchase_price||0)) * i.quantity;
-                
-                if (match || query === '') {
-                    miniHtml += `
+                soldItems.forEach(item => {
+                    const tid = item.transaction_id || item.id;
+                    if (!grouped[tid]) grouped[tid] = { items: [], total_sold: 0, total_modal: 0, sold_at: item.sold_at };
+                    grouped[tid].items.push(item);
+                    grouped[tid].total_sold += (item.sold_price || 0) * item.quantity;
+                    grouped[tid].total_modal += (item.purchase_price || 0) * item.quantity;
+
+                    const cardProfit = ((item.sold_price || 0) - (item.purchase_price || 0)) * item.quantity;
+                    if (!cardProfits[item.name]) cardProfits[item.name] = 0;
+                    cardProfits[item.name] += cardProfit;
+                });
+
+                let soldHtml = '';
+                for (let tid in grouped) {
+                    const trx = grouped[tid];
+                    const dateStr = trx.sold_at ? trx.sold_at.substring(0, 10) : '';
+                    if (start && dateStr < start) continue;
+                    if (end && dateStr > end) continue;
+
+                    let matchesQuery = false;
+                    let miniHtml = '';
+                    trx.items.forEach(i => {
+                        const match = (i.name + ' ' + (i.set_name || '')).toLowerCase().includes(query);
+                        if (match) matchesQuery = true;
+                        const iprofit = ((i.sold_price || 0) - (i.purchase_price || 0)) * i.quantity;
+
+                        if (match || query === '') {
+                            miniHtml += `
                     <div class="trx-mini-item">
                         <div style="flex:1">
                             <b>${i.name}</b> <span style="color:var(--text-muted)">x${i.quantity}</span><br>
-                            <span style="font-size:0.8rem; color:var(--text-muted)">${i.set_name} | Modal: ${formatIDR((i.purchase_price||0)*i.quantity)} | Jual: ${formatIDR((i.sold_price||0)*i.quantity)}</span>
+                            <span style="font-size:0.8rem; color:var(--text-muted)">${i.set_name} | Modal: ${formatIDR((i.purchase_price || 0) * i.quantity)} | Jual: ${formatIDR((i.sold_price || 0) * i.quantity)}</span>
                         </div>
-                        <div style="text-align:right; margin-right:15px; font-weight:bold" class="${iprofit>=0?'profit-plus':'profit-minus'}">${iprofit>=0?'+':''}${formatIDR(iprofit)}</div>
+                        <div style="text-align:right; margin-right:15px; font-weight:bold" class="${iprofit >= 0 ? 'profit-plus' : 'profit-minus'}">${iprofit >= 0 ? '+' : ''}${formatIDR(iprofit)}</div>
                         <button class="btn-undo-sale" onclick="batalJual('${i.id}')">↩ Cancel</button>
                     </div>`;
-                }
-            });
+                        }
+                    });
 
-            if (matchesQuery || query === '') {
-                totalTrx++;
-                runningOmset += trx.total_sold;
-                runningModal += trx.total_modal;
-                const profit = trx.total_sold - trx.total_modal;
-                
-                let tgl = trx.sold_at ? new Date(trx.sold_at).toLocaleString('id-ID') : '-';
-                soldHtml += `
+                    if (matchesQuery || query === '') {
+                        totalTrx++;
+                        runningOmset += trx.total_sold;
+                        runningModal += trx.total_modal;
+                        const profit = trx.total_sold - trx.total_modal;
+
+                        let tgl = trx.sold_at ? new Date(trx.sold_at).toLocaleString('id-ID') : '-';
+                        soldHtml += `
                 <div class="trx-card">
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:10px">
                         <div>
-                            <div style="font-size:0.8rem; color:var(--text-muted)">STRUK ${tid.substring(0,8).toUpperCase()} • ${tgl}</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted)">STRUK ${tid.substring(0, 8).toUpperCase()} • ${tgl}</div>
                             <div>Gross: <b>${formatIDR(trx.total_sold)}</b></div>
                         </div>
                         <div style="text-align:right">
                             <div style="font-size:0.8rem; color:var(--text-muted)">P/L</div>
-                            <div class="${profit>=0?'profit-plus':'profit-minus'}" style="font-size:1.2rem; font-weight:bold">${profit>=0?'+':''}${formatIDR(profit)}</div>
+                            <div class="${profit >= 0 ? 'profit-plus' : 'profit-minus'}" style="font-size:1.2rem; font-weight:bold">${profit >= 0 ? '+' : ''}${formatIDR(profit)}</div>
                         </div>
                     </div>
                     ${miniHtml}
                 </div>`;
+                    }
+                }
+
+                const grid = document.getElementById('soldGrid');
+                grid.innerHTML = totalTrx > 0 ? soldHtml : '<div style="text-align:center; padding:50px; color:var(--text-muted);">Belum ada penjualan.</div>';
+
+                const netProfit = runningOmset - runningModal;
+                const margin = runningOmset > 0 ? ((netProfit / runningOmset) * 100).toFixed(1) : 0;
+
+                let bestSeller = '-'; let maxProfit = -999999999;
+                for (let name in cardProfits) { if (cardProfits[name] > maxProfit) { maxProfit = cardProfits[name]; bestSeller = name; } }
+
+                document.getElementById('statSoldTrx').innerText = totalTrx;
+                document.getElementById('statSoldOmset').innerText = formatIDR(runningOmset);
+                const elProfit = document.getElementById('statSoldProfit');
+                elProfit.innerText = `${netProfit >= 0 ? '+' : ''}${formatIDR(netProfit)}`; elProfit.className = `stat-value ${netProfit >= 0 ? 'profit-plus' : 'profit-minus'}`;
+                document.getElementById('statSoldMargin').innerText = `${margin}%`;
+                document.getElementById('statSoldBest').innerText = bestSeller;
             }
         }
-        
-        const grid = document.getElementById('soldGrid');
-        grid.innerHTML = totalTrx > 0 ? soldHtml : '<div style="text-align:center; padding:50px; color:var(--text-muted);">Belum ada penjualan.</div>';
 
-        const netProfit = runningOmset - runningModal;
-        const margin = runningOmset > 0 ? ((netProfit / runningOmset) * 100).toFixed(1) : 0;
-        
-        let bestSeller = '-'; let maxProfit = -999999999;
-        for(let name in cardProfits) { if(cardProfits[name] > maxProfit) { maxProfit = cardProfits[name]; bestSeller = name; } }
+        async function loadInventory() {
+            try {
+                const res = await fetch(`${API_URL}/api/inventory`);
+                if (!res.ok) throw new Error();
+                globalData = await res.json();
 
-        document.getElementById('statSoldTrx').innerText = totalTrx;
-        document.getElementById('statSoldOmset').innerText = formatIDR(runningOmset);
-        const elProfit = document.getElementById('statSoldProfit');
-        elProfit.innerText = `${netProfit>=0?'+':''}${formatIDR(netProfit)}`; elProfit.className = `stat-value ${netProfit>=0?'profit-plus':'profit-minus'}`;
-        document.getElementById('statSoldMargin').innerText = `${margin}%`;
-        document.getElementById('statSoldBest').innerText = bestSeller;
-    }
-}
+                // Populate set dropdown
+                const setMenu = document.getElementById('fddSetMenu');
+                const sets = [...new Set(globalData.map(i => i.set_name).filter(Boolean))].sort();
+                setMenu.innerHTML = `<div class="fdd-item ${filterState.set === '' ? 'active' : ''}" data-val="" onclick="setFilter('set','',this,'fddSetLabel')">✨ Semua Set</div>`;
+                sets.forEach(s => {
+                    setMenu.innerHTML += `<div class="fdd-item ${filterState.set === s ? 'active' : ''}" data-val="${s}" onclick="setFilter('set','${s.replace(/'/g, "\\'")}',this,'fddSetLabel')">${s}</div>`;
+                });
 
-async function loadInventory() {
-    try {
-        const res = await fetch(`${API_URL}/api/inventory`);
-        if (!res.ok) throw new Error();
-        globalData = await res.json();
-        
-        // Populate set dropdown
-        const setMenu = document.getElementById('fddSetMenu');
-        const sets = [...new Set(globalData.map(i => i.set_name).filter(Boolean))].sort();
-        setMenu.innerHTML = `<div class="fdd-item ${filterState.set===''?'active':''}" data-val="" onclick="setFilter('set','',this,'fddSetLabel')">✨ Semua Set</div>`;
-        sets.forEach(s => {
-            setMenu.innerHTML += `<div class="fdd-item ${filterState.set===s?'active':''}" data-val="${s}" onclick="setFilter('set','${s.replace(/'/g,"\\'")}',this,'fddSetLabel')">${s}</div>`;
-        });
-        
-        applyFiltersAndRender();
-    } catch (error) { showToast('Gagal ambil data dari server.', true); }
-}
+                applyFiltersAndRender();
+            } catch (error) { showToast('Gagal ambil data dari server.', true); }
+        }
 
-function parseNewCSVFormat(jsonData) {
-    return jsonData.map(item => {
-        const findVal = (targets) => {
-            const keys = Object.keys(item);
-            for(let t of targets) {
-                let k = keys.find(x => x.trim().toLowerCase() === t.toLowerCase());
-                if(k) return item[k];
-            }
-            for(let t of targets) {
-                let k = keys.find(x => x.trim().toLowerCase().includes(t.toLowerCase()));
-                if(k) return item[k];
-            }
-            return null;
-        };
+        function parseNewCSVFormat(jsonData) {
+            return jsonData.map(item => {
+                const findVal = (targets) => {
+                    const keys = Object.keys(item);
+                    for (let t of targets) {
+                        let k = keys.find(x => x.trim().toLowerCase() === t.toLowerCase());
+                        if (k) return item[k];
+                    }
+                    for (let t of targets) {
+                        let k = keys.find(x => x.trim().toLowerCase().includes(t.toLowerCase()));
+                        if (k) return item[k];
+                    }
+                    return null;
+                };
 
-        // Try to find the market/cost price column — cover many Collectr export naming variants
-        const rawCost = findVal([
-            'market price', 'market_price', 'market value', 'market_value',
-            'current value', 'current_value', 'card value', 'card_value',
-            'estimated value', 'est. value', 'est value',
-            'round', 'rounded', 'purchase_price', 'purchase price',
-            'tcg price', 'tcg market', 'total value',
-            'market'
-        ]);
-        
-        // Smart number parsing: handle numeric values AND string formats (US/ID/EU)
-        // Then round to nearest 10,000 (equivalent to Excel ROUND(x, -4))
-        let costPrice = 0;
-        const parseSmartNumber = (v) => {
-            if (v === null || v === undefined || v === '') return 0;
-            if (typeof v === 'number') return v; // XLSX already gave us a JS number
-            const s = String(v).trim().replace(/[Rp$€£\s]/gi, '');
-            const hasDot = s.includes('.');
-            const hasComma = s.includes(',');
-            let c = s;
-            if (hasDot && !hasComma) {
-                // "574600.24" → decimal | "5.746" (ID thousands) → strip dot
-                const parts = s.split('.');
-                const afterLastDot = parts[parts.length - 1];
-                if (afterLastDot.length === 3 && parts.length === 2) {
-                    c = s.replace(/\./g, ''); // thousands dot
-                }
-                // else keep dot as decimal point
-            } else if (hasComma && !hasDot) {
-                c = s.replace(/,/g, ''); // comma = thousands separator
-            } else if (hasDot && hasComma) {
-                if (s.indexOf('.') < s.indexOf(',')) {
-                    c = s.replace(/\./g, '').replace(',', '.'); // 5.746,00 EU
+                // Smart number parsing: handle numeric values AND string formats (US/ID/EU)
+                const parseSmartNumber = (v) => {
+                    if (v === null || v === undefined || v === '') return 0;
+                    if (typeof v === 'number') return v; // XLSX already gave us a JS number
+                    const s = String(v).trim().replace(/[Rp$€£\s]/gi, '');
+                    const hasDot = s.includes('.');
+                    const hasComma = s.includes(',');
+                    let c = s;
+                    if (hasDot && !hasComma) {
+                        // "574600.24" → decimal | "5.746" (ID thousands) → strip dot
+                        const parts = s.split('.');
+                        const afterLastDot = parts[parts.length - 1];
+                        if (afterLastDot.length === 3 && parts.length === 2) {
+                            c = s.replace(/\./g, ''); // thousands dot
+                        }
+                        // else keep dot as decimal point
+                    } else if (hasComma && !hasDot) {
+                        c = s.replace(/,/g, ''); // comma = thousands separator
+                    } else if (hasDot && hasComma) {
+                        if (s.indexOf('.') < s.indexOf(',')) {
+                            c = s.replace(/\./g, '').replace(',', '.'); // 5.746,00 EU
+                        } else {
+                            c = s.replace(/,/g, ''); // 5,746.00 US
+                        }
+                    }
+                    c = c.replace(/[^0-9.-]/g, '');
+                    return parseFloat(c) || 0;
+                };
+
+                // Determine Category FIRST
+                let cat = item['category'] || 'Single';
+                const pName = String(item['Portfolio Name'] || item['Portfolio'] || item['Category'] || '').toLowerCase();
+                if (pName.includes('slab set')) cat = 'Slab Set';
+                else if (pName.includes('slab')) cat = 'Slab';
+                else if (pName.includes('sealed')) cat = 'Sealed';
+                else if (pName.includes('single')) cat = 'Single';
+
+                const valRound = findVal(['round', 'rounded']);
+                const valOpenPrice = findVal(['open price', 'open_price', 'openprice']);
+                
+                let costPrice = 0;
+                let marketPrice = 0;
+
+                const hasRound = valRound !== null && valRound !== undefined && valRound !== '';
+                const hasOpenPrice = valOpenPrice !== null && valOpenPrice !== undefined && valOpenPrice !== '';
+
+                if (hasRound && hasOpenPrice) {
+                    costPrice = parseSmartNumber(valRound);
+                    marketPrice = parseSmartNumber(valOpenPrice);
                 } else {
-                    c = s.replace(/,/g, ''); // 5,746.00 US
+                    // Try to find the market/cost price column — cover many Collectr export naming variants
+                    const rawCost = findVal([
+                        'market price', 'market_price', 'market value', 'market_value',
+                        'current value', 'current_value', 'card value', 'card_value',
+                        'estimated value', 'est. value', 'est value',
+                        'purchase_price', 'purchase price',
+                        'tcg price', 'tcg market', 'total value',
+                        'market'
+                    ]);
+
+                    let baseVal = 0;
+                    if (rawCost !== null && rawCost !== undefined && rawCost !== '') {
+                        baseVal = parseSmartNumber(rawCost);
+                    } else {
+                        // Last-resort fallback: find the largest numeric value in the row
+                        let maxNum = 0;
+                        for (const key of Object.keys(item)) {
+                            const v = item[key];
+                            if (typeof v === 'number' && v > maxNum) maxNum = v;
+                        }
+                        if (maxNum > 0) baseVal = maxNum;
+                    }
+
+                    if (cat === 'Single') {
+                        costPrice = Math.round(baseVal / 10000) * 10000;
+                        marketPrice = costPrice + 30000;
+                    } else {
+                        costPrice = baseVal;
+                        marketPrice = baseVal;
+                    }
                 }
-            }
-            c = c.replace(/[^0-9.-]/g, '');
-            return parseFloat(c) || 0;
-        };
 
-        if (rawCost !== null && rawCost !== undefined && rawCost !== '') {
-            costPrice = Math.round(parseSmartNumber(rawCost) / 10000) * 10000;
-        } else {
-            // Last-resort fallback: find the largest numeric value in the row
-            // (likely the market price column even if named unexpectedly)
-            let maxNum = 0;
-            for (const key of Object.keys(item)) {
-                const v = item[key];
-                if (typeof v === 'number' && v > maxNum) maxNum = v;
-            }
-            if (maxNum > 0) costPrice = Math.round(maxNum / 10000) * 10000;
-        }
-        const marketPrice = costPrice + 30000;
+                let rawCond = String(item['Card Condition'] || '').toUpperCase();
+                let cond = 'NM';
+                if (rawCond.includes('LIGHTLY') || rawCond === 'LP') cond = 'LP';
+                else if (rawCond.includes('MODERATELY') || rawCond === 'MP') cond = 'MP';
+                else if (rawCond.includes('HEAVILY') || rawCond === 'HP') cond = 'HP';
+                else if (rawCond.includes('DAMAGED') || rawCond === 'DMG') cond = 'DMG';
 
-        let cat = item['category'] || 'Single';
-        const pName = String(item['Portfolio Name'] || item['Portfolio'] || item['Category'] || '').toLowerCase();
-        if(pName.includes('slab set')) cat = 'Slab Set';
-        else if(pName.includes('slab')) cat = 'Slab';
-        else if(pName.includes('sealed')) cat = 'Sealed';
-        else if(pName.includes('single')) cat = 'Single';
-
-        let rawCond = String(item['Card Condition'] || '').toUpperCase();
-        let cond = 'NM';
-        if(rawCond.includes('LIGHTLY') || rawCond==='LP') cond = 'LP';
-        else if(rawCond.includes('MODERATELY') || rawCond==='MP') cond = 'MP';
-        else if(rawCond.includes('HEAVILY') || rawCond==='HP') cond = 'HP';
-        else if(rawCond.includes('DAMAGED') || rawCond==='DMG') cond = 'DMG';
-
-        let grader = null, gradeVal = null;
-        const rawGrade = String(item['Grade'] || '');
-        if (cat === 'Slab' && rawGrade && rawGrade.toUpperCase() !== 'UNGRADED') {
-            let parts = rawGrade.split(' ');
-            if (parts.length >= 2) { grader = parts[0]; gradeVal = parts.slice(1).join(' '); }
-            else { grader = rawGrade; gradeVal = rawGrade; }
-        }
-
-        let lang = item['language'] || 'English';
-        const rawName = String(item['Product Name'] || 'Unknown');
-        const rawSet = String(item['Set'] || '-');
-        if(rawName.includes('(JP)') || rawSet.includes('(JP)') || rawName.includes('Japanese')) lang = 'Japanese';
-
-        const rawVar = String(item['Variant'] || '').toLowerCase();
-        const isHolo = rawVar.includes('holo') ? 1 : 0;
-        const is1st = rawVar.includes('1st') ? 1 : 0;
-
-        return {
-            name: rawName.replace(' (JP)', '').trim(),
-            set_name: rawSet,
-            category: cat,
-            language: lang,
-            card_number: String(item['Card Number'] || ''),
-            quantity: Math.max(1, parseInt(item['Quantity']) || 1),
-            purchase_price: costPrice,
-            market_price: marketPrice,
-            is_holo: isHolo,
-            is_first_edition: is1st,
-            card_condition: cond,
-            grader: grader,
-            grade: gradeVal,
-            notes: item['Notes'] || null
-        };
-    });
-}
-
-function handleExcelUpload(event, mode) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-
-    reader.onload = async function (e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-            const rawJsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-            if (rawJsonData.length === 0) return showToast('File kosong!', true);
-
-            const processedData = parseNewCSVFormat(rawJsonData);
-
-            const execUpload = async () => {
-                showToast(`Memproses ${processedData.length} baris...`, false);
-                const url = mode === 'replace' ? `${API_URL}/api/inventory/bulk-replace` : `${API_URL}/api/inventory/bulk-import`;
-                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(processedData) });
-                if (res.ok) {
-                    const r = await safeJson(res);
-                    closeModal(); showToast(r.message); loadInventory();
-                } else {
-                    const err = await safeJson(res).catch(e => ({error:'Gagal'}));
-                    closeModal(); showToast(err.error, true);
+                let grader = null, gradeVal = null;
+                const rawGrade = String(item['Grade'] || '');
+                if (cat === 'Slab' && rawGrade && rawGrade.toUpperCase() !== 'UNGRADED') {
+                    let parts = rawGrade.split(' ');
+                    if (parts.length >= 2) { grader = parts[0]; gradeVal = parts.slice(1).join(' '); }
+                    else { grader = rawGrade; gradeVal = rawGrade; }
                 }
+
+                let lang = item['language'] || 'English';
+                const rawName = String(item['Product Name'] || 'Unknown');
+                const rawSet = String(item['Set'] || '-');
+                if (rawName.includes('(JP)') || rawSet.includes('(JP)') || rawName.includes('Japanese')) lang = 'Japanese';
+
+                const rawVar = String(item['Variant'] || '').toLowerCase();
+                const isHolo = rawVar.includes('holo') ? 1 : 0;
+                const is1st = rawVar.includes('1st') ? 1 : 0;
+
+                return {
+                    name: rawName.replace(' (JP)', '').trim(),
+                    set_name: rawSet,
+                    category: cat,
+                    language: lang,
+                    card_number: String(item['Card Number'] || ''),
+                    quantity: Math.max(1, parseInt(item['Quantity']) || 1),
+                    purchase_price: costPrice,
+                    market_price: marketPrice,
+                    is_holo: isHolo,
+                    is_first_edition: is1st,
+                    card_condition: cond,
+                    grader: grader,
+                    grade: gradeVal,
+                    notes: item['Notes'] || null
+                };
+            });
+        }
+
+        function handleExcelUpload(event, mode) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+
+            reader.onload = async function (e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const rawJsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                    if (rawJsonData.length === 0) return showToast('File kosong!', true);
+
+                    const processedData = parseNewCSVFormat(rawJsonData);
+
+                    const execUpload = async () => {
+                        showToast(`Memproses ${processedData.length} baris...`, false);
+                        const url = mode === 'replace' ? `${API_URL}/api/inventory/bulk-replace` : `${API_URL}/api/inventory/bulk-import`;
+                        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(processedData) });
+                        if (res.ok) {
+                            const r = await safeJson(res);
+                            closeModal(); showToast(r.message); loadInventory();
+                        } else {
+                            const err = await safeJson(res).catch(e => ({ error: 'Gagal' }));
+                            closeModal(); showToast(err.error, true);
+                        }
+                    };
+
+                    if (mode === 'replace') {
+                        openModal('Peringatan REPLACE!', `Hapus SEMUA data Vault dan ganti dengan ${processedData.length} kartu ini? (Data Sold aman)`, '', execUpload);
+                    } else {
+                        await execUpload();
+                    }
+                } catch (err) { showToast('Error sistem membaca Excel.', true); }
+                document.getElementById('excelAppendInput').value = '';
+                document.getElementById('excelReplaceInput').value = '';
             };
+            reader.readAsArrayBuffer(file);
+        }
 
-            if (mode === 'replace') {
-                openModal('Peringatan REPLACE!', `Hapus SEMUA data Vault dan ganti dengan ${processedData.length} kartu ini? (Data Sold aman)`, '', execUpload);
-            } else {
-                await execUpload();
-            }
-        } catch (err) { showToast('Error sistem membaca Excel.', true); }
-        document.getElementById('excelAppendInput').value = '';
-        document.getElementById('excelReplaceInput').value = '';
-    };
-    reader.readAsArrayBuffer(file);
-}
+        function exportToExcel() {
+            const vaultItems = globalData.filter(i => i.status === 'Vault' || !i.status);
+            if (vaultItems.length === 0) return showToast('Kosong!', true);
 
-function exportToExcel() {
-    const vaultItems = globalData.filter(i => i.status === 'Vault' || !i.status);
-    if(vaultItems.length === 0) return showToast('Kosong!', true);
-    
-    const expData = vaultItems.map(i => ({
-        Name: i.name, Set: i.set_name, 'Card Number': i.card_number,
-        Category: i.category, Language: i.language, Condition: i.card_condition,
-        Variant: (i.is_holo?'Holo ':'') + (i.is_first_edition?'1st Ed':'').trim(),
-        Grade: i.grader ? `${i.grader} ${i.grade||''}` : '',
-        Quantity: i.quantity, 'Purchase Price': i.purchase_price, 'Market Price': i.market_price
-    }));
-    
-    const ws = XLSX.utils.json_to_sheet(expData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Vault");
-    XLSX.writeFile(wb, `Holovault_Export_${new Date().toISOString().slice(0,10)}.xlsx`);
-}
+            const expData = vaultItems.map(i => ({
+                Name: i.name, Set: i.set_name, 'Card Number': i.card_number,
+                Category: i.category, Language: i.language, Condition: i.card_condition,
+                Variant: (i.is_holo ? 'Holo ' : '') + (i.is_first_edition ? '1st Ed' : '').trim(),
+                Grade: i.grader ? `${i.grader} ${i.grade || ''}` : '',
+                Quantity: i.quantity, 'Purchase Price': i.purchase_price, 'Market Price': i.market_price
+            }));
 
-async function exportSoldToCSV() {
-    const soldItems = globalData.filter(i => i.status === 'Sold');
-    if (soldItems.length === 0) return showToast('Belum ada penjualan!', true);
-    
-    let csv = "\ufeffNama Kartu,Set,Tanggal,Qty,Modal,Harga Jual,Total Omset,Profit\n";
-    soldItems.forEach(i => {
-        const omset = (i.sold_price||0) * i.quantity;
-        const profit = omset - ((i.purchase_price||0) * i.quantity);
-        csv += `"${i.name}","${i.set_name}",${i.sold_at?i.sold_at.slice(0,10):''},${i.quantity},${i.purchase_price||0},${i.sold_price||0},${omset},${profit}\n`;
-    });
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Holovault_Sold_${new Date().toISOString().slice(0,10)}.csv`;
-    link.click();
-}
+            const ws = XLSX.utils.json_to_sheet(expData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Vault");
+            XLSX.writeFile(wb, `Holovault_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+        }
 
-window.onload = loadInventory;
-</script>
+        async function exportSoldToCSV() {
+            const soldItems = globalData.filter(i => i.status === 'Sold');
+            if (soldItems.length === 0) return showToast('Belum ada penjualan!', true);
+
+            let csv = "\ufeffNama Kartu,Set,Tanggal,Qty,Modal,Harga Jual,Total Omset,Profit\n";
+            soldItems.forEach(i => {
+                const omset = (i.sold_price || 0) * i.quantity;
+                const profit = omset - ((i.purchase_price || 0) * i.quantity);
+                csv += `"${i.name}","${i.set_name}",${i.sold_at ? i.sold_at.slice(0, 10) : ''},${i.quantity},${i.purchase_price || 0},${i.sold_price || 0},${omset},${profit}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Holovault_Sold_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+        }
+
+        window.onload = loadInventory;
+    </script>
 </body>
+
 </html>
