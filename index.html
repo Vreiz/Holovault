@@ -1063,6 +1063,16 @@
 
         function closeModal() { document.getElementById('customModal').classList.add('hidden'); }
 
+        document.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('customModal');
+            if (e.key === 'Enter' && !modal.classList.contains('hidden')) {
+                const btn = document.getElementById('modalConfirmBtn');
+                if (btn && !btn.disabled) {
+                    btn.click();
+                }
+            }
+        });
+
         function switchTab(tab) {
             if (isBulkMode) toggleBulkMode();
             document.getElementById('tabVault').classList.toggle('active', tab === 'vault');
