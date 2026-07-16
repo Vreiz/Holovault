@@ -1286,8 +1286,16 @@
             <input type="text" id="editNum" value="${item.card_number || ''}" placeholder="Card Number">
         </div>
         <div style="display:flex; gap:10px; margin-bottom:8px">
-            <input type="text" id="editCost" value="${formatIDR(item.purchase_price).replace(/Rp|\./g, '').trim()}" oninput="formatRupiah(this)" placeholder="Cost">
-            <input type="text" id="editMarket" value="${formatIDR(item.market_price).replace(/Rp|\./g, '').trim()}" oninput="formatRupiah(this)" placeholder="Market">
+            <input type="text" id="editCost" value="${formatIDR(item.purchase_price).replace(/Rp|\\./g, '').trim()}" oninput="formatRupiah(this)" placeholder="Cost">
+            <input type="text" id="editMarket" value="${formatIDR(item.market_price).replace(/Rp|\\./g, '').trim()}" oninput="formatRupiah(this)" placeholder="Market">
+        </div>
+        <div style="display:flex; gap:10px; margin-bottom:8px; align-items:center;">
+            <select id="editLang" style="flex:1">
+                <option value="English" ${item.language === 'English' ? 'selected' : ''}>English</option>
+                <option value="Japanese" ${item.language === 'Japanese' ? 'selected' : ''}>Japanese</option>
+            </select>
+            <label style="display:flex; align-items:center; gap:5px; font-size:0.9rem; color:var(--text-main)"><input type="checkbox" id="editHolo" ${item.is_holo ? 'checked' : ''}> Holo</label>
+            <label style="display:flex; align-items:center; gap:5px; font-size:0.9rem; color:var(--text-main)"><input type="checkbox" id="edit1stEd" ${item.is_first_edition ? 'checked' : ''}> 1st Ed</label>
         </div>
     `;
 
@@ -1299,7 +1307,10 @@
                     card_number: document.getElementById('editNum').value,
                     purchase_price: parseRupiah(document.getElementById('editCost').value),
                     market_price: parseRupiah(document.getElementById('editMarket').value),
-                    category: item.category, language: item.language, card_condition: item.card_condition, is_holo: item.is_holo, is_first_edition: item.is_first_edition
+                    language: document.getElementById('editLang').value,
+                    is_holo: document.getElementById('editHolo').checked ? 1 : 0,
+                    is_first_edition: document.getElementById('edit1stEd').checked ? 1 : 0,
+                    category: item.category, card_condition: item.card_condition
                 };
                 const res = await fetch(`${API_URL}/api/inventory/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 if (res.ok) { closeModal(); showToast("Terupdate"); loadInventory(); } else throw new Error("Gagal");
