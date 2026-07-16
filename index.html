@@ -1641,8 +1641,11 @@
                     ]);
 
                     let baseVal = 0;
+                    let priceExists = false;
+
                     if (rawCost !== null && rawCost !== undefined && rawCost !== '') {
                         baseVal = parseSmartNumber(rawCost);
+                        priceExists = true;
                     } else {
                         // Last-resort fallback: find the largest numeric value in the row
                         let maxNum = 0;
@@ -1650,15 +1653,25 @@
                             const v = item[key];
                             if (typeof v === 'number' && v > maxNum) maxNum = v;
                         }
-                        if (maxNum > 0) baseVal = maxNum;
+                        if (maxNum > 0) {
+                            baseVal = maxNum;
+                            priceExists = true;
+                        }
                     }
 
-                    if (cat === 'Single') {
-                        costPrice = Math.round(baseVal / 10000) * 10000;
-                        marketPrice = costPrice + 30000;
-                    } else {
+                    if (priceExists) {
+                        // Jika excel sudah ada harganya, gunakan harga tersebut (jangan di-override)
                         costPrice = baseVal;
                         marketPrice = baseVal;
+                    } else {
+                        // Kalau harga kosong, beri nilai default +30.000 untuk Single
+                        if (cat === 'Single') {
+                            costPrice = Math.round(baseVal / 10000) * 10000; // baseVal is 0
+                            marketPrice = costPrice + 30000;
+                        } else {
+                            costPrice = baseVal;
+                            marketPrice = baseVal;
+                        }
                     }
                 }
 
