@@ -1659,19 +1659,13 @@
                         }
                     }
 
-                    if (priceExists) {
-                        // Jika excel sudah ada harganya, gunakan harga tersebut (jangan di-override)
+                    // Jika ROUND dan OPEN PRICE kosong/tidak ada, lakukan pembulatan -4 (puluhan ribu terdekat)
+                    if (cat === 'Single') {
+                        costPrice = Math.round(baseVal / 10000) * 10000;
+                        marketPrice = costPrice + 30000;
+                    } else {
                         costPrice = baseVal;
                         marketPrice = baseVal;
-                    } else {
-                        // Kalau harga kosong, beri nilai default +30.000 untuk Single
-                        if (cat === 'Single') {
-                            costPrice = Math.round(baseVal / 10000) * 10000; // baseVal is 0
-                            marketPrice = costPrice + 30000;
-                        } else {
-                            costPrice = baseVal;
-                            marketPrice = baseVal;
-                        }
                     }
                 }
 
