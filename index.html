@@ -1689,7 +1689,7 @@
                 const rawSet = String(item['Set'] || '-');
                 if (rawName.includes('(JP)') || rawSet.includes('(JP)') || rawName.includes('Japanese')) lang = 'Japanese';
 
-                const rawVar = String(item['Variant'] || item['Printing'] || item['Finish'] || '').toLowerCase();
+                const rawVar = String(item['Variant'] || item['Variance'] || item['Printing'] || item['Finish'] || '').toLowerCase();
                 const isHolo = (rawVar.includes('holo') || rawName.toLowerCase().includes('holo')) ? 1 : 0;
                 const is1st = rawVar.includes('1st') ? 1 : 0;
 
