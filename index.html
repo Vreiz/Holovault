@@ -750,6 +750,137 @@
         .btn-show-more:hover {
             background: rgba(59, 130, 246, 0.1);
         }
+
+        /* ===== SOLD FILTER SECTION & PILLS ===== */
+        .sold-filter-wrapper {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .sold-filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .sold-filter-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sold-preset-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .date-preset-pill {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .date-preset-pill:hover {
+            border-color: var(--sold);
+            color: var(--text-main);
+            transform: translateY(-1px);
+        }
+
+        .date-preset-pill.active {
+            background: linear-gradient(135deg, var(--sold) 0%, #d97706 100%);
+            border-color: var(--sold);
+            color: #000;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+
+        .sold-filter-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 12px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.08);
+        }
+
+        .custom-date-picker-group {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: relative;
+        }
+
+        .custom-date-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
+        .btn-date-trigger {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 7px 12px;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-date-trigger:hover {
+            border-color: var(--sold);
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .date-separator {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        #soldSection .stats-bar {
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+        @media (max-width: 1100px) {
+            #soldSection .stats-bar {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            #soldSection .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
     </style>
 </head>
 
@@ -927,32 +1058,69 @@
 
         <!-- SOLD TAB -->
         <div id="soldSection" class="hidden">
-            <div class="filter-bar">
-                <input type="date" id="filterStartDate" class="filter-item" onchange="applyFiltersAndRender()">
-                <input type="date" id="filterEndDate" class="filter-item" onchange="applyFiltersAndRender()">
-                <input type="text" id="soldSearchInput" class="filter-search" placeholder="Cari nama kartu terjual..."
-                    oninput="applyFiltersAndRender()">
+            <!-- SOLD INTERACTIVE FILTER WRAPPER -->
+            <div class="sold-filter-wrapper">
+                <div class="sold-filter-header">
+                    <div class="sold-filter-title">
+                        <span>🗓️ Filter Tanggal Penjualan (Preset / Kalender Tanpa Ketik)</span>
+                    </div>
+                    <div id="soldFilterStatusText" style="font-size: 0.85rem; color: var(--sold); font-weight: 700;">
+                        ✨ Periode Aktif: Semua Waktu
+                    </div>
+                </div>
+
+                <div class="sold-preset-pills">
+                    <button class="date-preset-pill active" id="pill_all" onclick="setSoldDatePreset('all')">🌟 Semua Waktu</button>
+                    <button class="date-preset-pill" id="pill_today" onclick="setSoldDatePreset('today')">📅 Hari Ini</button>
+                    <button class="date-preset-pill" id="pill_yesterday" onclick="setSoldDatePreset('yesterday')">📆 Kemarin</button>
+                    <button class="date-preset-pill" id="pill_7days" onclick="setSoldDatePreset('7days')">⚡ 7 Hari Terakhir</button>
+                    <button class="date-preset-pill" id="pill_30days" onclick="setSoldDatePreset('30days')">📊 30 Hari Terakhir</button>
+                    <button class="date-preset-pill" id="pill_thismonth" onclick="setSoldDatePreset('thismonth')">📌 Bulan Ini</button>
+                    <button class="date-preset-pill" id="pill_lastmonth" onclick="setSoldDatePreset('lastmonth')">⏮️ Bulan Lalu</button>
+                    <button class="date-preset-pill" id="pill_thisyear" onclick="setSoldDatePreset('thisyear')">🏆 Tahun Ini</button>
+                </div>
+
+                <div class="sold-filter-actions">
+                    <div class="custom-date-picker-group">
+                        <span class="custom-date-label">👉 Pilihan Custom (Klik Kalender):</span>
+                        <input type="date" id="filterStartDate" style="position:absolute; width:0; height:0; opacity:0; pointer-events:none;" onchange="onCustomDateChange()">
+                        <input type="date" id="filterEndDate" style="position:absolute; width:0; height:0; opacity:0; pointer-events:none;" onchange="onCustomDateChange()">
+
+                        <button class="btn-date-trigger" id="btnStartDate" onclick="openDatePicker('filterStartDate')" title="Klik untuk pilih tanggal awal di kalender">
+                            <span>🗓️</span> <span id="labelStartDate">Dari: Semua</span>
+                        </button>
+                        <span class="date-separator">s/d</span>
+                        <button class="btn-date-trigger" id="btnEndDate" onclick="openDatePicker('filterEndDate')" title="Klik untuk pilih tanggal akhir di kalender">
+                            <span>🏁</span> <span id="labelEndDate">Sampai: Sekarang</span>
+                        </button>
+                        <button class="btn-ghost" style="padding: 6px 12px; font-size: 0.82rem;" onclick="setSoldDatePreset('all')">🔄 Reset</button>
+                    </div>
+
+                    <div style="flex:1; min-width: 220px; max-width: 380px;">
+                        <input type="text" id="soldSearchInput" class="filter-search" style="width: 100%;" placeholder="🔍 Cari nama kartu terjual..." oninput="applyFiltersAndRender()">
+                    </div>
+                </div>
             </div>
 
-            <div class="stats-bar">
-                <div class="stat-card">
-                    <div class="stat-title">Total Transaksi</div>
+            <div class="stats-bar" style="border-left: 4px solid var(--sold); padding-left: 2px;">
+                <div class="stat-card" style="border-left-color: var(--sold);">
+                    <div class="stat-title">Struk Transaksi (Range Terpilih)</div>
                     <div class="stat-value" id="statSoldTrx">0</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-title">Total Omset</div>
-                    <div class="stat-value" id="statSoldOmset">Rp0</div>
+                <div class="stat-card" style="border-left-color: #10b981;">
+                    <div class="stat-title">Total Omset (Range Terpilih)</div>
+                    <div class="stat-value" style="color: #10b981;" id="statSoldOmset">Rp0</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-title">Net Profit</div>
+                <div class="stat-card" style="border-left-color: #3b82f6;">
+                    <div class="stat-title">Net Profit (Range Terpilih)</div>
                     <div class="stat-value" id="statSoldProfit">Rp0</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" style="border-left-color: #a855f7;">
                     <div class="stat-title">Margin %</div>
                     <div class="stat-value" id="statSoldMargin">0%</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-title">Best Seller</div>
+                <div class="stat-card" style="border-left-color: #ec4899;">
+                    <div class="stat-title">Best Seller (Range Terpilih)</div>
                     <div class="stat-value" style="font-size: 1rem; margin-top: 5px;" id="statSoldBest">-</div>
                 </div>
             </div>
@@ -1084,6 +1252,7 @@
             document.getElementById('btnToggleBulk').classList.toggle('hidden', tab !== 'vault');
 
             if (tab === 'vault') vaultDisplayLimit = 20;
+            if (tab === 'sold' && typeof updateSoldDateUI === 'function') updateSoldDateUI();
             applyFiltersAndRender();
         }
 
@@ -1342,6 +1511,141 @@
             if (filterState.firstEd !== null) addChip(`1st Ed: ${filterState.firstEd ? 'Yes' : 'No'}`, 'firstEd');
         }
 
+        let currentSoldPreset = 'all';
+
+        function getLocalDateStr(dateInput) {
+            if (!dateInput) return '';
+            const d = new Date(dateInput);
+            if (isNaN(d.getTime())) return String(dateInput).substring(0, 10);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function openDatePicker(inputId) {
+            const el = document.getElementById(inputId);
+            if (!el) return;
+            try {
+                if (typeof el.showPicker === 'function') {
+                    el.showPicker();
+                } else {
+                    el.click();
+                    el.focus();
+                }
+            } catch (e) {
+                el.click();
+                el.focus();
+            }
+        }
+
+        function setSoldDatePreset(preset) {
+            currentSoldPreset = preset;
+            const startInput = document.getElementById('filterStartDate');
+            const endInput = document.getElementById('filterEndDate');
+            if (!startInput || !endInput) return;
+
+            const now = new Date();
+            const todayStr = getLocalDateStr(now);
+
+            let start = '';
+            let end = '';
+
+            if (preset === 'today') {
+                start = todayStr;
+                end = todayStr;
+            } else if (preset === 'yesterday') {
+                const yest = new Date(now);
+                yest.setDate(now.getDate() - 1);
+                const yestStr = getLocalDateStr(yest);
+                start = yestStr;
+                end = yestStr;
+            } else if (preset === '7days') {
+                const d7 = new Date(now);
+                d7.setDate(now.getDate() - 6);
+                start = getLocalDateStr(d7);
+                end = todayStr;
+            } else if (preset === '30days') {
+                const d30 = new Date(now);
+                d30.setDate(now.getDate() - 29);
+                start = getLocalDateStr(d30);
+                end = todayStr;
+            } else if (preset === 'thismonth') {
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                start = getLocalDateStr(firstDay);
+                end = todayStr;
+            } else if (preset === 'lastmonth') {
+                const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const lastDayLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+                start = getLocalDateStr(firstDayLastMonth);
+                end = getLocalDateStr(lastDayLastMonth);
+            } else if (preset === 'thisyear') {
+                const firstDayYear = new Date(now.getFullYear(), 0, 1);
+                start = getLocalDateStr(firstDayYear);
+                end = todayStr;
+            } else if (preset === 'all') {
+                start = '';
+                end = '';
+            }
+
+            startInput.value = start;
+            endInput.value = end;
+
+            updateSoldDateUI();
+            applyFiltersAndRender();
+        }
+
+        function onCustomDateChange() {
+            currentSoldPreset = 'custom';
+            updateSoldDateUI();
+            applyFiltersAndRender();
+        }
+
+        function formatIndoDateShort(dateStr) {
+            if (!dateStr) return '-';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
+            const mIdx = parseInt(parts[1], 10) - 1;
+            return `${parseInt(parts[2], 10)} ${months[mIdx] || parts[1]} ${parts[0]}`;
+        }
+
+        function updateSoldDateUI() {
+            const presets = ['all', 'today', 'yesterday', '7days', '30days', 'thismonth', 'lastmonth', 'thisyear'];
+            presets.forEach(p => {
+                const btn = document.getElementById(`pill_${p}`);
+                if (btn) btn.classList.toggle('active', currentSoldPreset === p);
+            });
+
+            const startVal = document.getElementById('filterStartDate')?.value || '';
+            const endVal = document.getElementById('filterEndDate')?.value || '';
+
+            const labelStart = document.getElementById('labelStartDate');
+            const labelEnd = document.getElementById('labelEndDate');
+
+            if (labelStart) labelStart.innerText = startVal ? `Dari: ${formatIndoDateShort(startVal)}` : 'Dari: Semua';
+            if (labelEnd) labelEnd.innerText = endVal ? `Sampai: ${formatIndoDateShort(endVal)}` : 'Sampai: Sekarang';
+
+            const statusText = document.getElementById('soldFilterStatusText');
+            if (statusText) {
+                let text = '✨ Periode Aktif: Semua Waktu';
+                if (currentSoldPreset === 'today') text = `✨ Periode Aktif: Hari Ini (${formatIndoDateShort(startVal)})`;
+                else if (currentSoldPreset === 'yesterday') text = `✨ Periode Aktif: Kemarin (${formatIndoDateShort(startVal)})`;
+                else if (currentSoldPreset === '7days') text = `✨ Periode Aktif: 7 Hari Terakhir (${formatIndoDateShort(startVal)} s/d ${formatIndoDateShort(endVal)})`;
+                else if (currentSoldPreset === '30days') text = `✨ Periode Aktif: 30 Hari Terakhir (${formatIndoDateShort(startVal)} s/d ${formatIndoDateShort(endVal)})`;
+                else if (currentSoldPreset === 'thismonth') text = `✨ Periode Aktif: Bulan Ini (${formatIndoDateShort(startVal)} s/d ${formatIndoDateShort(endVal)})`;
+                else if (currentSoldPreset === 'lastmonth') text = `✨ Periode Aktif: Bulan Lalu (${formatIndoDateShort(startVal)} s/d ${formatIndoDateShort(endVal)})`;
+                else if (currentSoldPreset === 'thisyear') text = `✨ Periode Aktif: Tahun Ini (${formatIndoDateShort(startVal)} s/d ${formatIndoDateShort(endVal)})`;
+                else if (currentSoldPreset === 'custom') {
+                    if (startVal && endVal) text = `✨ Periode Aktif: ${formatIndoDateShort(startVal)} s/d ${formatIndoDateShort(endVal)}`;
+                    else if (startVal) text = `✨ Periode Aktif: Sejak ${formatIndoDateShort(startVal)}`;
+                    else if (endVal) text = `✨ Periode Aktif: Sampai ${formatIndoDateShort(endVal)}`;
+                    else text = '✨ Periode Aktif: Semua Waktu';
+                }
+                statusText.innerText = text;
+            }
+        }
+
         function applyFiltersAndRender() {
             const tab = document.getElementById('tabVault').classList.contains('active') ? 'vault' : 'sold';
 
@@ -1484,25 +1788,21 @@
                 let soldItems = globalData.filter(item => item.status === 'Sold');
 
                 const grouped = {};
-                let runningOmset = 0, runningModal = 0, totalTrx = 0;
-                const cardProfits = {};
-
                 soldItems.forEach(item => {
                     const tid = item.transaction_id || item.id;
                     if (!grouped[tid]) grouped[tid] = { items: [], total_sold: 0, total_modal: 0, sold_at: item.sold_at };
                     grouped[tid].items.push(item);
                     grouped[tid].total_sold += (item.sold_price || 0) * item.quantity;
                     grouped[tid].total_modal += (item.purchase_price || 0) * item.quantity;
-
-                    const cardProfit = ((item.sold_price || 0) - (item.purchase_price || 0)) * item.quantity;
-                    if (!cardProfits[item.name]) cardProfits[item.name] = 0;
-                    cardProfits[item.name] += cardProfit;
                 });
+
+                let runningOmset = 0, runningModal = 0, totalTrx = 0;
+                const cardProfits = {};
 
                 let soldHtml = '';
                 for (let tid in grouped) {
                     const trx = grouped[tid];
-                    const dateStr = trx.sold_at ? trx.sold_at.substring(0, 10) : '';
+                    const dateStr = getLocalDateStr(trx.sold_at);
                     if (start && dateStr < start) continue;
                     if (end && dateStr > end) continue;
 
@@ -1532,6 +1832,14 @@
                         runningModal += trx.total_modal;
                         const profit = trx.total_sold - trx.total_modal;
 
+                        trx.items.forEach(item => {
+                            if (query === '' || (item.name + ' ' + (item.set_name || '')).toLowerCase().includes(query)) {
+                                const cProf = ((item.sold_price || 0) - (item.purchase_price || 0)) * item.quantity;
+                                if (!cardProfits[item.name]) cardProfits[item.name] = 0;
+                                cardProfits[item.name] += cProf;
+                            }
+                        });
+
                         let tgl = trx.sold_at ? new Date(trx.sold_at).toLocaleString('id-ID') : '-';
                         soldHtml += `
                 <div class="trx-card">
@@ -1551,7 +1859,7 @@
                 }
 
                 const grid = document.getElementById('soldGrid');
-                grid.innerHTML = totalTrx > 0 ? soldHtml : '<div style="text-align:center; padding:50px; color:var(--text-muted);">Belum ada penjualan.</div>';
+                grid.innerHTML = totalTrx > 0 ? soldHtml : '<div style="text-align:center; padding:50px; color:var(--text-muted); font-size: 1rem;">Belum ada penjualan yang cocok dengan filter tanggal/pencarian ini.</div>';
 
                 const netProfit = runningOmset - runningModal;
                 const margin = runningOmset > 0 ? ((netProfit / runningOmset) * 100).toFixed(1) : 0;
@@ -1791,20 +2099,29 @@
         }
 
         async function exportSoldToCSV() {
-            const soldItems = globalData.filter(i => i.status === 'Sold');
-            if (soldItems.length === 0) return showToast('Belum ada penjualan!', true);
+            const start = document.getElementById('filterStartDate')?.value || '';
+            const end = document.getElementById('filterEndDate')?.value || '';
+            const soldItems = globalData.filter(i => {
+                if (i.status !== 'Sold') return false;
+                const dateStr = getLocalDateStr(i.sold_at);
+                if (start && dateStr < start) return false;
+                if (end && dateStr > end) return false;
+                return true;
+            });
+            if (soldItems.length === 0) return showToast('Belum ada penjualan di periode filter ini!', true);
 
             let csv = "\ufeffNama Kartu,Set,Tanggal,Qty,Modal,Harga Jual,Total Omset,Profit\n";
             soldItems.forEach(i => {
                 const omset = (i.sold_price || 0) * i.quantity;
                 const profit = omset - ((i.purchase_price || 0) * i.quantity);
-                csv += `"${i.name}","${i.set_name}",${i.sold_at ? i.sold_at.slice(0, 10) : ''},${i.quantity},${i.purchase_price || 0},${i.sold_price || 0},${omset},${profit}\n`;
+                csv += `"${i.name}","${i.set_name}",${i.sold_at ? getLocalDateStr(i.sold_at) : ''},${i.quantity},${i.purchase_price || 0},${i.sold_price || 0},${omset},${profit}\n`;
             });
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `Holovault_Sold_${new Date().toISOString().slice(0, 10)}.csv`;
+            const rangeName = (start || end) ? `_${start || 'all'}_sd_${end || 'all'}` : '';
+            link.download = `Holovault_Sold${rangeName}_${new Date().toISOString().slice(0, 10)}.csv`;
             link.click();
         }
 
