@@ -1,8 +1,28 @@
-﻿const express = require('express');
+process.env.TZ = 'Asia/Jakarta';
+
+const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
 const path = require('path');
 const crypto = require('crypto');
+
+function getJakartaNowSQL() {
+    const d = new Date();
+    const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Jakarta',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    }).formatToParts(d);
+    
+    const p = {};
+    parts.forEach(part => p[part.type] = part.value);
+    return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}:${p.second}`;
+}
 
 const app = express();
 app.use(cors());
@@ -16,6 +36,8 @@ const pool = mysql.createPool({
     user: 'bHEitaKtTPBTcrk.root',
     password: 'qPOxc0nuVez63w32',
     database: 'test', 
+    timezone: '+07:00',
+    dateStrings: true,
     ssl: {
         minVersion: 'TLSv1.2',
         rejectUnauthorized: true
@@ -25,6 +47,12 @@ const pool = mysql.createPool({
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 0
+});
+
+pool.on('connection', (connection) => {
+    connection.query("SET time_zone = '+07:00'", (err) => {
+        if (err) console.error('🔥 [TiDB Notice] Gagal set time_zone ke +07:00:', err && err.message);
+    });
 });
 
 pool.on('error', (err) => {
@@ -41,6 +69,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 async function ensureSchemaLengths() {
     try {
+        await pool.query("SET time_zone = '+07:00'").catch(() => {});
         await pool.query(`ALTER TABLE inventory MODIFY COLUMN grade VARCHAR(255) NULL`);
         await pool.query(`ALTER TABLE inventory MODIFY COLUMN grader VARCHAR(255) NULL`);
         await pool.query(`ALTER TABLE inventory MODIFY COLUMN card_number VARCHAR(255) NULL`);
@@ -49,7 +78,7 @@ async function ensureSchemaLengths() {
         await pool.query(`ALTER TABLE inventory MODIFY COLUMN set_code VARCHAR(255) NULL`);
         await pool.query(`ALTER TABLE inventory MODIFY COLUMN category VARCHAR(255) NULL`);
         await pool.query(`ALTER TABLE inventory MODIFY COLUMN language VARCHAR(255) NULL`);
-        await pool.query(`ALTER TABLE inventory MODIFY COLUMN name VARCHAR(255) NOT NULL`);
+        await pool.query(`ALTER TABLE inventory MODIFY COLUMN name VARCHAR(255) NULL`);
         await pool.query(`ALTER TABLE inventory MODIFY COLUMN set_name VARCHAR(255) NULL`);
         // Add created_at column if it doesn't exist yet
         await pool.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP`);
@@ -90,8 +119,8 @@ app.post('/api/inventory', async (req, res) => {
         
         const id = crypto.randomUUID();
         await pool.query(
-            `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault')`,
-            [id, name, category, set_name || '-', set_code || null, card_number || null, language || 'English', quantity || 1, purchase_price || 0, market_price || 0, notes || null, card_condition || null, req.body.is_holo?1:0, req.body.is_first_edition?1:0, grader || null, grade || null, cert_number || null]
+            `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault', ?)`,
+            [id, name, category, set_name || '-', set_code || null, card_number || null, language || 'English', quantity || 1, purchase_price || 0, market_price || 0, notes || null, card_condition || null, req.body.is_holo?1:0, req.body.is_first_edition?1:0, grader || null, grade || null, cert_number || null, getJakartaNowSQL()]
         );
         res.status(201).json({ message: 'Saved' });
     } catch (error) { res.status(500).json({ error: 'Gagal simpan' }); }
@@ -124,8 +153,9 @@ async function processSale(id, sell_qty, price_per_unit, trx_id) {
     await pool.query('UPDATE inventory SET quantity = quantity - ? WHERE id = ?', [sq, id]);
     
     const newId = crypto.randomUUID();
+    const nowWib = getJakartaNowSQL();
     await pool.query(
-        `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status, sold_price, transaction_id, sold_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Sold', ?, ?, NOW())`,
+        `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status, sold_price, transaction_id, sold_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Sold', ?, ?, ?, ?)`,
         [
             newId, 
             item.name || 'Unknown', 
@@ -145,7 +175,9 @@ async function processSale(id, sell_qty, price_per_unit, trx_id) {
             item.grade || null, 
             item.cert_number || null, 
             price_per_unit || 0, 
-            trx_id || null
+            trx_id || null,
+            nowWib,
+            item.created_at || nowWib
         ]
     );
 }
@@ -262,8 +294,8 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
                 updatedCount++;
             } else {
                 await conn.query(
-                    `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault')`,
-                    [crypto.randomUUID(), name, cat, setName, setCode, cardNum, lang, safeQty, safePP, safeMP, i.notes || null, cond, isHolo, is1st, grader, grade, certNum]
+                    `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault', ?)`,
+                    [crypto.randomUUID(), name, cat, setName, setCode, cardNum, lang, safeQty, safePP, safeMP, i.notes || null, cond, isHolo, is1st, grader, grade, certNum, getJakartaNowSQL()]
                 );
                 insertedCount++;
             }
@@ -303,7 +335,7 @@ app.post('/api/inventory/bulk-replace', async (req, res) => {
             const sStr = (v, max = 250) => (v !== null && v !== undefined && v !== '') ? String(v).slice(0, max) : null;
 
             await conn.query(
-                `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault')`,
+                `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault', ?)`,
                 [
                     crypto.randomUUID(), 
                     sStr(i.name, 250) || 'Unnamed', 
@@ -319,7 +351,8 @@ app.post('/api/inventory/bulk-replace', async (req, res) => {
                     i.is_first_edition || 0, 
                     sStr(i.grader, 100), 
                     sStr(i.grade, 100), 
-                    sStr(i.cert_number, 100)
+                    sStr(i.cert_number, 100),
+                    getJakartaNowSQL()
                 ]
             );
             insertedCount++;

@@ -1513,14 +1513,29 @@
 
         let currentSoldPreset = 'all';
 
+        function formatJakartaDateTime(dateInput) {
+            if (!dateInput) return '-';
+            let str = String(dateInput);
+            if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(str)) {
+                str = str.replace(' ', 'T') + '+07:00';
+            } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(str)) {
+                str = str + '+07:00';
+            }
+            const d = new Date(str);
+            if (isNaN(d.getTime())) return String(dateInput);
+            return d.toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' WIB';
+        }
+
         function getLocalDateStr(dateInput) {
             if (!dateInput) return '';
+            let str = String(dateInput);
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+                return str.substring(0, 10);
+            }
             const d = new Date(dateInput);
-            if (isNaN(d.getTime())) return String(dateInput).substring(0, 10);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
+            if (isNaN(d.getTime())) return str.substring(0, 10);
+            const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' });
+            return formatter.format(d);
         }
 
         function openDatePicker(inputId) {
@@ -1840,7 +1855,7 @@
                             }
                         });
 
-                        let tgl = trx.sold_at ? new Date(trx.sold_at).toLocaleString('id-ID') : '-';
+                        let tgl = formatJakartaDateTime(trx.sold_at);
                         soldHtml += `
                 <div class="trx-card">
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:10px">
