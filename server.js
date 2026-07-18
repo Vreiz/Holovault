@@ -288,8 +288,8 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
 
             if (existing.length > 0) {
                 await conn.query(
-                    `UPDATE inventory SET quantity = quantity + ?, purchase_price = ?, market_price = ?, card_number = COALESCE(card_number, ?), set_code = COALESCE(set_code, ?) WHERE id = ?`,
-                    [safeQty, safePP, safeMP, cardNum, setCode, existing[0].id]
+                    `UPDATE inventory SET quantity = quantity + ?, card_number = COALESCE(card_number, ?), set_code = COALESCE(set_code, ?) WHERE id = ?`,
+                    [safeQty, cardNum, setCode, existing[0].id]
                 );
                 updatedCount++;
             } else {

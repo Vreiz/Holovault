@@ -1910,6 +1910,40 @@
         }
 
         function parseNewCSVFormat(jsonData) {
+            // Check if it's our own DB Export
+            if (jsonData.length > 0 && 'Name' in jsonData[0] && 'Purchase Price' in jsonData[0]) {
+                return jsonData.map(item => {
+                    const rawVar = String(item['Variant'] || '').toLowerCase();
+                    const isHolo = (rawVar.includes('holo')) ? 1 : 0;
+                    const is1st = (rawVar.includes('1st')) ? 1 : 0;
+                    
+                    let grader = null, gradeVal = null;
+                    const rawGrade = String(item['Grade'] || '');
+                    if (rawGrade) {
+                        let parts = rawGrade.split(' ');
+                        if (parts.length >= 2) { grader = parts[0]; gradeVal = parts.slice(1).join(' '); }
+                        else { grader = rawGrade; gradeVal = rawGrade; }
+                    }
+
+                    return {
+                        name: item['Name'] || 'Unnamed Card',
+                        set_name: item['Set'] || '-',
+                        category: item['Category'] || 'Single',
+                        language: item['Language'] || 'English',
+                        card_number: String(item['Card Number'] || ''),
+                        quantity: Math.max(1, parseInt(item['Quantity']) || 1),
+                        purchase_price: parseFloat(item['Purchase Price']) || 0,
+                        market_price: parseFloat(item['Market Price']) || 0,
+                        is_holo: isHolo,
+                        is_first_edition: is1st,
+                        card_condition: item['Condition'] || 'NM',
+                        grader: grader,
+                        grade: gradeVal,
+                        notes: item['Notes'] || null
+                    };
+                });
+            }
+
             return jsonData.map(item => {
                 const findVal = (targets) => {
                     const keys = Object.keys(item);
