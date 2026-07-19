@@ -665,6 +665,25 @@
             border-color: var(--danger);
         }
 
+        .btn-edit-date {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-edit-date:hover {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--sold);
+        }
+
         /* Toast & Modal */
         #toastContainer {
             position: fixed;
@@ -1453,6 +1472,60 @@
             });
         }
 
+        function editSoldDate(itemId, transactionId, currentSoldAt) {
+            // Convert current sold_at to datetime-local format (YYYY-MM-DDTHH:MM)
+            let defaultVal = '';
+            if (currentSoldAt) {
+                let str = String(currentSoldAt);
+                // Handle "YYYY-MM-DD HH:MM:SS" format
+                if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(str)) {
+                    defaultVal = str.replace(' ', 'T').substring(0, 16);
+                } else if (/^\d{4}-\d{2}-\d{2}T/.test(str)) {
+                    defaultVal = str.substring(0, 16);
+                } else {
+                    const d = new Date(str);
+                    if (!isNaN(d.getTime())) {
+                        const jktParts = new Intl.DateTimeFormat('en-CA', {
+                            timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit',
+                            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+                        }).formatToParts(d);
+                        const p = {};
+                        jktParts.forEach(part => p[part.type] = part.value);
+                        defaultVal = `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+                    }
+                }
+            }
+
+            const inputsHtml = `
+                <label style="font-size:0.85rem; font-weight:bold; color:var(--text-main);">Tanggal & Waktu Penjualan (WIB)</label>
+                <input type="datetime-local" id="modalSoldDateVal" value="${defaultVal}" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--border); background:var(--bg-panel); color:var(--text-main); font-size:0.95rem;">
+                <p style="font-size:0.78rem; color:var(--text-muted); margin-top:8px;">⚠️ Mengubah tanggal akan berlaku untuk semua item dalam struk transaksi ini.</p>
+            `;
+
+            openModal('✏️ Ubah Tanggal Penjualan', 'Pilih tanggal dan waktu baru untuk transaksi ini.', inputsHtml, async () => {
+                const newDate = document.getElementById('modalSoldDateVal').value;
+                if (!newDate) { showToast('Tanggal tidak boleh kosong!', true); throw new Error(); }
+
+                // Convert datetime-local (YYYY-MM-DDTHH:MM) to SQL format (YYYY-MM-DD HH:MM:SS)
+                const sqlDate = newDate.replace('T', ' ') + ':00';
+
+                const res = await fetch(`${API_URL}/api/inventory/${itemId}/sold-date`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sold_at: sqlDate, transaction_id: transactionId })
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    showToast("✅ Tanggal penjualan diperbarui!");
+                    loadInventory();
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || 'Gagal update tanggal');
+                }
+            });
+        }
+
         function mulaiEdit(id) {
             if (isBulkMode) return;
             const item = globalData.find(x => x.id === id); if (!item) return;
@@ -1856,11 +1929,13 @@
                         });
 
                         let tgl = formatJakartaDateTime(trx.sold_at);
+                        const firstItemId = trx.items[0].id;
+                        const rawSoldAt = trx.sold_at || '';
                         soldHtml += `
                 <div class="trx-card">
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:10px">
                         <div>
-                            <div style="font-size:0.8rem; color:var(--text-muted)">STRUK ${tid.substring(0, 8).toUpperCase()} • ${tgl}</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted)">STRUK ${tid.substring(0, 8).toUpperCase()} • <button class="btn-edit-date" onclick="editSoldDate('${firstItemId}', '${tid}', '${rawSoldAt}')" title="Klik untuk ubah tanggal penjualan">📅 ${tgl} ✏️</button></div>
                             <div>Gross: <b>${formatIDR(trx.total_sold)}</b></div>
                         </div>
                         <div style="text-align:right">
