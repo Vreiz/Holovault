@@ -370,6 +370,25 @@ app.post('/api/inventory/bulk-replace', async (req, res) => {
     }
 });
 
+app.put('/api/inventory/:id/sold-date', async (req, res) => {
+    try {
+        const { sold_at, transaction_id } = req.body;
+        if (!sold_at) return res.status(400).json({ error: 'Tanggal tidak boleh kosong' });
+
+        if (transaction_id) {
+            // Update all items in the same transaction group
+            await pool.query('UPDATE inventory SET sold_at = ? WHERE transaction_id = ?', [sold_at, transaction_id]);
+        } else {
+            // Update single item
+            await pool.query('UPDATE inventory SET sold_at = ? WHERE id = ?', [sold_at, req.params.id]);
+        }
+        res.status(200).json({ message: 'Tanggal penjualan diperbarui' });
+    } catch (error) {
+        console.error("ERROR UPDATE SOLD DATE:", error);
+        res.status(500).json({ error: error.message || 'Gagal update tanggal' });
+    }
+});
+
 app.put('/api/inventory/:id/qty', async (req, res) => {
     try {
         const { action } = req.body; 

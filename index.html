@@ -867,6 +867,25 @@
             border-color: var(--danger);
         }
 
+        .btn-edit-date {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-edit-date:hover {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--sold);
+        }
+
         /* Toast & Modal */
         #toastContainer {
             position: fixed;
@@ -1129,195 +1148,216 @@
 
         <div class="container">
 
-        <div class="stats-bar">
-            <div class="stat-card">
-                <div class="stat-title">Total Items (Qty)</div>
-                <div class="stat-value" id="statTotalQty">0</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-title">Total Entries</div>
-                <div class="stat-value" id="statTotalUnique">0</div>
-            </div>
-            <div class="stat-card" style="border-left-color: #f59e0b;">
-                <div class="stat-title">Total Cost</div>
-                <div class="stat-value" id="statTotalCost">Rp0</div>
-            </div>
-            <div class="stat-card" style="border-left-color: var(--green);">
-                <div class="stat-title">Market Value</div>
-                <div class="stat-value" id="statTotalMarket">Rp0</div>
-            </div>
-        </div>
-
-        <!-- VAULT TAB -->
-        <div id="vaultSection">
-            <div class="filter-bar">
-                <input type="text" id="inventorySearchInput" class="filter-search"
-                    placeholder="🔍 Search card name, set, number..." oninput="applyFiltersAndRender()">
-
-                <!-- Sort -->
-                <div class="fdd-wrap" id="fddSort">
-                    <div class="fdd-trigger" id="fddSortLabel">🕒 Newest <span class="fdd-arrow">▼</span></div>
-                    <div class="fdd-menu">
-                        <div class="fdd-item active" data-val="terbaru"
-                            onclick="setFilter('sort','terbaru',this,'fddSortLabel')">🕒 Newest Added</div>
-                        <div class="fdd-item" data-val="terlama"
-                            onclick="setFilter('sort','terlama',this,'fddSortLabel')">📅 Oldest</div>
-                        <div class="fdd-item" data-val="nama_az"
-                            onclick="setFilter('sort','nama_az',this,'fddSortLabel')">🔤 Name A → Z</div>
-                        <div class="fdd-item" data-val="nama_za"
-                            onclick="setFilter('sort','nama_za',this,'fddSortLabel')">🔤 Name Z → A</div>
-                        <div class="fdd-item" data-val="market_desc"
-                            onclick="setFilter('sort','market_desc',this,'fddSortLabel')">📈 Highest Market</div>
-                        <div class="fdd-item" data-val="market_asc"
-                            onclick="setFilter('sort','market_asc',this,'fddSortLabel')">📉 Lowest Market</div>
-                        <div class="fdd-item" data-val="cost_desc"
-                            onclick="setFilter('sort','cost_desc',this,'fddSortLabel')">💸 Highest Cost</div>
-                        <div class="fdd-item" data-val="cost_asc"
-                            onclick="setFilter('sort','cost_asc',this,'fddSortLabel')">💸 Lowest Cost</div>
-                        <div class="fdd-item" data-val="qty_desc"
-                            onclick="setFilter('sort','qty_desc',this,'fddSortLabel')">📦 Highest Qty</div>
-                        <div class="fdd-item" data-val="qty_asc"
-                            onclick="setFilter('sort','qty_asc',this,'fddSortLabel')">📦 Lowest Qty</div>
-                        <div class="fdd-item" data-val="set_az"
-                            onclick="setFilter('sort','set_az',this,'fddSortLabel')">🗂️ Set A → Z</div>
-                        <div class="fdd-item" data-val="set_za"
-                            onclick="setFilter('sort','set_za',this,'fddSortLabel')">🗂️ Set Z → A</div>
-                    </div>
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-title">Total Items (Qty)</div>
+                    <div class="stat-value" id="statTotalQty">0</div>
                 </div>
-
-                <!-- Filter Set -->
-                <div class="fdd-wrap" id="fddSet">
-                    <div class="fdd-trigger" id="fddSetLabel">✨ All Sets <span class="fdd-arrow">▼</span></div>
-                    <div class="fdd-menu" id="fddSetMenu" style="max-height:260px; overflow-y:auto;">
-                        <div class="fdd-item active" data-val="" onclick="setFilter('set','',this,'fddSetLabel')">✨
-                            All Sets</div>
-                    </div>
+                <div class="stat-card">
+                    <div class="stat-title">Total Entries</div>
+                    <div class="stat-value" id="statTotalUnique">0</div>
                 </div>
-
-                <!-- Filter Kategori -->
-                <div class="fdd-wrap" id="fddCat">
-                    <div class="fdd-trigger" id="fddCatLabel">📂 Category <span class="fdd-arrow">▼</span></div>
-                    <div class="fdd-menu" id="fddCatMenu" style="max-height:260px; overflow-y:auto;">
-                        <div class="fdd-item active" data-val="" onclick="setFilter('cat','',this,'fddCatLabel')">📂
-                            All Categories</div>
-                    </div>
+                <div class="stat-card" style="border-left-color: #f59e0b;">
+                    <div class="stat-title">Total Cost</div>
+                    <div class="stat-value" id="statTotalCost">Rp0</div>
                 </div>
-
-                <!-- Filter Bahasa -->
-                <div class="fdd-wrap" id="fddLang">
-                    <div class="fdd-trigger" id="fddLangLabel">🌐 Language <span class="fdd-arrow">▼</span></div>
-                    <div class="fdd-menu" id="fddLangMenu" style="max-height:260px; overflow-y:auto;">
-                        <div class="fdd-item active" data-val="" onclick="setFilter('lang','',this,'fddLangLabel')">🌐
-                            All Languages</div>
-                    </div>
-                </div>
-
-                <!-- Filter Kondisi -->
-                <div class="fdd-wrap" id="fddCond">
-                    <div class="fdd-trigger" id="fddCondLabel">💎 Condition <span class="fdd-arrow">▼</span></div>
-                    <div class="fdd-menu" id="fddCondMenu" style="max-height:260px; overflow-y:auto;">
-                        <div class="fdd-item active" data-val="" onclick="setFilter('cond','',this,'fddCondLabel')">💎
-                            All Conditions</div>
-                    </div>
-                </div>
-
-                <button class="filter-pill" id="btnFilterHolo" onclick="toggleHoloFilter()">Holo: Any</button>
-                <button class="filter-pill" id="btnFilter1st" onclick="toggle1stFilter()">1st Ed: Any</button>
-            </div>
-
-            <div id="activeFilterChips"></div>
-
-            <div id="vaultGrid" class="vault-grid"></div>
-            <div id="vaultTable" class="table-view-container hidden">
-                <table id="vaultTableContent">
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Name & Set</th>
-                            <th>Tags</th>
-                            <th>Qty</th>
-                            <th>Cost</th>
-                            <th>Market</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button id="btnShowMore" class="btn-show-more hidden" onclick="showMoreVault()">Show More</button>
-                <button id="btnShowAll" class="btn-show-more hidden" onclick="showAllVault()" style="background: rgba(139, 92, 246, 0.15); color: var(--primary); border-color: var(--primary);">Show All</button>
-            </div>
-        </div>
-
-        <!-- SOLD TAB -->
-        <div id="soldSection" class="hidden">
-            <!-- SOLD INTERACTIVE FILTER WRAPPER -->
-            <div class="sold-filter-wrapper">
-                <div class="sold-filter-header">
-                    <div class="sold-filter-title">
-                        <span>🗓️ Sales Date Filter</span>
-                    </div>
-                    <div id="soldFilterStatusText" style="font-size: 0.85rem; color: var(--sold); font-weight: 700;">
-                        Active Period: All Time
-                    </div>
-                </div>
-
-                <div class="sold-preset-pills">
-                    <button class="date-preset-pill active" id="pill_all" onclick="setSoldDatePreset('all')">All Time</button>
-                    <button class="date-preset-pill" id="pill_today" onclick="setSoldDatePreset('today')">Today</button>
-                    <button class="date-preset-pill" id="pill_yesterday" onclick="setSoldDatePreset('yesterday')">Yesterday</button>
-                    <button class="date-preset-pill" id="pill_7days" onclick="setSoldDatePreset('7days')">Last 7 Days</button>
-                    <button class="date-preset-pill" id="pill_30days" onclick="setSoldDatePreset('30days')">Last 30 Days</button>
-                    <button class="date-preset-pill" id="pill_thismonth" onclick="setSoldDatePreset('thismonth')">This Month</button>
-                    <button class="date-preset-pill" id="pill_lastmonth" onclick="setSoldDatePreset('lastmonth')">Last Month</button>
-                    <button class="date-preset-pill" id="pill_thisyear" onclick="setSoldDatePreset('thisyear')">This Year</button>
-                </div>
-
-                <div class="sold-filter-actions">
-                    <div class="custom-date-picker-group">
-                        <input type="date" id="filterStartDate" style="position:absolute; width:0; height:0; opacity:0; pointer-events:none;" onchange="onCustomDateChange()">
-                        <input type="date" id="filterEndDate" style="position:absolute; width:0; height:0; opacity:0; pointer-events:none;" onchange="onCustomDateChange()">
-
-                        <button class="btn-date-trigger" id="btnStartDate" onclick="openDatePicker('filterStartDate')" title="Click to select start date">
-                            <span>🗓️</span> <span id="labelStartDate">From: All</span>
-                        </button>
-                        <span class="date-separator">to</span>
-                        <button class="btn-date-trigger" id="btnEndDate" onclick="openDatePicker('filterEndDate')" title="Click to select end date">
-                            <span>🏁</span> <span id="labelEndDate">To: Now</span>
-                        </button>
-                        <button class="btn-ghost" style="padding: 6px 12px; font-size: 0.82rem;" onclick="setSoldDatePreset('all')">Reset</button>
-                    </div>
-
-                    <div style="flex:1; min-width: 220px; max-width: 380px;">
-                        <input type="text" id="soldSearchInput" class="filter-search" style="width: 100%;" placeholder="🔍 Search sold cards..." oninput="applyFiltersAndRender()">
-                    </div>
+                <div class="stat-card" style="border-left-color: var(--green);">
+                    <div class="stat-title">Market Value</div>
+                    <div class="stat-value" id="statTotalMarket">Rp0</div>
                 </div>
             </div>
 
-            <div class="stats-bar" style="border-left: 4px solid var(--sold); padding-left: 2px;">
-                <div class="stat-card" style="border-left-color: var(--sold);">
-                    <div class="stat-title">Transactions</div>
-                    <div class="stat-value" id="statSoldTrx">0</div>
+            <!-- VAULT TAB -->
+            <div id="vaultSection">
+                <div class="filter-bar">
+                    <input type="text" id="inventorySearchInput" class="filter-search"
+                        placeholder="🔍 Search card name, set, number..." oninput="applyFiltersAndRender()">
+
+                    <!-- Sort -->
+                    <div class="fdd-wrap" id="fddSort">
+                        <div class="fdd-trigger" id="fddSortLabel">🕒 Newest <span class="fdd-arrow">▼</span></div>
+                        <div class="fdd-menu">
+                            <div class="fdd-item active" data-val="terbaru"
+                                onclick="setFilter('sort','terbaru',this,'fddSortLabel')">🕒 Newest Added</div>
+                            <div class="fdd-item" data-val="terlama"
+                                onclick="setFilter('sort','terlama',this,'fddSortLabel')">📅 Oldest</div>
+                            <div class="fdd-item" data-val="nama_az"
+                                onclick="setFilter('sort','nama_az',this,'fddSortLabel')">🔤 Name A → Z</div>
+                            <div class="fdd-item" data-val="nama_za"
+                                onclick="setFilter('sort','nama_za',this,'fddSortLabel')">🔤 Name Z → A</div>
+                            <div class="fdd-item" data-val="market_desc"
+                                onclick="setFilter('sort','market_desc',this,'fddSortLabel')">📈 Highest Market</div>
+                            <div class="fdd-item" data-val="market_asc"
+                                onclick="setFilter('sort','market_asc',this,'fddSortLabel')">📉 Lowest Market</div>
+                            <div class="fdd-item" data-val="cost_desc"
+                                onclick="setFilter('sort','cost_desc',this,'fddSortLabel')">💸 Highest Cost</div>
+                            <div class="fdd-item" data-val="cost_asc"
+                                onclick="setFilter('sort','cost_asc',this,'fddSortLabel')">💸 Lowest Cost</div>
+                            <div class="fdd-item" data-val="qty_desc"
+                                onclick="setFilter('sort','qty_desc',this,'fddSortLabel')">📦 Highest Qty</div>
+                            <div class="fdd-item" data-val="qty_asc"
+                                onclick="setFilter('sort','qty_asc',this,'fddSortLabel')">📦 Lowest Qty</div>
+                            <div class="fdd-item" data-val="set_az"
+                                onclick="setFilter('sort','set_az',this,'fddSortLabel')">🗂️ Set A → Z</div>
+                            <div class="fdd-item" data-val="set_za"
+                                onclick="setFilter('sort','set_za',this,'fddSortLabel')">🗂️ Set Z → A</div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Set -->
+                    <div class="fdd-wrap" id="fddSet">
+                        <div class="fdd-trigger" id="fddSetLabel">✨ All Sets <span class="fdd-arrow">▼</span></div>
+                        <div class="fdd-menu" id="fddSetMenu" style="max-height:260px; overflow-y:auto;">
+                            <div class="fdd-item active" data-val="" onclick="setFilter('set','',this,'fddSetLabel')">✨
+                                All Sets</div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Kategori -->
+                    <div class="fdd-wrap" id="fddCat">
+                        <div class="fdd-trigger" id="fddCatLabel">📂 Category <span class="fdd-arrow">▼</span></div>
+                        <div class="fdd-menu" id="fddCatMenu" style="max-height:260px; overflow-y:auto;">
+                            <div class="fdd-item active" data-val="" onclick="setFilter('cat','',this,'fddCatLabel')">📂
+                                All Categories</div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Bahasa -->
+                    <div class="fdd-wrap" id="fddLang">
+                        <div class="fdd-trigger" id="fddLangLabel">🌐 Language <span class="fdd-arrow">▼</span></div>
+                        <div class="fdd-menu" id="fddLangMenu" style="max-height:260px; overflow-y:auto;">
+                            <div class="fdd-item active" data-val="" onclick="setFilter('lang','',this,'fddLangLabel')">
+                                🌐
+                                All Languages</div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Kondisi -->
+                    <div class="fdd-wrap" id="fddCond">
+                        <div class="fdd-trigger" id="fddCondLabel">💎 Condition <span class="fdd-arrow">▼</span></div>
+                        <div class="fdd-menu" id="fddCondMenu" style="max-height:260px; overflow-y:auto;">
+                            <div class="fdd-item active" data-val="" onclick="setFilter('cond','',this,'fddCondLabel')">
+                                💎
+                                All Conditions</div>
+                        </div>
+                    </div>
+
+                    <button class="filter-pill" id="btnFilterHolo" onclick="toggleHoloFilter()">Holo: Any</button>
+                    <button class="filter-pill" id="btnFilter1st" onclick="toggle1stFilter()">1st Ed: Any</button>
                 </div>
-                <div class="stat-card" style="border-left-color: #10b981;">
-                    <div class="stat-title">Gross Revenue</div>
-                    <div class="stat-value" style="color: #10b981;" id="statSoldOmset">Rp0</div>
+
+                <div id="activeFilterChips"></div>
+
+                <div id="vaultGrid" class="vault-grid"></div>
+                <div id="vaultTable" class="table-view-container hidden">
+                    <table id="vaultTableContent">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Name & Set</th>
+                                <th>Tags</th>
+                                <th>Qty</th>
+                                <th>Cost</th>
+                                <th>Market</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
-                <div class="stat-card" style="border-left-color: #3b82f6;">
-                    <div class="stat-title">Net Profit</div>
-                    <div class="stat-value" id="statSoldProfit">Rp0</div>
-                </div>
-                <div class="stat-card" style="border-left-color: #ec4899;">
-                    <div class="stat-title">Top Seller</div>
-                    <div class="stat-value" style="font-size: 1rem; margin-top: 5px;" id="statSoldBest">-</div>
+
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button id="btnShowMore" class="btn-show-more hidden" onclick="showMoreVault()">Show More</button>
+                    <button id="btnShowAll" class="btn-show-more hidden" onclick="showAllVault()"
+                        style="background: rgba(139, 92, 246, 0.15); color: var(--primary); border-color: var(--primary);">Show
+                        All</button>
                 </div>
             </div>
 
-            <div id="soldGrid"></div>
-        </div>
-    </div><!-- /.container -->
+            <!-- SOLD TAB -->
+            <div id="soldSection" class="hidden">
+                <!-- SOLD INTERACTIVE FILTER WRAPPER -->
+                <div class="sold-filter-wrapper">
+                    <div class="sold-filter-header">
+                        <div class="sold-filter-title">
+                            <span>🗓️ Sales Date Filter</span>
+                        </div>
+                        <div id="soldFilterStatusText"
+                            style="font-size: 0.85rem; color: var(--sold); font-weight: 700;">
+                            Active Period: All Time
+                        </div>
+                    </div>
+
+                    <div class="sold-preset-pills">
+                        <button class="date-preset-pill active" id="pill_all" onclick="setSoldDatePreset('all')">All
+                            Time</button>
+                        <button class="date-preset-pill" id="pill_today"
+                            onclick="setSoldDatePreset('today')">Today</button>
+                        <button class="date-preset-pill" id="pill_yesterday"
+                            onclick="setSoldDatePreset('yesterday')">Yesterday</button>
+                        <button class="date-preset-pill" id="pill_7days" onclick="setSoldDatePreset('7days')">Last 7
+                            Days</button>
+                        <button class="date-preset-pill" id="pill_30days" onclick="setSoldDatePreset('30days')">Last 30
+                            Days</button>
+                        <button class="date-preset-pill" id="pill_thismonth"
+                            onclick="setSoldDatePreset('thismonth')">This Month</button>
+                        <button class="date-preset-pill" id="pill_lastmonth"
+                            onclick="setSoldDatePreset('lastmonth')">Last Month</button>
+                        <button class="date-preset-pill" id="pill_thisyear" onclick="setSoldDatePreset('thisyear')">This
+                            Year</button>
+                    </div>
+
+                    <div class="sold-filter-actions">
+                        <div class="custom-date-picker-group">
+                            <input type="date" id="filterStartDate"
+                                style="position:absolute; width:0; height:0; opacity:0; pointer-events:none;"
+                                onchange="onCustomDateChange()">
+                            <input type="date" id="filterEndDate"
+                                style="position:absolute; width:0; height:0; opacity:0; pointer-events:none;"
+                                onchange="onCustomDateChange()">
+
+                            <button class="btn-date-trigger" id="btnStartDate"
+                                onclick="openDatePicker('filterStartDate')" title="Click to select start date">
+                                <span>🗓️</span> <span id="labelStartDate">From: All</span>
+                            </button>
+                            <span class="date-separator">to</span>
+                            <button class="btn-date-trigger" id="btnEndDate" onclick="openDatePicker('filterEndDate')"
+                                title="Click to select end date">
+                                <span>🏁</span> <span id="labelEndDate">To: Now</span>
+                            </button>
+                            <button class="btn-ghost" style="padding: 6px 12px; font-size: 0.82rem;"
+                                onclick="setSoldDatePreset('all')">Reset</button>
+                        </div>
+
+                        <div style="flex:1; min-width: 220px; max-width: 380px;">
+                            <input type="text" id="soldSearchInput" class="filter-search" style="width: 100%;"
+                                placeholder="🔍 Search sold cards..." oninput="applyFiltersAndRender()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-bar" style="border-left: 4px solid var(--sold); padding-left: 2px;">
+                    <div class="stat-card" style="border-left-color: var(--sold);">
+                        <div class="stat-title">Transactions</div>
+                        <div class="stat-value" id="statSoldTrx">0</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color: #10b981;">
+                        <div class="stat-title">Gross Revenue</div>
+                        <div class="stat-value" style="color: #10b981;" id="statSoldOmset">Rp0</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color: #3b82f6;">
+                        <div class="stat-title">Net Profit</div>
+                        <div class="stat-value" id="statSoldProfit">Rp0</div>
+                    </div>
+                    <div class="stat-card" style="border-left-color: #ec4899;">
+                        <div class="stat-title">Top Seller</div>
+                        <div class="stat-value" style="font-size: 1rem; margin-top: 5px;" id="statSoldBest">-</div>
+                    </div>
+                </div>
+
+                <div id="soldGrid"></div>
+            </div>
+        </div><!-- /.container -->
     </div><!-- /.main-content -->
 
     <div id="bulkActionBar" class="floating-action-bar hidden">
@@ -1651,6 +1691,60 @@
                 const res = await fetch(`${API_URL}/api/inventory/${id}/undo-sell`, { method: 'PUT' });
                 if (res.ok) { closeModal(); showToast("Returned to Vault."); loadInventory(); }
                 else throw new Error("Failed");
+            });
+        }
+
+        function editSoldDate(itemId, transactionId, currentSoldAt) {
+            // Convert current sold_at to datetime-local format (YYYY-MM-DDTHH:MM)
+            let defaultVal = '';
+            if (currentSoldAt) {
+                let str = String(currentSoldAt);
+                // Handle "YYYY-MM-DD HH:MM:SS" format
+                if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(str)) {
+                    defaultVal = str.replace(' ', 'T').substring(0, 16);
+                } else if (/^\d{4}-\d{2}-\d{2}T/.test(str)) {
+                    defaultVal = str.substring(0, 16);
+                } else {
+                    const d = new Date(str);
+                    if (!isNaN(d.getTime())) {
+                        const jktParts = new Intl.DateTimeFormat('en-CA', {
+                            timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit',
+                            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+                        }).formatToParts(d);
+                        const p = {};
+                        jktParts.forEach(part => p[part.type] = part.value);
+                        defaultVal = `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+                    }
+                }
+            }
+
+            const inputsHtml = `
+                <label style="font-size:0.85rem; font-weight:bold; color:var(--text-main);">Tanggal & Waktu Penjualan (WIB)</label>
+                <input type="datetime-local" id="modalSoldDateVal" value="${defaultVal}" style="width:100%; padding:10px; border-radius:6px; border:1px solid var(--border); background:var(--bg-panel); color:var(--text-main); font-size:0.95rem;">
+                <p style="font-size:0.78rem; color:var(--text-muted); margin-top:8px;">⚠️ Mengubah tanggal akan berlaku untuk semua item dalam struk transaksi ini.</p>
+            `;
+
+            openModal('✏️ Ubah Tanggal Penjualan', 'Pilih tanggal dan waktu baru untuk transaksi ini.', inputsHtml, async () => {
+                const newDate = document.getElementById('modalSoldDateVal').value;
+                if (!newDate) { showToast('Tanggal tidak boleh kosong!', true); throw new Error(); }
+
+                // Convert datetime-local (YYYY-MM-DDTHH:MM) to SQL format (YYYY-MM-DD HH:MM:SS)
+                const sqlDate = newDate.replace('T', ' ') + ':00';
+
+                const res = await fetch(`${API_URL}/api/inventory/${itemId}/sold-date`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sold_at: sqlDate, transaction_id: transactionId })
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    showToast("✅ Tanggal penjualan diperbarui!");
+                    loadInventory();
+                } else {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || 'Gagal update tanggal');
+                }
             });
         }
 
@@ -2068,6 +2162,8 @@
                         });
 
                         let tgl = formatJakartaDateTime(trx.sold_at);
+                        const firstItemId = trx.items[0].id;
+                        const rawSoldAt = trx.sold_at || '';
                         soldHtml += `
                 <div class="trx-card">
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:10px">
@@ -2161,7 +2257,7 @@
                     const rawVar = String(item['Variant'] || '').toLowerCase();
                     const isHolo = (rawVar.includes('holo')) ? 1 : 0;
                     const is1st = (rawVar.includes('1st')) ? 1 : 0;
-                    
+
                     let grader = null, gradeVal = null;
                     const rawGrade = String(item['Grade'] || '');
                     if (rawGrade) {
@@ -2242,7 +2338,7 @@
 
                 const valRound = findVal(['round', 'rounded']);
                 const valOpenPrice = findVal(['open price', 'open_price', 'openprice']);
-                
+
                 let costPrice = 0;
                 let marketPrice = 0;
 
