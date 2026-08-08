@@ -1102,6 +1102,244 @@
                 grid-template-columns: repeat(1, 1fr);
             }
         }
+
+        /* ===== DUPLICATE REVIEW MODAL ===== */
+        .dup-modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1100;
+            backdrop-filter: blur(5px);
+            animation: dupFadeIn 0.25s ease;
+        }
+        @keyframes dupFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .dup-modal-box {
+            background: var(--bg-card);
+            width: 95%;
+            max-width: 950px;
+            max-height: 85vh;
+            border-radius: 16px;
+            border: 1px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 130, 246, 0.1);
+            animation: dupSlideUp 0.3s ease;
+        }
+        @keyframes dupSlideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .dup-modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .dup-modal-header h2 {
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .dup-badge {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--sold);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+        .dup-summary {
+            padding: 12px 25px;
+            background: rgba(59, 130, 246, 0.06);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+        .dup-summary-item {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        .dup-summary-item b {
+            color: var(--text-main);
+        }
+        .dup-bulk-actions {
+            padding: 12px 25px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .dup-btn {
+            padding: 7px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.82rem;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .dup-btn-old {
+            background: rgba(148, 163, 184, 0.12);
+            color: var(--text-muted);
+        }
+        .dup-btn-old:hover {
+            background: rgba(148, 163, 184, 0.25);
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+        .dup-btn-new {
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--primary);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        .dup-btn-new:hover {
+            background: rgba(59, 130, 246, 0.25);
+            border-color: var(--primary);
+        }
+        .dup-table-wrap {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+        .dup-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .dup-table th {
+            position: sticky;
+            top: 0;
+            background: var(--bg-panel);
+            z-index: 5;
+            padding: 10px 14px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .dup-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+            font-size: 0.88rem;
+            vertical-align: middle;
+        }
+        .dup-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .dup-card-name {
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.3;
+        }
+        .dup-card-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .dup-price-cell {
+            text-align: right;
+            white-space: nowrap;
+        }
+        .dup-price-old {
+            color: var(--text-muted);
+        }
+        .dup-price-new {
+            color: var(--primary);
+        }
+        .dup-price-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 2px;
+            opacity: 0.7;
+        }
+        .dup-price-value {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+        .dup-toggle-wrap {
+            display: flex;
+            gap: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .dup-toggle-opt {
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        .dup-toggle-opt:first-child {
+            border-right: 1px solid var(--border);
+        }
+        .dup-toggle-opt.active-old {
+            background: rgba(148, 163, 184, 0.2);
+            color: var(--text-main);
+        }
+        .dup-toggle-opt.active-new {
+            background: rgba(59, 130, 246, 0.25);
+            color: var(--primary);
+        }
+        .dup-modal-footer {
+            padding: 16px 25px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            gap: 10px;
+        }
+        .dup-modal-footer .dup-footer-info {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+        .dup-footer-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .dup-price-diff-up {
+            color: var(--green);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .dup-price-diff-down {
+            color: var(--danger);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        @media (max-width: 700px) {
+            .dup-modal-box {
+                max-height: 92vh;
+                width: 100%;
+                border-radius: 12px 12px 0 0;
+            }
+            .dup-table th, .dup-table td {
+                padding: 8px 8px;
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 
@@ -1377,6 +1615,46 @@
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button class="btn-ghost" onclick="closeModal()">Cancel</button>
                 <button class="btn-primary" id="modalConfirmBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duplicate Review Modal -->
+    <div id="dupReviewModal" class="dup-modal-overlay hidden">
+        <div class="dup-modal-box">
+            <div class="dup-modal-header">
+                <h2>⚠️ Duplikat Ditemukan <span class="dup-badge" id="dupCountBadge">0</span></h2>
+                <button class="btn-ghost" onclick="closeDupModal()" style="padding:6px 12px;">✕</button>
+            </div>
+            <div class="dup-summary" id="dupSummaryBar">
+                <div class="dup-summary-item">📦 Item Baru: <b id="dupNewCount">0</b></div>
+                <div class="dup-summary-item">🔄 Duplikat: <b id="dupDupCount">0</b></div>
+                <div class="dup-summary-item">📊 Total: <b id="dupTotalCount">0</b></div>
+            </div>
+            <div class="dup-bulk-actions">
+                <button class="dup-btn dup-btn-old" onclick="dupSetAllChoice('old')">📌 Pakai Semua Harga Lama (DB)</button>
+                <button class="dup-btn dup-btn-new" onclick="dupSetAllChoice('new')">🔄 Pakai Semua Harga Baru (Import)</button>
+            </div>
+            <div class="dup-table-wrap">
+                <table class="dup-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Kartu</th>
+                            <th>Harga Lama (DB)</th>
+                            <th>Harga Baru (Import)</th>
+                            <th>Pilihan</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dupTableBody"></tbody>
+                </table>
+            </div>
+            <div class="dup-modal-footer">
+                <div class="dup-footer-info" id="dupFooterInfo">Qty duplikat otomatis dijumlahkan.</div>
+                <div class="dup-footer-actions">
+                    <button class="btn-ghost" onclick="closeDupModal()">Batal</button>
+                    <button class="btn-primary" id="dupConfirmBtn" onclick="confirmDupImport()">✅ Konfirmasi Import</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2431,6 +2709,136 @@
             });
         }
 
+        // ===== DUPLICATE REVIEW STATE =====
+        let dupPendingData = null;  // { processedData, newItems, duplicates, dupChoices }
+
+        function openDupModal(processedData, newItems, duplicates) {
+            const dupChoices = {};
+            duplicates.forEach((d, i) => { dupChoices[d.index] = 'old'; });
+
+            dupPendingData = { processedData, newItems, duplicates, dupChoices };
+
+            document.getElementById('dupCountBadge').innerText = duplicates.length;
+            document.getElementById('dupNewCount').innerText = newItems.length;
+            document.getElementById('dupDupCount').innerText = duplicates.length;
+            document.getElementById('dupTotalCount').innerText = processedData.length;
+
+            renderDupTable();
+            document.getElementById('dupReviewModal').classList.remove('hidden');
+        }
+
+        function closeDupModal() {
+            document.getElementById('dupReviewModal').classList.add('hidden');
+            dupPendingData = null;
+        }
+
+        function renderDupTable() {
+            if (!dupPendingData) return;
+            const { duplicates, dupChoices } = dupPendingData;
+            const tbody = document.getElementById('dupTableBody');
+
+            let html = '';
+            duplicates.forEach((d, idx) => {
+                const imp = d.importItem;
+                const ex = d.existingItem;
+                const choice = dupChoices[d.index] || 'old';
+
+                const ppDiff = imp.purchase_price - (ex.purchase_price || 0);
+                const mpDiff = imp.market_price - (ex.market_price || 0);
+
+                const ppDiffHtml = ppDiff !== 0 ? `<div class="${ppDiff > 0 ? 'dup-price-diff-up' : 'dup-price-diff-down'}">${ppDiff > 0 ? '▲' : '▼'} ${formatIDR(Math.abs(ppDiff))}</div>` : '';
+                const mpDiffHtml = mpDiff !== 0 ? `<div class="${mpDiff > 0 ? 'dup-price-diff-up' : 'dup-price-diff-down'}">${mpDiff > 0 ? '▲' : '▼'} ${formatIDR(Math.abs(mpDiff))}</div>` : '';
+
+                html += `
+                <tr>
+                    <td style="color:var(--text-muted);">${idx + 1}</td>
+                    <td>
+                        <div class="dup-card-name">${imp.name}</div>
+                        <div class="dup-card-sub">${imp.set_name} #${imp.card_number || '-'} • ${imp.language} • +${imp.quantity} qty</div>
+                    </td>
+                    <td class="dup-price-cell dup-price-old">
+                        <div class="dup-price-label">Cost</div>
+                        <div class="dup-price-value">${formatIDR(ex.purchase_price || 0)}</div>
+                        <div class="dup-price-label" style="margin-top:6px">Market</div>
+                        <div class="dup-price-value">${formatIDR(ex.market_price || 0)}</div>
+                        <div style="font-size:0.72rem; margin-top:4px; opacity:0.6">Qty di DB: ${ex.quantity}</div>
+                    </td>
+                    <td class="dup-price-cell dup-price-new">
+                        <div class="dup-price-label">Cost</div>
+                        <div class="dup-price-value">${formatIDR(imp.purchase_price || 0)}</div>
+                        ${ppDiffHtml}
+                        <div class="dup-price-label" style="margin-top:6px">Market</div>
+                        <div class="dup-price-value">${formatIDR(imp.market_price || 0)}</div>
+                        ${mpDiffHtml}
+                    </td>
+                    <td>
+                        <div class="dup-toggle-wrap">
+                            <button class="dup-toggle-opt ${choice === 'old' ? 'active-old' : ''}" onclick="dupSetChoice(${d.index}, 'old')">Lama</button>
+                            <button class="dup-toggle-opt ${choice === 'new' ? 'active-new' : ''}" onclick="dupSetChoice(${d.index}, 'new')">Baru</button>
+                        </div>
+                    </td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function dupSetChoice(itemIndex, choice) {
+            if (!dupPendingData) return;
+            dupPendingData.dupChoices[itemIndex] = choice;
+            renderDupTable();
+        }
+
+        function dupSetAllChoice(choice) {
+            if (!dupPendingData) return;
+            dupPendingData.duplicates.forEach(d => {
+                dupPendingData.dupChoices[d.index] = choice;
+            });
+            renderDupTable();
+            showToast(choice === 'old' ? '📌 Semua duplikat → Harga Lama' : '🔄 Semua duplikat → Harga Baru');
+        }
+
+        async function confirmDupImport() {
+            if (!dupPendingData) return;
+            const { processedData, dupChoices } = dupPendingData;
+
+            const btn = document.getElementById('dupConfirmBtn');
+            const origText = btn.innerText;
+            btn.innerText = 'Memproses...';
+            btn.disabled = true;
+
+            try {
+                // Attach price_choice to each item based on its index
+                const finalData = processedData.map((item, idx) => {
+                    if (dupChoices.hasOwnProperty(idx)) {
+                        return { ...item, price_choice: dupChoices[idx] };
+                    }
+                    return item;
+                });
+
+                showToast(`Mengimport ${finalData.length} kartu...`);
+                const res = await fetch(`${API_URL}/api/inventory/bulk-import`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(finalData)
+                });
+
+                if (res.ok) {
+                    const r = await safeJson(res);
+                    closeDupModal();
+                    showToast(r.message);
+                    loadInventory();
+                } else {
+                    const err = await safeJson(res).catch(() => ({ error: 'Gagal' }));
+                    showToast(err.error, true);
+                }
+            } catch (e) {
+                showToast('Error: ' + e.message, true);
+            } finally {
+                btn.innerText = origText;
+                btn.disabled = false;
+            }
+        }
+
         function handleExcelUpload(event, mode) {
             const file = event.target.files[0];
             if (!file) return;
@@ -2445,23 +2853,64 @@
 
                     const processedData = parseNewCSVFormat(rawJsonData);
 
-                    const execUpload = async () => {
-                        showToast(`Processing ${processedData.length} rows...`, false);
-                        const url = mode === 'replace' ? `${API_URL}/api/inventory/bulk-replace` : `${API_URL}/api/inventory/bulk-import`;
-                        const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(processedData) });
-                        if (res.ok) {
-                            const r = await safeJson(res);
-                            closeModal(); showToast(r.message); loadInventory();
-                        } else {
-                            const err = await safeJson(res).catch(e => ({ error: 'Failed' }));
-                            closeModal(); showToast(err.error, true);
-                        }
-                    };
-
                     if (mode === 'replace') {
-                        openModal('REPLACE Warning!', `Delete ALL Vault data and replace with these ${processedData.length} cards? (Sales History is safe)`, '', execUpload);
+                        // Replace mode: no duplicate check, just confirm and replace
+                        const execReplace = async () => {
+                            showToast(`Processing ${processedData.length} rows...`, false);
+                            const res = await fetch(`${API_URL}/api/inventory/bulk-replace`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(processedData)
+                            });
+                            if (res.ok) {
+                                const r = await safeJson(res);
+                                closeModal(); showToast(r.message); loadInventory();
+                            } else {
+                                const err = await safeJson(res).catch(e => ({ error: 'Failed' }));
+                                closeModal(); showToast(err.error, true);
+                            }
+                        };
+                        openModal('REPLACE Warning!', `Delete ALL Vault data and replace with these ${processedData.length} cards? (Sales History is safe)`, '', execReplace);
                     } else {
-                        await execUpload();
+                        // Append mode: preview for duplicates first
+                        showToast('Memeriksa duplikat...', false);
+                        try {
+                            const previewRes = await fetch(`${API_URL}/api/inventory/bulk-import-preview`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(processedData)
+                            });
+
+                            if (!previewRes.ok) {
+                                const err = await safeJson(previewRes).catch(() => ({ error: 'Gagal preview' }));
+                                showToast(err.error, true);
+                                return;
+                            }
+
+                            const preview = await previewRes.json();
+
+                            if (preview.duplicates && preview.duplicates.length > 0) {
+                                // Show duplicate review modal
+                                openDupModal(processedData, preview.newItems, preview.duplicates);
+                            } else {
+                                // No duplicates, import directly
+                                showToast(`Memproses ${processedData.length} baris...`, false);
+                                const res = await fetch(`${API_URL}/api/inventory/bulk-import`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(processedData)
+                                });
+                                if (res.ok) {
+                                    const r = await safeJson(res);
+                                    showToast(r.message); loadInventory();
+                                } else {
+                                    const err = await safeJson(res).catch(e => ({ error: 'Gagal' }));
+                                    showToast(err.error, true);
+                                }
+                            }
+                        } catch (previewErr) {
+                            showToast('Error preview: ' + previewErr.message, true);
+                        }
                     }
                 } catch (err) { showToast('System error reading Excel.', true); }
                 document.getElementById('excelAppendInput').value = '';

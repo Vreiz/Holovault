@@ -235,6 +235,95 @@ app.put('/api/inventory/:id/undo-sell', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal batalkan' }); }
 });
 
+// Helper: normalize import item fields (shared between preview & import)
+function normalizeImportItem(i) {
+    const parsedQty = parseInt(i.quantity);
+    const safeQty = (isNaN(parsedQty) || parsedQty < 1) ? 1 : parsedQty;
+    
+    const cleanNumber = (val) => {
+        if (val === null || val === undefined || val === '') return 0;
+        if (typeof val === 'number') return Math.round(val);
+        const strVal = String(val).replace(/,/g, '').replace(/[^0-9.-]/g, ''); 
+        const parsed = parseFloat(strVal);
+        return isNaN(parsed) ? 0 : Math.round(parsed);
+    };
+
+    const safePP = cleanNumber(i.purchase_price);
+    const safeMP = cleanNumber(i.market_price);
+
+    const isHolo = parseInt(i.is_holo) || 0;
+    const is1st = parseInt(i.is_first_edition) || 0;
+    const sStr = (v, max = 250) => (v !== null && v !== undefined && v !== '') ? String(v).slice(0, max) : null;
+
+    return {
+        safeQty, safePP, safeMP, isHolo, is1st,
+        name: sStr(i.name, 250) || 'Unnamed Card',
+        setName: sStr(i.set_name, 250) || '-',
+        lang: sStr(i.language, 100) || 'English',
+        cond: sStr(i.card_condition, 100) || 'NM',
+        grader: sStr(i.grader, 100),
+        grade: sStr(i.grade, 100),
+        certNum: sStr(i.cert_number, 100),
+        cardNum: sStr(i.card_number, 100),
+        setCode: sStr(i.set_code, 100),
+        cat: sStr(i.category, 100) || 'Single',
+        notes: i.notes || null
+    };
+}
+
+// Preview endpoint: detect duplicates before importing
+app.post('/api/inventory/bulk-import-preview', async (req, res) => {
+    try {
+        const items = req.body;
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'Data kosong' });
+        }
+
+        const newItems = [];
+        const duplicates = [];
+
+        for (let idx = 0; idx < items.length; idx++) {
+            const i = items[idx];
+            const n = normalizeImportItem(i);
+
+            const [existing] = await pool.query(
+                `SELECT * FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND card_number <=> ? AND set_code <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
+                [n.name, n.setName, n.lang, n.cond, n.isHolo, n.is1st, n.cardNum, n.setCode, n.grader, n.grade, n.certNum]
+            );
+
+            if (existing.length > 0) {
+                duplicates.push({
+                    index: idx,
+                    importItem: {
+                        name: n.name, set_name: n.setName, category: n.cat, language: n.lang,
+                        card_number: n.cardNum, set_code: n.setCode, card_condition: n.cond,
+                        quantity: n.safeQty, purchase_price: n.safePP, market_price: n.safeMP,
+                        is_holo: n.isHolo, is_first_edition: n.is1st,
+                        grader: n.grader, grade: n.grade, cert_number: n.certNum
+                    },
+                    existingItem: {
+                        id: existing[0].id,
+                        name: existing[0].name, set_name: existing[0].set_name, category: existing[0].category,
+                        language: existing[0].language, card_number: existing[0].card_number,
+                        set_code: existing[0].set_code, card_condition: existing[0].card_condition,
+                        quantity: existing[0].quantity,
+                        purchase_price: existing[0].purchase_price, market_price: existing[0].market_price,
+                        is_holo: existing[0].is_holo, is_first_edition: existing[0].is_first_edition,
+                        grader: existing[0].grader, grade: existing[0].grade, cert_number: existing[0].cert_number
+                    }
+                });
+            } else {
+                newItems.push({ index: idx, item: i });
+            }
+        }
+
+        res.status(200).json({ newItems, duplicates });
+    } catch (error) {
+        console.error("ERROR PREVIEW IMPORT:", error);
+        res.status(500).json({ error: error.message || 'Gagal preview import' });
+    }
+});
+
 app.post('/api/inventory/bulk-import', async (req, res) => {
     let conn = null;
     try {
@@ -252,50 +341,33 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
         await conn.beginTransaction(); 
 
         for (const i of items) {
-            const parsedQty = parseInt(i.quantity);
-            const safeQty = (isNaN(parsedQty) || parsedQty < 1) ? 1 : parsedQty;
-            
-            const cleanNumber = (val) => {
-                if (val === null || val === undefined || val === '') return 0;
-                if (typeof val === 'number') return Math.round(val);
-                const strVal = String(val).replace(/,/g, '').replace(/[^0-9.-]/g, ''); 
-                const parsed = parseFloat(strVal);
-                return isNaN(parsed) ? 0 : Math.round(parsed);
-            };
-
-            const safePP = cleanNumber(i.purchase_price);
-            const safeMP = cleanNumber(i.market_price);
-
-            const isHolo = parseInt(i.is_holo) || 0;
-            const is1st = parseInt(i.is_first_edition) || 0;
-            const sStr = (v, max = 250) => (v !== null && v !== undefined && v !== '') ? String(v).slice(0, max) : null;
-
-            const name = sStr(i.name, 250) || 'Unnamed Card';
-            const setName = sStr(i.set_name, 250) || '-';
-            const lang = sStr(i.language, 100) || 'English';
-            const cond = sStr(i.card_condition, 100) || 'NM';
-            const grader = sStr(i.grader, 100);
-            const grade = sStr(i.grade, 100);
-            const certNum = sStr(i.cert_number, 100);
-            const cardNum = sStr(i.card_number, 100);
-            const setCode = sStr(i.set_code, 100);
-            const cat = sStr(i.category, 100) || 'Single';
+            const n = normalizeImportItem(i);
 
             const [existing] = await conn.query(
-                `SELECT id FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND card_number <=> ? AND set_code <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
-                [name, setName, lang, cond, isHolo, is1st, cardNum, setCode, grader, grade, certNum]
+                `SELECT id, purchase_price, market_price FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND card_number <=> ? AND set_code <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
+                [n.name, n.setName, n.lang, n.cond, n.isHolo, n.is1st, n.cardNum, n.setCode, n.grader, n.grade, n.certNum]
             );
 
             if (existing.length > 0) {
-                await conn.query(
-                    `UPDATE inventory SET quantity = quantity + ?, card_number = COALESCE(card_number, ?), set_code = COALESCE(set_code, ?) WHERE id = ?`,
-                    [safeQty, cardNum, setCode, existing[0].id]
-                );
+                // price_choice: "old" = keep DB prices, "new" = overwrite with import prices
+                const priceChoice = i.price_choice || 'old';
+                
+                if (priceChoice === 'new') {
+                    await conn.query(
+                        `UPDATE inventory SET quantity = quantity + ?, purchase_price = ?, market_price = ?, card_number = COALESCE(card_number, ?), set_code = COALESCE(set_code, ?) WHERE id = ?`,
+                        [n.safeQty, n.safePP, n.safeMP, n.cardNum, n.setCode, existing[0].id]
+                    );
+                } else {
+                    await conn.query(
+                        `UPDATE inventory SET quantity = quantity + ?, card_number = COALESCE(card_number, ?), set_code = COALESCE(set_code, ?) WHERE id = ?`,
+                        [n.safeQty, n.cardNum, n.setCode, existing[0].id]
+                    );
+                }
                 updatedCount++;
             } else {
                 await conn.query(
                     `INSERT INTO inventory (id, name, category, set_name, set_code, card_number, language, quantity, purchase_price, market_price, notes, card_condition, is_holo, is_first_edition, grader, grade, cert_number, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Vault', ?)`,
-                    [crypto.randomUUID(), name, cat, setName, setCode, cardNum, lang, safeQty, safePP, safeMP, i.notes || null, cond, isHolo, is1st, grader, grade, certNum, getJakartaNowSQL()]
+                    [crypto.randomUUID(), n.name, n.cat, n.setName, n.setCode, n.cardNum, n.lang, n.safeQty, n.safePP, n.safeMP, n.notes, n.cond, n.isHolo, n.is1st, n.grader, n.grade, n.certNum, getJakartaNowSQL()]
                 );
                 insertedCount++;
             }
