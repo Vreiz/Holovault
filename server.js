@@ -287,8 +287,8 @@ app.post('/api/inventory/bulk-import-preview', async (req, res) => {
             const n = normalizeImportItem(i);
 
             const [existing] = await pool.query(
-                `SELECT * FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND card_number <=> ? AND set_code <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
-                [n.name, n.setName, n.lang, n.cond, n.isHolo, n.is1st, n.cardNum, n.setCode, n.grader, n.grade, n.certNum]
+                `SELECT * FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND category = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND card_number <=> ? AND set_code <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
+                [n.name, n.setName, n.cat, n.lang, n.cond, n.isHolo, n.is1st, n.cardNum, n.setCode, n.grader, n.grade, n.certNum]
             );
 
             if (existing.length > 0) {
@@ -344,8 +344,8 @@ app.post('/api/inventory/bulk-import', async (req, res) => {
             const n = normalizeImportItem(i);
 
             const [existing] = await conn.query(
-                `SELECT id, purchase_price, market_price FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND card_number <=> ? AND set_code <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
-                [n.name, n.setName, n.lang, n.cond, n.isHolo, n.is1st, n.cardNum, n.setCode, n.grader, n.grade, n.certNum]
+                `SELECT id, purchase_price, market_price FROM inventory WHERE status = 'Vault' AND name = ? AND set_name = ? AND category = ? AND language = ? AND card_condition = ? AND is_holo = ? AND is_first_edition = ? AND card_number <=> ? AND set_code <=> ? AND grader <=> ? AND grade <=> ? AND cert_number <=> ?`,
+                [n.name, n.setName, n.cat, n.lang, n.cond, n.isHolo, n.is1st, n.cardNum, n.setCode, n.grader, n.grade, n.certNum]
             );
 
             if (existing.length > 0) {
