@@ -2923,18 +2923,80 @@
             const vaultItems = globalData.filter(i => i.status === 'Vault' || !i.status);
             if (vaultItems.length === 0) return showToast('Vault is empty!', true);
 
-            const expData = vaultItems.map(i => ({
-                Name: i.name, Set: i.set_name, 'Card Number': i.card_number,
-                Category: i.category, Language: i.language, Condition: i.card_condition,
-                Variant: (i.is_holo ? 'Holo ' : '') + (i.is_first_edition ? '1st Ed' : '').trim(),
-                Grade: i.grader ? `${i.grader} ${i.grade || ''}` : '',
-                Quantity: i.quantity, 'Purchase Price': i.purchase_price, 'Market Price': i.market_price
-            }));
+            const todayDate = new Date();
+            const dateStr = todayDate.toISOString().slice(0, 10);
+            const marketHeader = `Market Price (As of ${dateStr})`;
+
+            const condMap = {
+                'NM': 'Near Mint',
+                'LP': 'Lightly Played',
+                'MP': 'Moderately Played',
+                'HP': 'Heavily Played',
+                'DMG': 'Damaged'
+            };
+
+            const expData = vaultItems.map(i => {
+                let formattedDate = '';
+                if (i.created_at) {
+                    const d = new Date(i.created_at);
+                    if (!isNaN(d.getTime())) {
+                        formattedDate = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+                    }
+                }
+                if (!formattedDate) {
+                    formattedDate = `${todayDate.getMonth() + 1}/${todayDate.getDate()}/${todayDate.getFullYear()}`;
+                }
+
+                const rawCond = (i.card_condition || '').trim().toUpperCase();
+                const fullCond = condMap[rawCond] || i.card_condition || 'Near Mint';
+
+                let variance = 'Normal';
+                if (i.is_holo && i.is_first_edition) variance = '1st Edition Holofoil';
+                else if (i.is_holo) variance = 'Holofoil';
+                else if (i.is_first_edition) variance = '1st Edition';
+                else if (i.category === 'Sealed') variance = '';
+
+                const gradeStr = i.grader ? `${i.grader} ${i.grade || ''}`.trim() : 'Ungraded';
+
+                return {
+                    'Portfolio Name': i.category || 'Single',
+                    'Category': 'Pokemon',
+                    'Set': i.set_name || '',
+                    'Product Name': i.name || '',
+                    'Card Number': i.card_number ? String(i.card_number) : '',
+                    'Rarity': '',
+                    'Variance': variance,
+                    'Grade': gradeStr,
+                    'Card Condition': fullCond,
+                    'Average Cost Paid': 0,
+                    'Quantity': parseInt(i.quantity) || 1,
+                    [marketHeader]: '',
+                    'ROUND': parseFloat(i.purchase_price) || 0,
+                    'OPEN PRICE': parseFloat(i.market_price) || 0,
+                    'Price Override': 0,
+                    'Watchlist': 'FALSE',
+                    'Date Added': formattedDate,
+                    'Notes': i.notes || ''
+                };
+            });
 
             const ws = XLSX.utils.json_to_sheet(expData);
+
+            // Ensure Card Number column is strictly treated as string (so Excel doesn't turn '08/25' into a date)
+            if (ws['!ref']) {
+                const range = XLSX.utils.decode_range(ws['!ref']);
+                const colIndex = 4; // 'Card Number' is 5th column (index 4)
+                for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+                    const cellRef = XLSX.utils.encode_cell({ r: R, c: colIndex });
+                    if (ws[cellRef]) {
+                        ws[cellRef].t = 's';
+                    }
+                }
+            }
+
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Vault");
-            XLSX.writeFile(wb, `Holovault_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            XLSX.writeFile(wb, `Holovault_Export_${dateStr}.xlsx`);
         }
 
         async function exportSoldToCSV() {
