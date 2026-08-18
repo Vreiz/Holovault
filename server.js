@@ -235,6 +235,67 @@ app.put('/api/inventory/:id/undo-sell', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Gagal batalkan' }); }
 });
 
+const EN_SETS = [
+    'Ancient Origins', 'Ascended Heroes', 'Astral Radiance', 'Base Set (Unlimited)', 'Battle Styles',
+    'BREAKthrough', 'Brilliant Stars', 'Brilliant Stars Trainer Gallery', 'Celebrations',
+    'Celebrations: Classic Collection', 'Champion\'s Path', 'Chilling Reign', 'Cosmic Eclipse',
+    'Crown Zenith', 'Crown Zenith: Galarian Gallery', 'Destined Rivals', 'Evolutions', 'Evolving Skies',
+    'Fates Collide', 'Furious Fists', 'Fusion Strike', 'Generations', 'Generations: Radiant Collection',
+    'Hidden Fates', 'Hidden Fates: Shiny Vault', 'Journey Together', 'Lost Origin',
+    'Lost Origin Trainer Gallery', 'Mega Evolution', 'Mega Evolution Promos', 'Obsidian Flames',
+    'Paldea Evolved', 'Paldean Fates', 'Paradox Rift', 'Phantasmal Flames', 'Phantom Forces',
+    'Pokemon 151', 'Pokemon Go', 'Primal Clash', 'Prismatic Evolutions', 'Roaring Skies',
+    'Scarlet & Violet Base Set', 'Scarlet & Violet Promo', 'Shining Fates', 'Shining Fates: Shiny Vault',
+    'Shining Legends', 'Shrouded Fable', 'Silver Tempest', 'Silver Tempest Trainer Gallery',
+    'Stellar Crown', 'Sun & Moon Promo', 'Surging Sparks', 'SV: 151', 'Sword & Shield Base Set',
+    'Sword & Shield Promo', 'Team Up', 'Temporal Forces', 'Twilight Masquerade', 'Unbroken Bonds',
+    'Unified Minds', 'Vivid Voltage'
+];
+
+const JP_SETS = [
+    '25th Anniversary Promo (JP)', 'Abyss Eye', 'Battle Partners', 'Battle Region', 'Black Bolt',
+    'Chaos Rising', 'Clay Burst', 'Collection X', 'Crimson Haze', 'Cyber Judge',
+    'Deoxys VSTAR & VMAX High-Class Deck', 'Dream League', 'Eevee Heroes', 'Emerald Break',
+    'EX Unseen Forces (Japanese)', 'ex Starter Set Marnie\'s Morpeko & Grimmsnarl ex',
+    'Fossil (Japanese)', 'Fusion Arts', 'Gaia Volcano', 'Glory of Team Rocket',
+    'Gym Challenge (Japanese)', 'Hot Air Arena', 'Inferno X', 'Jet Black Geist',
+    'Jungle (Japanese)', 'Matchless Fighter', 'Mega Brave', 'MEGA Dream ex', 'Mega Symphonia',
+    'Neo Discovery (Japanese)', 'Neo Genesis (Japanese)', 'Night Wanderer', 'Nihil Zero',
+    'Ninja Spinner', 'Paradigm Trigger', 'Paradise Dragona', 'Perfect Order', 'Phantom Gate',
+    'Pokemon GO (Japanese)', 'Reviving Legends', 'Ruler of the Black Flame',
+    'Scarlet & Violet Promo JP', 'Shiny Collection', 'Shiny Star V', 'Shiny Treasure ex',
+    'Star Birth', 'Storm Emeralda', 'Sun & Moon Promos JP', 'Super Electric Breaker',
+    'Sword & Shield Promos (JP)', 'Tag Bolt', 'Tag Team GX All Stars', 'Team Rocket (Japanese)',
+    'Terastal Festival ex', 'Tidal Storm', 'Time Gazer', 'Triplet Beat',
+    'Unnumbered Promos (1999)', 'Unnumbered Promos (2000)', 'VMAX Climax', 'VSTAR Universe',
+    'White Flare'
+];
+
+function getLanguageForSet(rawSet) {
+    if (!rawSet) return '(SET NOT AVAILABLE)';
+    const s = String(rawSet).trim().toLowerCase();
+    
+    for (let set of EN_SETS) {
+        if (set.toLowerCase() === s) return 'English';
+    }
+    for (let set of JP_SETS) {
+        if (set.toLowerCase() === s) return 'Japanese';
+    }
+    
+    const norm = str => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const sNorm = norm(s);
+    if (!sNorm) return '(SET NOT AVAILABLE)';
+
+    for (let set of EN_SETS) {
+        if (norm(set) === sNorm) return 'English';
+    }
+    for (let set of JP_SETS) {
+        if (norm(set) === sNorm) return 'Japanese';
+    }
+    
+    return '(SET NOT AVAILABLE)';
+}
+
 // Helper: normalize import item fields (shared between preview & import)
 function normalizeImportItem(i) {
     const parsedQty = parseInt(i.quantity);
@@ -255,11 +316,14 @@ function normalizeImportItem(i) {
     const is1st = parseInt(i.is_first_edition) || 0;
     const sStr = (v, max = 250) => (v !== null && v !== undefined && v !== '') ? String(v).slice(0, max) : null;
 
+    const rawSetName = sStr(i.set_name, 250) || '-';
+    const resolvedLang = sStr(i.language, 100) || getLanguageForSet(rawSetName);
+
     return {
         safeQty, safePP, safeMP, isHolo, is1st,
         name: sStr(i.name, 250) || 'Unnamed Card',
-        setName: sStr(i.set_name, 250) || '-',
-        lang: sStr(i.language, 100) || 'English',
+        setName: rawSetName,
+        lang: resolvedLang,
         cond: sStr(i.card_condition, 100) || 'NM',
         grader: sStr(i.grader, 100),
         grade: sStr(i.grade, 100),

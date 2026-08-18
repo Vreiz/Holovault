@@ -1106,7 +1106,10 @@
         /* ===== DUPLICATE REVIEW MODAL ===== */
         .dup-modal-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: rgba(0, 0, 0, 0.8);
             display: flex;
             justify-content: center;
@@ -1115,10 +1118,17 @@
             backdrop-filter: blur(5px);
             animation: dupFadeIn 0.25s ease;
         }
+
         @keyframes dupFadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
+
         .dup-modal-box {
             background: var(--bg-card);
             width: 95%;
@@ -1132,10 +1142,19 @@
             box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(59, 130, 246, 0.1);
             animation: dupSlideUp 0.3s ease;
         }
+
         @keyframes dupSlideUp {
-            from { transform: translateY(30px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
+
         .dup-modal-header {
             padding: 20px 25px;
             border-bottom: 1px solid var(--border);
@@ -1144,12 +1163,14 @@
             align-items: center;
             flex-shrink: 0;
         }
+
         .dup-modal-header h2 {
             font-size: 1.15rem;
             display: flex;
             align-items: center;
             gap: 10px;
         }
+
         .dup-badge {
             background: rgba(245, 158, 11, 0.2);
             color: var(--sold);
@@ -1158,6 +1179,7 @@
             font-size: 0.8rem;
             font-weight: 700;
         }
+
         .dup-summary {
             padding: 12px 25px;
             background: rgba(59, 130, 246, 0.06);
@@ -1168,13 +1190,16 @@
             flex-wrap: wrap;
             flex-shrink: 0;
         }
+
         .dup-summary-item {
             font-size: 0.85rem;
             color: var(--text-muted);
         }
+
         .dup-summary-item b {
             color: var(--text-main);
         }
+
         .dup-bulk-actions {
             padding: 12px 25px;
             display: flex;
@@ -1183,6 +1208,7 @@
             border-bottom: 1px solid var(--border);
             flex-shrink: 0;
         }
+
         .dup-btn {
             padding: 7px 16px;
             border-radius: 8px;
@@ -1192,33 +1218,40 @@
             border: 1px solid var(--border);
             transition: all 0.2s;
         }
+
         .dup-btn-old {
             background: rgba(148, 163, 184, 0.12);
             color: var(--text-muted);
         }
+
         .dup-btn-old:hover {
             background: rgba(148, 163, 184, 0.25);
             color: var(--text-main);
             border-color: var(--text-muted);
         }
+
         .dup-btn-new {
             background: rgba(59, 130, 246, 0.12);
             color: var(--primary);
             border-color: rgba(59, 130, 246, 0.3);
         }
+
         .dup-btn-new:hover {
             background: rgba(59, 130, 246, 0.25);
             border-color: var(--primary);
         }
+
         .dup-table-wrap {
             flex: 1;
             overflow-y: auto;
             padding: 0;
         }
+
         .dup-table {
             width: 100%;
             border-collapse: collapse;
         }
+
         .dup-table th {
             position: sticky;
             top: 0;
@@ -1233,35 +1266,43 @@
             text-align: left;
             border-bottom: 1px solid var(--border);
         }
+
         .dup-table td {
             padding: 10px 14px;
             border-bottom: 1px solid rgba(51, 65, 85, 0.5);
             font-size: 0.88rem;
             vertical-align: middle;
         }
+
         .dup-table tr:hover {
             background: rgba(255, 255, 255, 0.02);
         }
+
         .dup-card-name {
             font-weight: 700;
             color: var(--text-main);
             line-height: 1.3;
         }
+
         .dup-card-sub {
             font-size: 0.78rem;
             color: var(--text-muted);
             margin-top: 2px;
         }
+
         .dup-price-cell {
             text-align: right;
             white-space: nowrap;
         }
+
         .dup-price-old {
             color: var(--text-muted);
         }
+
         .dup-price-new {
             color: var(--primary);
         }
+
         .dup-price-label {
             font-size: 0.7rem;
             text-transform: uppercase;
@@ -1269,10 +1310,12 @@
             margin-bottom: 2px;
             opacity: 0.7;
         }
+
         .dup-price-value {
             font-weight: 700;
             font-size: 0.95rem;
         }
+
         .dup-toggle-wrap {
             display: flex;
             gap: 0;
@@ -1280,6 +1323,7 @@
             overflow: hidden;
             border: 1px solid var(--border);
         }
+
         .dup-toggle-opt {
             padding: 6px 14px;
             font-size: 0.8rem;
@@ -1291,17 +1335,21 @@
             color: var(--text-muted);
             white-space: nowrap;
         }
+
         .dup-toggle-opt:first-child {
             border-right: 1px solid var(--border);
         }
+
         .dup-toggle-opt.active-old {
             background: rgba(148, 163, 184, 0.2);
             color: var(--text-main);
         }
+
         .dup-toggle-opt.active-new {
             background: rgba(59, 130, 246, 0.25);
             color: var(--primary);
         }
+
         .dup-modal-footer {
             padding: 16px 25px;
             border-top: 1px solid var(--border);
@@ -1311,31 +1359,38 @@
             flex-shrink: 0;
             gap: 10px;
         }
+
         .dup-modal-footer .dup-footer-info {
             font-size: 0.82rem;
             color: var(--text-muted);
         }
+
         .dup-footer-actions {
             display: flex;
             gap: 10px;
         }
+
         .dup-price-diff-up {
             color: var(--green);
             font-size: 0.75rem;
             font-weight: 600;
         }
+
         .dup-price-diff-down {
             color: var(--danger);
             font-size: 0.75rem;
             font-weight: 600;
         }
+
         @media (max-width: 700px) {
             .dup-modal-box {
                 max-height: 92vh;
                 width: 100%;
                 border-radius: 12px 12px 0 0;
             }
-            .dup-table th, .dup-table td {
+
+            .dup-table th,
+            .dup-table td {
                 padding: 8px 8px;
                 font-size: 0.8rem;
             }
@@ -1632,8 +1687,10 @@
                 <div class="dup-summary-item">📊 Total: <b id="dupTotalCount">0</b></div>
             </div>
             <div class="dup-bulk-actions">
-                <button class="dup-btn dup-btn-old" onclick="dupSetAllChoice('old')">📌 Pakai Semua Harga Lama (DB)</button>
-                <button class="dup-btn dup-btn-new" onclick="dupSetAllChoice('new')">🔄 Pakai Semua Harga Baru (Import)</button>
+                <button class="dup-btn dup-btn-old" onclick="dupSetAllChoice('old')">📌 Pakai Semua Harga Lama
+                    (DB)</button>
+                <button class="dup-btn dup-btn-new" onclick="dupSetAllChoice('new')">🔄 Pakai Semua Harga Baru
+                    (Import)</button>
             </div>
             <div class="dup-table-wrap">
                 <table class="dup-table">
@@ -1653,7 +1710,8 @@
                 <div class="dup-footer-info" id="dupFooterInfo">Qty duplikat otomatis dijumlahkan.</div>
                 <div class="dup-footer-actions">
                     <button class="btn-ghost" onclick="closeDupModal()">Batal</button>
-                    <button class="btn-primary" id="dupConfirmBtn" onclick="confirmDupImport()">✅ Konfirmasi Import</button>
+                    <button class="btn-primary" id="dupConfirmBtn" onclick="confirmDupImport()">✅ Konfirmasi
+                        Import</button>
                 </div>
             </div>
         </div>
@@ -2659,7 +2717,7 @@
                     // Jika ROUND dan OPEN PRICE kosong/tidak ada, lakukan pembulatan -4 (puluhan ribu terdekat)
                     if (cat === 'Single') {
                         costPrice = Math.round(baseVal / 10000) * 10000;
-                        marketPrice = costPrice + 30000;
+                        marketPrice = costPrice + 20000;
                     } else {
                         costPrice = baseVal;
                         marketPrice = baseVal;
